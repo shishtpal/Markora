@@ -1,0 +1,274 @@
+:root {
+  --font-ui: "Space Grotesk", "Segoe UI", "Noto Sans Devanagari", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, monospace;
+  --font-scale: 1;
+  --files-size: 240px;
+  --outline-size: 220px;
+  --files-grip: 5px;
+  --outline-grip: 5px;
+  --source-ratio: 50%;
+  font-size: calc(15px * var(--font-scale));
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-weight: 400;
+  src: url("../fonts/space-grotesk-latin-400-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-weight: 500;
+  src: url("../fonts/space-grotesk-latin-500-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-weight: 700;
+  src: url("../fonts/space-grotesk-latin-700-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-weight: 400;
+  src: url("../fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-weight: 500;
+  src: url("../fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Sans Devanagari";
+  font-weight: 400;
+  src: url("../fonts/noto-sans-devanagari-devanagari-400-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+html[data-color="dark"] {
+  color-scheme: dark;
+  --canvas: #101722;
+  --surface: #172231;
+  --surface-elevated: #1b283a;
+  --inset: #1d2a3b;
+  --text: #e8efff;
+  --muted: #a5b5d1;
+  --divider: #2d3e56;
+  --frame: #526b91;
+  --accent: #6f9bff;
+  --accent-soft: #6f9bff24;
+  --saved: #8de5c2;
+  --warning: #ffd064;
+  --error: #ff7581;
+  --error-soft: #ff758122;
+  --scrollbar-thumb: #4b6180;
+  --scrollbar-track: #141e2c;
+  --shadow-md: 0 8px 24px rgb(0 0 0 / 0.38);
+  --shadow-lg: 0 20px 54px rgb(0 0 0 / 0.55);
+}
+
+html[data-color="light"] {
+  color-scheme: light;
+  --canvas: #f4f7fc;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --inset: #eef3fb;
+  --text: #10234b;
+  --muted: #5c6f91;
+  --divider: #e0e7f2;
+  --frame: #bac9df;
+  --accent: #1246c5;
+  --accent-soft: #1246c518;
+  --saved: #08734f;
+  --warning: #a86400;
+  --error: #bd2438;
+  --error-soft: #bd243818;
+  --scrollbar-thumb: #93a7c7;
+  --scrollbar-track: #eef3fb;
+  --shadow-md: 0 8px 24px rgb(16 35 75 / 0.12);
+  --shadow-lg: 0 20px 54px rgb(16 35 75 / 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font: 400 1rem/1.55 var(--font-ui);
+  color: var(--text);
+  background: var(--canvas);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  button {
+    transition: scale 120ms ease;
+  }
+}
+
+@media (hover: hover) {
+  button:not(:disabled):hover {
+    background: var(--inset);
+  }
+}
+
+button:not(:disabled):active {
+  scale: 0.97;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button[aria-pressed="true"],
+button[aria-selected="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+input,
+select {
+  border: 1px solid var(--frame);
+  border-radius: 5px;
+  background: var(--canvas);
+  padding: 7px 9px;
+  min-width: 0;
+}
+
+input:focus-visible,
+select:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 0;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.quiet,
+.muted {
+  color: var(--muted);
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ui-icon {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+kbd {
+  font: 500 0.7rem var(--font-mono);
+  color: var(--muted);
+  background: var(--inset);
+  border: 1px solid var(--divider);
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.scroller,
+.scroll-pane,
+aside,
+#tabs,
+#palette-list,
+#source-editor {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+@supports not (scrollbar-color: auto) {
+  .scroll-pane::-webkit-scrollbar,
+  aside::-webkit-scrollbar,
+  #tabs::-webkit-scrollbar,
+  #palette-list::-webkit-scrollbar,
+  #source-editor::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+
+  .scroll-pane::-webkit-scrollbar-thumb,
+  aside::-webkit-scrollbar-thumb,
+  #tabs::-webkit-scrollbar-thumb,
+  #palette-list::-webkit-scrollbar-thumb,
+  #source-editor::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 999px;
+  }
+
+  .scroll-pane::-webkit-scrollbar-track,
+  aside::-webkit-scrollbar-track,
+  #tabs::-webkit-scrollbar-track,
+  #palette-list::-webkit-scrollbar-track,
+  #source-editor::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+}

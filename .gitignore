@@ -1,0 +1,9 @@
+node_modules/
+target/
+dist/
+.markora/
+.env
+.env.*
+!.env.example
+*.log
+assets/ui/fonts/segoe*.ttf

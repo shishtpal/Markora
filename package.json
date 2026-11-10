@@ -1,0 +1,23 @@
+{
+  "name": "markora",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Markora — Markdown editor (Rust + egui + WebView2). UI built with Tailwind CSS v4.",
+  "scripts": {
+    "build:ui": "node tools/build-ui.cjs",
+    "build:ui:watch": "node tools/build-ui.cjs --watch",
+    "test": "cargo test",
+    "test:ui": "node tools/verify-ui.cjs && node tools/smoke-native.cjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.5",
+    "oxfmt": "^0.77.0",
+    "tailwindcss": "^4.3.5"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/noto-sans-devanagari": "^5.3.0",
+    "@fontsource/space-grotesk": "^5.3.0"
+  },
+  "license": "MIT"
+}

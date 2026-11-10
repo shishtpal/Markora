@@ -1,0 +1,30 @@
+[package]
+name = "markora"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.95"
+description = "Markora Markdown editor with a WebView2 interface on Windows and a native source editor on Linux"
+license = "MIT"
+publish = false
+
+[dependencies]
+eframe = { version = "=0.36.2", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }
+rfd = "0.15"
+pulldown-cmark = { version = "0.13", default-features = false, features = ["simd", "html"] }
+raw-window-handle = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.38"
+windows-core = "0.61"
+wry = "0.55"
+# Pinned by wry 0.55 for a deterministic WebView2 placement.
+# (generic `wry` re-export is enough for the child-window API)
+windows-sys = { version = "0.59", features = ["Win32_UI_Shell"] }
+
+[profile.release]
+opt-level = 2
+lto = "thin"
+strip = true
+

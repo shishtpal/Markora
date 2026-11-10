@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+@import "../styles/shell.css";
+@import "../styles/editor.css";
+@import "../styles/github.css";
+@import "../styles/dialogs.css";
