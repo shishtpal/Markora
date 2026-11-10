@@ -1,8 +1,11 @@
 //! Application lifecycle. File operations, IPC, commands and fallback live in submodules.
 mod bridge;
 mod commands;
+mod export;
 mod fallback;
 mod files;
+#[cfg(test)]
+mod loading_tests;
 #[cfg(test)]
 mod tests;
 
@@ -10,14 +13,14 @@ use crate::{theme, webview_host::Host};
 use eframe::egui;
 use markora::{
     media::SharedMediaRoots,
-    model::{Prefs, Recent, Workspace},
+    model::{Prefs, PreparedDocument, Recent, Workspace},
     protocol::FileEntry,
     storage::Storage,
 };
 use std::{
-    collections::VecDeque,
+    collections::{HashSet, VecDeque},
     path::PathBuf,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, mpsc},
 };
 
 pub type BridgeQueue = Arc<Mutex<VecDeque<String>>>;
@@ -31,6 +34,28 @@ enum CloseAction {
 struct PendingClose {
     action: CloseAction,
     documents: VecDeque<u64>,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) struct SyncedDocState {
+    pub id: u64,
+    pub revision: u64,
+    pub view_mode: markora::model::ViewMode,
+    pub rendered_revision: u64,
+    pub rendered_full: bool,
+}
+
+pub(super) enum BgEvent {
+    FileLoaded {
+        path: PathBuf,
+        view_mode: markora::model::ViewMode,
+        result: Result<PreparedDocument, String>,
+    },
+    FolderLoaded {
+        path: PathBuf,
+        generation: u64,
+        result: Result<Vec<FileEntry>, String>,
+    },
 }
 
 pub struct Markora {
@@ -49,8 +74,19 @@ pub struct Markora {
     webview: Option<Host>,
     webview_attempted: bool,
     native_handle: Option<raw_window_handle::RawWindowHandle>,
+    egui_ctx: Option<egui::Context>,
     queue: BridgeQueue,
     media_roots: SharedMediaRoots,
+    bg_tx: mpsc::Sender<BgEvent>,
+    bg_rx: mpsc::Receiver<BgEvent>,
+    pending_opens: HashSet<PathBuf>,
+    folder_generation: u64,
+    pending_print: Option<(u64, u64, u64, Option<PathBuf>)>,
+    print_token: u64,
+    last_dark: Option<bool>,
+    synced_doc: Option<SyncedDocState>,
+    client_known_markdown: Option<(u64, u64)>,
+    fallback_buf: Option<(u64, u64, String)>,
 }
 
 impl Markora {
@@ -59,9 +95,17 @@ impl Markora {
         let storage = Storage::discover();
         let prefs = storage.prefs();
         let recents = storage.read("recents.json");
-        let workspace =
-            Workspace::new(include_str!("../assets/welcome.md").into(), prefs.view_mode);
-        Self {
+        let initial_arg = std::env::args_os().nth(1).map(PathBuf::from);
+        let initial_md = if initial_arg.is_some() {
+            String::new()
+        } else {
+            include_str!("../assets/welcome.md").into()
+        };
+        let workspace = Workspace::new(initial_md, prefs.view_mode);
+        let (bg_tx, bg_rx) = mpsc::channel();
+        let dark = prefs.color_mode == "dark";
+        theme::apply(&cc.egui_ctx, dark);
+        let mut app = Self {
             workspace,
             prefs,
             recents,
@@ -77,9 +121,25 @@ impl Markora {
             webview: None,
             webview_attempted: false,
             native_handle: cc.window_handle().ok().map(|h| h.as_raw()),
+            egui_ctx: Some(cc.egui_ctx.clone()),
             queue: Arc::new(Mutex::new(VecDeque::new())),
             media_roots: SharedMediaRoots::default(),
+            bg_tx,
+            bg_rx,
+            pending_opens: HashSet::new(),
+            folder_generation: 0,
+            pending_print: None,
+            print_token: 0,
+            last_dark: Some(dark),
+            synced_doc: None,
+            client_known_markdown: None,
+            fallback_buf: None,
+        };
+        if let Some(path) = initial_arg {
+            app.open_path(path);
         }
+        app.ensure_webview(&cc.egui_ctx);
+        app
     }
 
     fn notify(&mut self, message: impl Into<String>) {
@@ -109,6 +169,7 @@ impl Markora {
             self.queue.clone(),
             ctx.clone(),
             self.media_roots.clone(),
+            self.prefs.color_mode == "dark",
         ) {
             Ok(host) => self.webview = Some(host),
             Err(error) if cfg!(windows) => {
@@ -124,6 +185,7 @@ impl eframe::App for Markora {
         let ctx = ui.ctx().clone();
         self.ensure_webview(&ctx);
         self.drain_bridge();
+        self.drain_bg();
         let exports = self
             .webview
             .as_ref()
@@ -135,7 +197,11 @@ impl eframe::App for Markora {
                 Err(err) => self.fail(err),
             }
         }
-        theme::apply(&ctx, self.prefs.color_mode == "dark");
+        let dark = self.prefs.color_mode == "dark";
+        if self.last_dark != Some(dark) {
+            theme::apply(&ctx, dark);
+            self.last_dark = Some(dark);
+        }
 
         if ctx.input(|i| i.viewport().close_requested()) && !self.allow_close {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);

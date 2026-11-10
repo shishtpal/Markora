@@ -41,13 +41,30 @@ pub enum HtmlStyle {
 pub enum Action {
     Ready,
     Edit,
-    Command { command: String },
-    OpenPath { path: String },
-    OpenLink { url: String },
-    ActivateTab { id: u64 },
-    CloseTab { id: u64 },
-    Preferences { patch: PrefsPatch },
-    ResolveUnsaved { choice: UnsavedChoice },
+    PrintReady {
+        token: u64,
+    },
+    Command {
+        command: String,
+    },
+    OpenPath {
+        path: String,
+    },
+    OpenLink {
+        url: String,
+    },
+    ActivateTab {
+        id: u64,
+    },
+    CloseTab {
+        id: u64,
+    },
+    Preferences {
+        patch: PrefsPatch,
+    },
+    ResolveUnsaved {
+        choice: UnsavedChoice,
+    },
     #[serde(rename_all = "camelCase")]
     Export {
         format: ExportFormat,
@@ -119,17 +136,26 @@ pub struct FileEntry {
 #[serde(rename_all = "camelCase")]
 pub struct DocumentView<'a> {
     pub id: u64,
-    pub markdown: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub markdown: Option<&'a str>,
     pub revision: u64,
     pub view_mode: ViewMode,
-    pub rendered: &'a crate::markdown::RenderedDocument,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rendered: Option<&'a crate::markdown::RenderedDocument>,
+    pub word_count: usize,
+    pub char_count: usize,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot<'a> {
     pub tabs: Vec<TabView>,
-    pub document: DocumentView<'a>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub document: Option<DocumentView<'a>>,
+    pub active_doc_id: u64,
+    pub view_mode: ViewMode,
+    pub word_count: usize,
+    pub char_count: usize,
     pub prefs: &'a Prefs,
     pub folder: Option<String>,
     pub entries: &'a [FileEntry],

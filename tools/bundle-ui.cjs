@@ -1,4 +1,4 @@
-// Bundle the small, dependency-free UI modules and fonts into one offline HTML asset.
+// Bundle the UI modules; fonts load on demand from the host's embedded assets.
 // Source modules use named imports/exports; dependency order is explicit and checked.
 const fs = require("node:fs");
 const path = require("node:path");
@@ -36,13 +36,14 @@ const bodies = order.map((name) => {
     .replace(/^export /gm, "");
   return `modules[${JSON.stringify(name)}] = (() => {\n${source}\nreturn { ${exports.join(", ")} };\n})();`;
 });
+
 const js = `(() => {\n'use strict';\nconst modules = {};\n${bodies.join("\n")}\n})();`;
 new vm.Script(js, { filename: "markora-ui.js" });
 let css = fs.readFileSync(path.join(root, "tailwind", "app.built.css"), "utf8");
-css = css.replace(/url\(["']?(\.\.\/fonts\/[^"')]+)["']?\)/g, (_, relative) => {
-  const bytes = fs.readFileSync(path.resolve(root, "tailwind", relative));
-  return `url("data:font/woff2;base64,${bytes.toString("base64")}")`;
+css = css.replace(/url\(["']?\.\.\/fonts\/([^"')]+)["']?\)/g, (_, name) => {
+  return `url("/app/fonts/${name}")`;
 });
+
 const html = fs
   .readFileSync(path.join(root, "shell.html"), "utf8")
   .replace("<!-- STYLES -->", () => `<style>\n${css}\n</style>`)
@@ -52,5 +53,5 @@ const html = fs
   );
 fs.writeFileSync(path.join(root, "index.html"), html);
 console.log(
-  `Built ${order.length} UI modules and embedded fonts (${Math.round(Buffer.byteLength(html) / 1024)} KiB).`,
+  `Built ${order.length} UI modules with local font URLs (${Math.round(Buffer.byteLength(html) / 1024)} KiB).`,
 );

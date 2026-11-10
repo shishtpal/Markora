@@ -34,6 +34,7 @@ async function main() {
   wav.write("data", 36);
   wav.writeUInt32LE(8000, 40);
   fs.writeFileSync(path.join(assetsDir, "Krishna Madam 2021-09-16 09-50-50.wav"), wav);
+  const startupStart = Date.now();
   const app = spawn(path.join(root, "target/debug/markora.exe"), [], {
     cwd: root,
     windowsHide: true,
@@ -41,7 +42,7 @@ async function main() {
       ...process.env,
       MARKORA_DATA_DIR: path.join(artifacts, "settings"),
       WEBVIEW2_USER_DATA_FOLDER: path.join(artifacts, "webview"),
-      WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port} --remote-allow-origins=*`,
+      WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port} --remote-allow-origins=* --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows`,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -70,7 +71,7 @@ async function main() {
       );
     await wait(`document.querySelector('#connection')?.textContent==='Local'`, "native handshake");
     await wait(`document.querySelectorAll('.live-block').length>3`, "initial rendered document");
-    console.log("PASS native handshake and initial render");
+    console.log(`PASS native handshake and initial render (${Date.now() - startupStart} ms, fresh WebView2 profile)`);
 
     await menu("File", "new-tab");
     await wait(`document.querySelectorAll('.tab').length===2`, "File > New tab");
@@ -254,12 +255,18 @@ async function main() {
     await menu("View", "view-live");
     await wait(`document.querySelector('#live-document h1')?.textContent==='Saved by menu'`);
     await wait(`document.querySelector('#document').dataset.mode==='live' && !document.querySelector('#live-pane').hidden`);
+    // Ending an unchanged edit must restore the block and preserve other blocks.
+    await click('.live-block[data-block="0"]');
+    await call("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape" });
+    await call("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape" });
+    await wait(`!document.querySelector('.block-editor') && document.querySelector('#live-document h1')?.textContent==='Saved by menu'`,
+      "unchanged Live edit finishes and renders again");
     await wait(
       `(()=>{const a=document.querySelector('#live-document audio');return Boolean(a && a.readyState>=1 && a.duration>0 && document.querySelector('#live-document').textContent.includes('After audio.'));})()`,
       "local audio element loads and decodes",
     );
     const todoLayout = await evaluate(`(()=>{
-      const topLi = document.querySelector('#live-document > div > ul > li');
+      const topLi = document.querySelector('#live-document .live-block > ul > li');
       const topBox = topLi.querySelector('input[type="checkbox"]').getBoundingClientRect();
       const nestedUl = topLi.querySelector('ul');
       const nestedBox = nestedUl.querySelector('input[type="checkbox"]').getBoundingClientRect();
@@ -268,12 +275,10 @@ async function main() {
     assert(todoLayout.nestedTop >= todoLayout.topBottom - 2, `nested todo list must stack below parent: ${JSON.stringify(todoLayout)}`);
     assert(todoLayout.nestedLeft > todoLayout.topLeft + 10, `nested todo list must be indented: ${JSON.stringify(todoLayout)}`);
     await click('#live-document li ul li:nth-child(2) input[type="checkbox"]');
-    await wait(
-      `document.querySelector('#source-editor').value.includes('  - [x] Attendance Sheet')`,
-      "clicking nested todo checkbox toggles markdown",
-    );
     await menu("File", "save");
     await wait(`document.querySelector('#save-state').textContent==='Saved'`);
+    assert(fs.readFileSync(fixture, "utf8").includes('  - [x] Attendance Sheet'),
+      "clicking nested todo checkbox toggles saved Markdown");
     await menu("View", "toggle-theme");
     await wait(`document.documentElement.dataset.color==='light'`);
     const light = await call("Page.captureScreenshot", { format: "png" });
@@ -298,8 +303,79 @@ async function main() {
     assert.equal(printBox.display, "block");
     assert(printBox.h > 20, "print preview must render content");
     await call("Emulation.setEmulatedMedia", { media: "" });
+
+    const largePath = path.join(artifacts, "large.md");
+    let largeMd = "";
+    const sections = 8000;
+    for (let i = 0; i < sections; i++) {
+      largeMd += `# Section ${i}\n\nParagraph ${i} with **bold** text and ` + "lorem ipsum ".repeat(24) + "\n\n";
+    }
+    fs.writeFileSync(largePath, largeMd);
+    const openStart = Date.now();
+    await evaluate(
+      `window.ipc.postMessage(JSON.stringify({type:'openPath',path:${JSON.stringify(largePath)}}))`,
+    );
+    await wait(
+      `document.title.includes('large.md') && document.querySelectorAll('.live-block').length>=60`,
+      "large file initial render",
+    );
+    const openMs = Date.now() - openStart;
+    console.log(`PASS large Live initial view (${openMs} ms)`);
+    // Start editing before the frame queue finishes, then finish without changes.
+    await click('.live-block[data-block="0"]');
+    await call("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape" });
+    await call("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape" });
+    await wait(`document.querySelectorAll('#live-document .live-block').length===${sections * 2}`,
+      "progressive rendering resumes after finishing an unchanged edit", 15000);
+    await click("#outline button:last-child");
+    await wait(
+      `document.querySelector('.block-editor')?.value.includes('Section ${sections - 1}')`,
+      "deep outline jump on large file",
+    );
+    await menu("View", "view-source");
+    await wait(`document.querySelector('#document').dataset.mode==='source'`);
+    await menu("View", "view-live");
+    await wait(`document.querySelector('#document').dataset.mode==='live'`);
+    await wait(`document.querySelectorAll('#live-document .live-block').length===${sections * 2}`,
+      "all large-file blocks survive Source/Live roundtrip", 15000);
+    console.log("PASS large Live completion, unchanged edit, outline jump and Source/Live roundtrip");
+    await menu("View", "view-source");
+    await wait(`document.querySelector('#document').dataset.mode==='source'`);
+    const sourceLargePath = path.join(artifacts, "large-source.md");
+    fs.writeFileSync(sourceLargePath, largeMd);
+    const sourceOpenStart = Date.now();
+    await evaluate(`window.ipc.postMessage(JSON.stringify({type:'openPath',path:${JSON.stringify(sourceLargePath)}}))`);
+    await wait(`document.title.includes('large-source.md') && document.querySelector('#source-editor').value.length===${largeMd.length}`,
+      "large source file opens with its outline and complete text");
+    const sourceOpenMs = Date.now() - sourceOpenStart;
+    console.log(`PASS large Source open (${sourceOpenMs} ms)`);
+    const changedLarge = largeMd + "\nLast **unsaved** paragraph.\n";
+    await input(changedLarge);
+    // A state response arriving while the large draft is debounced must not lose the edit.
+    await menu("View", "view-split");
+    await wait(`document.querySelector('#preview-document').lastElementChild?.lastElementChild?.textContent==='Last unsaved paragraph.'`,
+      "deferred Source render and immediate mode change preserve the newest draft");
+    assert.equal(await evaluate(`document.querySelector('#source-editor').value`), changedLarge);
+    console.log("PASS large debounced source draft reaches Split preview");
+    await menu("View", "view-source");
+    await wait(`document.querySelector('#document').dataset.mode==='source'`);
+    // Observe the production acknowledgement; send an obsolete token to avoid a print dialog.
+    await evaluate(`(()=>{
+      const stringify=JSON.stringify;
+      JSON.stringify=function(value,...args){
+        if(value?.type==='printReady'){
+          window.printAcknowledgement={token:value.token,revision:value.draft?.revision};
+          value={...value,token:0};
+        }
+        return stringify.call(this,value,...args);
+      };
+    })()`);
+    await input(changedLarge + "\nLatest print **draft**.\n");
+    await menu("File", "print");
+    await wait(`window.printAcknowledgement && document.querySelector('#preview-document').lastElementChild?.lastElementChild?.textContent==='Latest print draft.'`,
+      "native print waits for the newest deferred source preview");
     assert.deepEqual(client.errors, []);
-    console.log("PASS real file open, immediate edit+Save menu and clean runtime");
+    console.log(`PASS real file open, immediate edit+Save, ${Math.round(largeMd.length / 1024)} KiB file: Live ${openMs} ms / Source ${sourceOpenMs} ms, render completion and clean runtime`);
     console.log(`Artifacts: ${artifacts}`);
   } catch (error) {
     if (client) {
@@ -308,7 +384,7 @@ async function main() {
           path.join(artifacts, "failure-state.json"),
           JSON.stringify(
             await client.evaluate(
-              `({html:document.body.innerText,errors:document.querySelector('#error-text')?.textContent})`,
+              `({html:document.body.innerText,errors:document.querySelector('#error-text')?.textContent,mode:document.querySelector('#document')?.dataset.mode,blocks:document.querySelectorAll('#live-document .live-block').length,editing:!!document.querySelector('.block-editor')})`,
             ),
             null,
             2,

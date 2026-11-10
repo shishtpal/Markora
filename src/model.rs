@@ -80,26 +80,106 @@ pub struct Recent {
 }
 
 #[derive(Debug)]
+pub struct PreparedDocument {
+    pub markdown: String,
+    pub rendered: RenderedDocument,
+    pub rendered_full: bool,
+    pub word_count: usize,
+    pub char_count: usize,
+}
+
+#[derive(Debug)]
 pub struct Document {
     pub id: u64,
     pub path: Option<PathBuf>,
     pub markdown: String,
-    pub saved_markdown: String,
+    pub saved_markdown: Option<String>,
     pub revision: u64,
     pub view_mode: ViewMode,
     pub rendered: RenderedDocument,
+    pub rendered_full: bool,
+    pub rendered_revision: u64,
+    pub word_count: usize,
+    pub char_count: usize,
 }
+
+const DEFER_SOURCE_RENDER_BYTES: usize = 64 * 1024;
 
 impl Document {
     pub fn new(id: u64, markdown: String, view_mode: ViewMode) -> Self {
+        Self::build(id, None, view_mode, Self::prepare(markdown, view_mode))
+    }
+
+    pub fn prepare(markdown: String, view_mode: ViewMode) -> PreparedDocument {
+        let (word_count, char_count) = crate::markdown::text_counts(&markdown);
+        let (rendered, rendered_full) = Self::render_for_mode(&markdown, view_mode);
+        PreparedDocument {
+            markdown,
+            rendered,
+            rendered_full,
+            word_count,
+            char_count,
+        }
+    }
+
+    pub fn from_prepared(
+        id: u64,
+        path: PathBuf,
+        view_mode: ViewMode,
+        prepared: PreparedDocument,
+    ) -> Self {
+        Self::build(id, Some(path), view_mode, prepared)
+    }
+
+    fn build(
+        id: u64,
+        path: Option<PathBuf>,
+        view_mode: ViewMode,
+        prepared: PreparedDocument,
+    ) -> Self {
         Self {
             id,
-            path: None,
-            saved_markdown: markdown.clone(),
-            rendered: crate::markdown::render(&markdown),
-            markdown,
+            path,
+            saved_markdown: None,
+            rendered: prepared.rendered,
+            rendered_full: prepared.rendered_full,
+            rendered_revision: 0,
+            markdown: prepared.markdown,
             revision: 0,
             view_mode,
+            word_count: prepared.word_count,
+            char_count: prepared.char_count,
+        }
+    }
+
+    pub fn render_for_mode(markdown: &str, view_mode: ViewMode) -> (RenderedDocument, bool) {
+        if view_mode == ViewMode::Source && markdown.len() > DEFER_SOURCE_RENDER_BYTES {
+            let outline = crate::markdown::render_outline(markdown);
+            (
+                RenderedDocument {
+                    html: String::new(),
+                    blocks: Vec::new(),
+                    outline,
+                },
+                false,
+            )
+        } else {
+            (crate::markdown::render(markdown), true)
+        }
+    }
+
+    pub fn ensure_rendered(&mut self) {
+        if !self.rendered_full {
+            self.rendered = crate::markdown::render(&self.markdown);
+            self.rendered_full = true;
+            self.rendered_revision = self.revision;
+        }
+    }
+
+    pub fn set_view_mode(&mut self, view_mode: ViewMode) {
+        self.view_mode = view_mode;
+        if view_mode != ViewMode::Source {
+            self.ensure_rendered();
         }
     }
 
@@ -109,13 +189,28 @@ impl Document {
         }
         self.revision = revision;
         if self.markdown != markdown {
-            self.rendered = crate::markdown::render(&markdown);
+            if self.saved_markdown.is_none() {
+                self.saved_markdown = Some(std::mem::take(&mut self.markdown));
+            } else if self.saved_markdown.as_deref() == Some(markdown.as_str()) {
+                self.saved_markdown = None;
+            }
+            let (word_count, char_count) = crate::markdown::text_counts(&markdown);
+            let (rendered, rendered_full) = Self::render_for_mode(&markdown, self.view_mode);
+            self.word_count = word_count;
+            self.char_count = char_count;
+            self.rendered = rendered;
+            self.rendered_full = rendered_full;
+            self.rendered_revision = revision;
             self.markdown = markdown;
         }
     }
 
+    pub fn mark_saved(&mut self) {
+        self.saved_markdown = None;
+    }
+
     pub fn dirty(&self) -> bool {
-        self.markdown != self.saved_markdown
+        self.saved_markdown.is_some()
     }
 
     pub fn title(&self) -> String {
@@ -162,8 +257,16 @@ impl Workspace {
         &mut self.tabs[self.active]
     }
     pub fn add(&mut self, markdown: String, view: ViewMode) {
-        self.tabs.push(Document::new(self.next_id, markdown, view));
+        let id = self.allocate_id();
+        self.push_active(Document::new(id, markdown, view));
+    }
+    pub fn allocate_id(&mut self) -> u64 {
+        let id = self.next_id;
         self.next_id += 1;
+        id
+    }
+    pub fn push_active(&mut self, doc: Document) {
+        self.tabs.push(doc);
         self.active = self.tabs.len() - 1;
     }
     pub fn activate(&mut self, id: u64) {

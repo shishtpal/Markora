@@ -72,8 +72,8 @@ node tools/build-ui.cjs --watch
 
 Restart Markora after a UI rebuild. Debug builds load the generated on-disk
 HTML on startup. Release builds embed it, so build the UI before `cargo build
---release`. Fonts are embedded in the bundle; Node and a web server are not
-needed at runtime.
+--release`. Fonts are embedded in the executable and loaded on demand through
+the local asset protocol. Node and a web server are not needed at runtime.
 
 ## Shortcuts (Windows web interface)
 

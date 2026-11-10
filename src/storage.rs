@@ -48,7 +48,11 @@ impl Storage {
 }
 
 pub fn read_markdown(path: &Path) -> io::Result<String> {
-    std::fs::read_to_string(path).map(|s| s.trim_start_matches('\u{feff}').to_string())
+    let mut text = std::fs::read_to_string(path)?;
+    if text.starts_with('\u{feff}') {
+        text.drain(..'\u{feff}'.len_utf8());
+    }
+    Ok(text)
 }
 
 /// Normalize existing files and new save destinations to the same tab identity.

@@ -12,6 +12,7 @@ impl Host {
         _queue: BridgeQueue,
         _wake: egui::Context,
         _media_roots: markora::media::SharedMediaRoots,
+        _dark_mode: bool,
     ) -> Result<Self, String> {
         Err("The web interface is currently available on Windows".into())
     }

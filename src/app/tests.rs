@@ -2,12 +2,12 @@
 use super::*;
 use markora::{model::ViewMode, protocol::UnsavedChoice};
 
-struct Fixture {
-    app: Markora,
-    dir: PathBuf,
+pub(super) struct Fixture {
+    pub(super) app: Markora,
+    pub(super) dir: PathBuf,
 }
 impl Fixture {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("target/host-tests")
             .join(format!(
@@ -19,6 +19,7 @@ impl Fixture {
                     .as_nanos()
             ));
         std::fs::create_dir_all(&dir).unwrap();
+        let (bg_tx, bg_rx) = mpsc::channel();
         let app = Markora {
             workspace: Workspace::new("first".into(), ViewMode::Live),
             prefs: Prefs::default(),
@@ -35,12 +36,23 @@ impl Fixture {
             webview: None,
             webview_attempted: true,
             native_handle: None,
+            egui_ctx: None,
             queue: Arc::new(Mutex::new(VecDeque::new())),
             media_roots: Default::default(),
+            bg_tx,
+            bg_rx,
+            pending_opens: HashSet::new(),
+            folder_generation: 0,
+            pending_print: None,
+            print_token: 0,
+            last_dark: None,
+            synced_doc: None,
+            client_known_markdown: None,
+            fallback_buf: None,
         };
         Self { app, dir }
     }
-    fn request(&mut self, message: serde_json::Value) {
+    pub(super) fn request(&mut self, message: serde_json::Value) {
         self.app
             .queue
             .lock()
@@ -159,16 +171,55 @@ fn export_to_path_writes_html_rtf_and_txt() {
     let html_path = fixture.dir.join("out.html");
     let rtf_path = fixture.dir.join("out.rtf");
     let txt_path = fixture.dir.join("out.txt");
-    fixture
-        .app
-        .export_to_path(html_path.clone(), markora::protocol::ExportFormat::Html, markora::protocol::HtmlStyle::Light);
-    fixture
-        .app
-        .export_to_path(rtf_path.clone(), markora::protocol::ExportFormat::Rtf, markora::protocol::HtmlStyle::Current);
-    fixture
-        .app
-        .export_to_path(txt_path.clone(), markora::protocol::ExportFormat::Txt, markora::protocol::HtmlStyle::Current);
-    assert!(std::fs::read_to_string(html_path).unwrap().contains("<strong>Markora</strong>"));
-    assert!(std::fs::read_to_string(rtf_path).unwrap().starts_with("{\\rtf1"));
-    assert!(std::fs::read_to_string(txt_path).unwrap().contains("Hello Markora."));
+    fixture.app.export_to_path(
+        html_path.clone(),
+        markora::protocol::ExportFormat::Html,
+        markora::protocol::HtmlStyle::Light,
+    );
+    fixture.app.export_to_path(
+        rtf_path.clone(),
+        markora::protocol::ExportFormat::Rtf,
+        markora::protocol::HtmlStyle::Current,
+    );
+    fixture.app.export_to_path(
+        txt_path.clone(),
+        markora::protocol::ExportFormat::Txt,
+        markora::protocol::HtmlStyle::Current,
+    );
+    assert!(
+        std::fs::read_to_string(html_path)
+            .unwrap()
+            .contains("<strong>Markora</strong>")
+    );
+    assert!(
+        std::fs::read_to_string(rtf_path)
+            .unwrap()
+            .starts_with("{\\rtf1")
+    );
+    assert!(
+        std::fs::read_to_string(txt_path)
+            .unwrap()
+            .contains("Hello Markora.")
+    );
+}
+
+#[test]
+fn source_mode_export_html_ensures_deferred_document_is_rendered() {
+    let mut fixture = Fixture::new();
+    let big_md = "# Big Heading\n\nBody paragraph.\n\n".repeat(3000);
+    fixture.app.run_command("view-source");
+    fixture.app.workspace.doc_mut().edit(big_md, 1);
+    assert!(!fixture.app.workspace.doc().rendered_full);
+    let html_path = fixture.dir.join("big.html");
+    fixture.app.export_to_path(
+        html_path.clone(),
+        markora::protocol::ExportFormat::Html,
+        markora::protocol::HtmlStyle::Minimal,
+    );
+    assert!(fixture.app.workspace.doc().rendered_full);
+    assert!(
+        std::fs::read_to_string(html_path)
+            .unwrap()
+            .contains("<h1>Big Heading</h1>")
+    );
 }

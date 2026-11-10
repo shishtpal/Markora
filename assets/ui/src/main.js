@@ -9,20 +9,36 @@ import { createChrome } from "./chrome.js";
 
 let snapshot = null;
 const bridge = createBridge((message) => {
+  if (message.type === "preparePrint") {
+    const doc = editor.document();
+    if (doc.id !== message.docId || doc.revision !== message.revision) {
+      bridge.send({ type: "printReady", token: message.token });
+      return;
+    }
+    editor.preparePrint();
+    // Let the browser lay out the complete preview before native printing starts.
+    document.fonts.ready.then(() => requestAnimationFrame(() => {
+      bridge.send({ type: "printReady", token: message.token });
+    }));
+    return;
+  }
   if (message.type === "requestClose") {
     bridge.send({ type: "command", command: "exit" });
     return;
   }
   if (message.type !== "state") return;
   snapshot = message.snapshot;
-  editor.accept(snapshot.document);
+  if (snapshot.document) editor.accept(snapshot.document);
   layout.accept(snapshot.prefs);
-  chrome.accept(snapshot);
+  chrome.accept(snapshot, editor.document());
   dialogs.accept(snapshot);
   commands.update();
 });
 
-const editor = createEditor(() => bridge.send({ type: "edit" }));
+const editor = createEditor(
+  (delayMs) => bridge.scheduleEdit(delayMs),
+  () => bridge.flushEdit(),
+);
 bridge.setDraft(() => editor.draft());
 const preferences = (patch) => bridge.send({ type: "preferences", patch });
 const layout = createLayout(preferences);

@@ -8,7 +8,13 @@ use markora::{
 fn html_export_embeds_theme_escapes_title_and_keeps_unicode() {
     let md = "# नमस्ते 😀\n\nA **bold** paragraph with `code`.\n\n- [x] Done\n";
     let rendered = markdown::render(md);
-    let html = to_html("Doc <Title> & \"Test\"", &rendered.html, "dark", "forest", HtmlStyle::Current);
+    let html = to_html(
+        "Doc <Title> & \"Test\"",
+        &rendered.html,
+        "dark",
+        "forest",
+        HtmlStyle::Current,
+    );
     assert!(html.starts_with("<!doctype html>"));
     assert!(html.contains("<title>Doc &lt;Title&gt; &amp; &quot;Test&quot;</title>"));
     assert!(html.contains("नमस्ते 😀"));
@@ -61,4 +67,3 @@ fn export_action_deserializes_with_defaults() {
         }
     ));
 }
-

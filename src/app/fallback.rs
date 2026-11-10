@@ -83,18 +83,27 @@ impl Markora {
         }
         egui::CentralPanel::default().show(ui, |ui| {
             let doc = self.workspace.doc_mut();
-            let mut text = doc.markdown.clone();
+            let buf_stale = self
+                .fallback_buf
+                .as_ref()
+                .is_none_or(|(id, rev, _)| *id != doc.id || *rev != doc.revision);
+            if buf_stale {
+                self.fallback_buf = Some((doc.id, doc.revision, doc.markdown.clone()));
+            }
+            let (_, rev, text) = self.fallback_buf.as_mut().expect("initialized");
             egui::ScrollArea::vertical().show(ui, |ui| {
                 if ui
                     .add(
-                        egui::TextEdit::multiline(&mut text)
+                        egui::TextEdit::multiline(text)
                             .code_editor()
                             .desired_width(f32::INFINITY)
                             .desired_rows(30),
                     )
                     .changed()
                 {
-                    doc.edit(text, doc.revision + 1);
+                    let next_rev = doc.revision + 1;
+                    *rev = next_rev;
+                    doc.edit(text.clone(), next_rev);
                 }
             });
         });

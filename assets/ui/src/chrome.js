@@ -5,7 +5,8 @@ export function createChrome(send, editor) {
   let tabsKey = "",
     filesKey = "",
     recentsKey = "",
-    outlineKey = "",
+    outlineDocId = 0,
+    outlineRef = null,
     lastError = "";
   const cleanPath = (p) => (p ? p.replace(/\\\\\?\\/g, "") : "");
   function fileButton(name, path, folder, activePath = "") {
@@ -22,8 +23,8 @@ export function createChrome(send, editor) {
     button.onclick = () => send({ type: "openPath", path });
     return button;
   }
-  function accept(snapshot) {
-    const { prefs, document: doc } = snapshot;
+  function accept(snapshot, doc = snapshot.document) {
+    const { prefs } = snapshot;
     const root = document.documentElement;
     root.dataset.color = prefs.colorMode;
     root.dataset.mdTheme = prefs.mdTheme;
@@ -111,19 +112,19 @@ export function createChrome(send, editor) {
       if (!snapshot.recents.length)
         $("#recents").append(element("p", "empty", "Opened files appear here."));
     }
-    const nextOutline = JSON.stringify([doc.id, doc.rendered.outline]);
-    if (outlineKey !== nextOutline) {
-      outlineKey = nextOutline;
-      $("#outline").replaceChildren(
-        ...doc.rendered.outline.map((heading) => {
-          const button = element("button", "", heading.title || "Untitled heading");
-          button.type = "button";
-          button.dataset.level = String(heading.level);
-          button.style.paddingLeft = `${8 + (heading.level - 1) * 12}px`;
-          button.onclick = () => editor.jump(heading.start);
-          return button;
-        }),
-      );
+    if (outlineDocId !== doc.id || outlineRef !== doc.rendered.outline) {
+      outlineDocId = doc.id;
+      outlineRef = doc.rendered.outline;
+      const frag = document.createDocumentFragment();
+      for (const heading of doc.rendered.outline) {
+        const button = element("button", "", heading.title || "Untitled heading");
+        button.type = "button";
+        button.dataset.level = String(heading.level);
+        button.style.paddingLeft = `${8 + (heading.level - 1) * 12}px`;
+        button.onclick = () => editor.jump(heading.start);
+        frag.append(button);
+      }
+      $("#outline").replaceChildren(frag);
       if (!doc.rendered.outline.length)
         $("#outline").append(element("p", "empty", "Headings appear here."));
     }
@@ -131,8 +132,8 @@ export function createChrome(send, editor) {
     $("#status").classList.toggle("error", snapshot.error);
     if (snapshot.error && snapshot.status !== lastError) showError(cleanPath(snapshot.status));
     lastError = snapshot.error ? snapshot.status : "";
-    const words = doc.markdown.trim() ? doc.markdown.trim().split(/\s+/).length : 0;
-    const chars = [...doc.markdown].length;
+    const words = snapshot.wordCount ?? 0;
+    const chars = snapshot.charCount ?? 0;
     $("#counts").textContent = `${words} ${words === 1 ? "word" : "words"} · ${chars} characters`;
     $("#save-state").textContent = tab?.dirty ? "Unsaved" : "Saved";
     $("#save-state").classList.toggle("dirty", !!tab?.dirty);

@@ -20,21 +20,22 @@ flowchart LR
 
 ## Rust modules
 
-| File | Responsibility |
-| --- | --- |
-| `src/main.rs` | Window configuration and startup |
-| `src/app.rs` | Lifecycle, frame processing, close interception |
-| `src/app/bridge.rs` | Deserialize requests, apply drafts, build snapshots |
-| `src/app/commands.rs` | Native commands and unsaved-change state machine |
-| `src/app/files.rs` | File/folder dialogs, open/save, recents |
-| `src/app/fallback.rs` | Native source editor when WebView2 is unavailable |
-| `src/model.rs` | Documents, revisions, dirty tracking, tabs, preferences |
-| `src/markdown.rs` | CommonMark/GFM HTML, source block ranges, outline |
-| `src/protocol.rs` | Serde request and snapshot types |
-| `src/storage.rs` | Settings persistence and filesystem operations |
-| `src/webview_host.rs` | Child webview, IPC wakeup, bounds and message delivery |
-| `src/webview_fallback.rs` | Non-Windows adapter selecting the native source editor |
-| `src/theme.rs`, `src/platform.rs` | Native styling/fonts and external URL opening |
+| File                              | Responsibility                                          |
+| --------------------------------- | ------------------------------------------------------- |
+| `src/main.rs`                     | Window configuration and startup                        |
+| `src/app.rs`                      | Lifecycle, frame processing, close interception         |
+| `src/app/bridge.rs`               | Deserialize requests, apply drafts, build snapshots     |
+| `src/app/commands.rs`             | Native commands and unsaved-change state machine        |
+| `src/app/files.rs`                | File/folder dialogs, open/save, recents                 |
+| `src/app/export.rs`               | Exports and acknowledged print/PDF preparation          |
+| `src/app/fallback.rs`             | Native source editor when WebView2 is unavailable       |
+| `src/model.rs`                    | Documents, revisions, dirty tracking, tabs, preferences |
+| `src/markdown.rs`                 | CommonMark/GFM HTML, source block ranges, outline       |
+| `src/protocol.rs`                 | Serde request and snapshot types                        |
+| `src/storage.rs`                  | Settings persistence and filesystem operations          |
+| `src/webview_host.rs`             | Child webview, IPC wakeup, bounds and message delivery  |
+| `src/webview_fallback.rs`         | Non-Windows adapter selecting the native source editor  |
+| `src/theme.rs`, `src/platform.rs` | Native styling/fonts and external URL opening           |
 
 The library (`src/lib.rs`) exposes the model, parser, protocol and storage so
 integration tests call production code. Host tests exercise the real command
@@ -45,17 +46,17 @@ dispatcher and close flow without creating a window.
 Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets in
 `assets/ui/styles/`. `assets/ui/index.html` and `tailwind/app.built.css` are generated.
 
-| Module | Responsibility |
-| --- | --- |
-| `main.js` | Connect the frontend modules |
-| `bridge.js` | Native transport, startup handshake, draft attachment |
-| `command-list.js`, `commands.js` | Shared command catalog, menus, shortcuts, dispatch |
-| `editor.js` | Document draft, revisions, source/split editing, formatting, history |
-| `live-editor.js` | Rendered blocks with an active Markdown textarea |
-| `layout.js` | Responsive sizing, pointer/keyboard resizers and saved widths |
-| `chrome.js` | Tabs, file lists, recents, outline, status and themes |
-| `dialogs.js`, `find.js` | Modal UI, palette, settings and document search |
-| `dom.js` | Small shared DOM helpers |
+| Module                           | Responsibility                                                       |
+| -------------------------------- | -------------------------------------------------------------------- |
+| `main.js`                        | Connect the frontend modules                                         |
+| `bridge.js`                      | Native transport, startup handshake, draft attachment                |
+| `command-list.js`, `commands.js` | Shared command catalog, menus, shortcuts, dispatch                   |
+| `editor.js`                      | Document draft, revisions, source/split editing, formatting, history |
+| `live-editor.js`                 | Rendered blocks with an active Markdown textarea                     |
+| `layout.js`                      | Responsive sizing, pointer/keyboard resizers and saved widths        |
+| `chrome.js`                      | Tabs, file lists, recents, outline, status and themes                |
+| `dialogs.js`, `find.js`          | Modal UI, palette, settings and document search                      |
+| `dom.js`                         | Small shared DOM helpers                                             |
 
 ## Data flow and invariants
 
@@ -79,8 +80,16 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
 ## Build and persistence
 
 `node tools/build-ui.cjs` compiles Tailwind, bundles the named-import JavaScript
-modules, validates their dependency order, and embeds the fonts. This creates a
-self-contained HTML asset with no runtime Node or web-server dependency.
+modules, and validates their dependency order. Rust embeds the HTML and fonts,
+serving them through the local asset protocol. Fonts load on demand and HTML
+responses bypass the browser cache so updates are visible after a restart.
+There is no runtime Node or web-server dependency.
+
+File reads and preparation run on background threads, overlapping WebView2
+startup for command-line files. Large Source documents defer HTML generation;
+Live inserts blocks in frame batches. State snapshots omit unchanged document
+content and reuse the browser's current draft. Printing explicitly waits for
+the browser to prepare the full preview before invoking the native print API.
 
 `cargo build` embeds that generated asset. Debug builds read the on-disk bundle
 on startup; release builds use the embedded copy. Rebuild the UI before Cargo

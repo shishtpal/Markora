@@ -3,6 +3,7 @@ import { $ } from "./dom.js";
 export function createFind(editor) {
   const input = $("#find-input");
   let index = -1;
+  let timer = null;
   function matches() {
     if (!input.value) return [];
     const haystack = editor.document().markdown.toLowerCase();
@@ -17,6 +18,10 @@ export function createFind(editor) {
     return hits;
   }
   function update(jump = false, direction = 1) {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
     const hits = matches();
     if (jump && hits.length) index = index < 0 ? (direction > 0 ? 0 : hits.length - 1) : (index + direction + hits.length) % hits.length;
     if (index >= hits.length) index = hits.length - 1;
@@ -28,7 +33,15 @@ export function createFind(editor) {
   }
   input.addEventListener("input", () => {
     index = -1;
-    update();
+    if (editor.document().markdown.length > 100_000) {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        update();
+      }, 100);
+    } else {
+      update();
+    }
   });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {

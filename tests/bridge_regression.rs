@@ -110,7 +110,11 @@ fn audio_and_video_tags_are_sanitized_and_normalized() {
         "<audio controls preload=\"metadata\" src=\"Todos.assets/Krishna Madam 2021-09-16 09-50-50.m4a\"></audio>",
     ));
     assert!(output.html.contains("<p>After audio.</p>"));
-    assert!(output.html.contains("<video controls preload=\"metadata\" src=\"clip.mp4\" width=\"640\"></video>"));
+    assert!(
+        output.html.contains(
+            "<video controls preload=\"metadata\" src=\"clip.mp4\" width=\"640\"></video>"
+        )
+    );
     assert!(!output.html.contains("onerror"));
     assert!(!output.html.contains("javascript:"));
     assert!(!output.html.contains("<script>"));
@@ -132,8 +136,83 @@ fn audio_before_nested_todos_without_blank_line_renders_list() {
     assert!(output.html.contains("<audio controls preload=\"metadata\" src=\"Todos.assets/Krishna Madam 2021-09-16 09-50-50.m4a\"></audio>"));
     assert!(output.html.contains("<audio controls preload=\"metadata\" src=\"Todos.assets/Kapil Goyal@sjbsvm Mathura 2021-09-16 10-18-21.m4a\"></audio>"));
     assert!(output.html.contains("<ul>"));
-    assert!(output.html.contains("<input disabled=\"\" type=\"checkbox\"/>"));
+    assert!(
+        output
+            .html
+            .contains("<input disabled=\"\" type=\"checkbox\"/>")
+    );
     assert!(output.html.contains("Krishna School Mam"));
     assert!(output.html.contains("Kapil Goyal Mathura"));
     assert_eq!(output.blocks.len(), 2);
+}
+
+#[test]
+fn large_markdown_renders_in_linear_time_with_accurate_utf16_offsets() {
+    let section = "## Section नमस्ते 😀\n\nParagraph with **bold**, `code`, and [ref][link].\n\n- Item one\n- Item two\n\n";
+    let mut md = String::with_capacity(section.len() * 6000 + 64);
+    for _ in 0..6000 {
+        md.push_str(section);
+    }
+    md.push_str("[link]: https://example.com\n");
+    let start = std::time::Instant::now();
+    let rendered = render(&md);
+    let elapsed = start.elapsed();
+    assert_eq!(rendered.outline.len(), 6000);
+    assert!(rendered.blocks.len() >= 18000);
+    assert!(rendered.html.contains("href=\"https://example.com\""));
+    let last_heading = rendered.outline.last().unwrap();
+    let tail_utf16: Vec<u16> = md.encode_utf16().collect();
+    let slice =
+        String::from_utf16(&tail_utf16[last_heading.start..last_heading.start + 20]).unwrap();
+    assert!(slice.starts_with("## Section नमस्ते 😀"));
+    assert!(
+        elapsed.as_secs_f64() < 3.0,
+        "2MB render took too long: {elapsed:?}"
+    );
+}
+
+#[test]
+fn source_mode_defers_full_render_until_mode_switch() {
+    let md = "# Heading\n\n".repeat(6000);
+    let mut doc = Document::new(1, md, ViewMode::Source);
+    assert!(!doc.rendered_full);
+    assert!(doc.rendered.blocks.is_empty());
+    assert_eq!(doc.rendered.outline.len(), 6000);
+    assert!(!doc.dirty());
+    doc.set_view_mode(ViewMode::Live);
+    assert!(doc.rendered_full);
+    assert_eq!(doc.rendered.blocks.len(), 6000);
+    assert!(doc.rendered.html.contains("<h1>Heading</h1>"));
+}
+
+#[test]
+fn cached_counts_preserve_unicode_and_ascii_whitespace_semantics() {
+    for markdown in [
+        "",
+        "one\u{b}two\tthree\r\nfour",
+        "नमस्ते 😀\u{a0}世界",
+        "a\u{2003}b",
+    ] {
+        assert_eq!(
+            markora::markdown::text_counts(markdown),
+            (
+                markdown.split_whitespace().count(),
+                markdown.chars().count()
+            )
+        );
+    }
+}
+
+#[test]
+fn saving_and_undoing_preserve_the_new_clean_baseline() {
+    let mut doc = Document::new(1, "original".into(), ViewMode::Live);
+    doc.edit("saved".into(), 1);
+    doc.mark_saved();
+    assert!(!doc.dirty());
+    doc.edit("original".into(), 2);
+    assert!(doc.dirty());
+    doc.edit("saved".into(), 3);
+    assert!(!doc.dirty());
+    doc.edit("changed again".into(), 4);
+    assert!(doc.dirty());
 }

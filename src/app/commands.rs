@@ -22,15 +22,7 @@ impl Markora {
             "export-pdf" => self.export_document(ExportFormat::Pdf, HtmlStyle::Current),
             "export-rtf" => self.export_document(ExportFormat::Rtf, HtmlStyle::Current),
             "export-txt" => self.export_document(ExportFormat::Txt, HtmlStyle::Current),
-            "print" => {
-                if let Some(host) = &self.webview {
-                    if let Err(error) = host.print() {
-                        self.fail(error);
-                    }
-                } else {
-                    self.fail("Printing requires WebView2 on Windows");
-                }
-            }
+            "print" => self.prepare_print(None),
             "save-all" => {
                 let ids: Vec<_> = self
                     .workspace
@@ -61,7 +53,7 @@ impl Markora {
                     "view-split" => ViewMode::Split,
                     _ => ViewMode::Live,
                 };
-                self.workspace.doc_mut().view_mode = view;
+                self.workspace.doc_mut().set_view_mode(view);
                 self.prefs.view_mode = view;
                 self.persist_prefs();
             }

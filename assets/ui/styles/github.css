@@ -54,7 +54,8 @@ html[data-md-theme="github"] .markdown-body h5 { font-size: .875em; }
 html[data-md-theme="github"] .markdown-body h6 { font-size: .85em; color: var(--gh-muted); }
 
 html[data-md-theme="github"] .markdown-body > :first-child,
-html[data-md-theme="github"] .live-block:first-child > :first-child {
+html[data-md-theme="github"] .preview-batch:first-child > :first-child,
+html[data-md-theme="github"] .live-block[data-block="0"] > :first-child {
   margin-top: 0;
 }
 

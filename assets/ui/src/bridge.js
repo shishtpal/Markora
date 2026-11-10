@@ -5,7 +5,10 @@ export function createBridge(receive) {
   const queue = [];
   let draft = () => null;
   let connected = false;
-  let retryTimer;
+  let retryTimer = null;
+  let editTimer = null;
+  const BACKOFF = [15, 30, 60, 120, 200];
+
   function flush() {
     const transport =
       window.ipc?.postMessage?.bind(window.ipc) ||
@@ -22,13 +25,35 @@ export function createBridge(receive) {
     }
   }
   function send(action) {
+    if (editTimer) {
+      clearTimeout(editTimer);
+      editTimer = null;
+    }
     queue.push(JSON.stringify({ ...action, draft: draft() }));
     flush();
   }
+  function scheduleEdit(delayMs = 0) {
+    if (delayMs <= 0) {
+      send({ type: "edit" });
+      return;
+    }
+    if (editTimer) clearTimeout(editTimer);
+    editTimer = setTimeout(() => {
+      editTimer = null;
+      send({ type: "edit" });
+    }, delayMs);
+  }
+  function flushEdit() {
+    if (editTimer) send({ type: "edit" });
+  }
+
   window.markoraReceive = (message) => {
     if (message.type === "state") {
       connected = true;
-      clearInterval(retryTimer);
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
       $("#connection").textContent = "Local";
       $("#connection").classList.add("connected");
       $("#connection").classList.remove("error");
@@ -42,10 +67,15 @@ export function createBridge(receive) {
   };
   function start() {
     send({ type: "ready" });
-    retryTimer = setInterval(() => {
+    let step = 0;
+    const poll = () => {
+      if (connected) return;
       flush();
       if (!connected && queue.length === 0) send({ type: "ready" });
-    }, 200);
+      const delay = BACKOFF[Math.min(step++, BACKOFF.length - 1)];
+      retryTimer = setTimeout(poll, delay);
+    };
+    retryTimer = setTimeout(poll, BACKOFF[0]);
     setTimeout(() => {
       if (connected) return;
       $("#connection").textContent = "Disconnected";
@@ -58,6 +88,8 @@ export function createBridge(receive) {
   }
   return {
     send,
+    scheduleEdit,
+    flushEdit,
     start,
     setDraft: (getDraft) => {
       draft = getDraft;

@@ -30,19 +30,30 @@ impl Host {
         queue: BridgeQueue,
         wake: egui::Context,
         media_roots: SharedMediaRoots,
+        dark_mode: bool,
     ) -> Result<Self, String> {
         let Some(raw_window_handle::RawWindowHandle::Win32(handle)) = handle else {
             return Err("WebView2 requires a Windows window handle".into());
         };
         let parent = ParentWindow(handle.hwnd.get());
         let ipc_wake = wake.clone();
+        let bg = if dark_mode {
+            (17, 21, 29, 255)
+        } else {
+            (255, 255, 255, 255)
+        };
         let webview = WebViewBuilder::new()
-            .with_html(load_html())
+            .with_background_color(bg)
+            .with_url("http://markora.localhost/app/index.html")
             .with_devtools(cfg!(debug_assertions))
             .with_asynchronous_custom_protocol("markora".into(), move |_id, request, responder| {
+                let uri = request.uri().to_string();
+                if let Some(response) = serve_app_asset(&uri) {
+                    responder.respond(response);
+                    return;
+                }
                 let roots = media_roots.clone();
                 std::thread::spawn(move || {
-                    let uri = request.uri().to_string();
                     let range = request
                         .headers()
                         .get("range")
@@ -79,9 +90,8 @@ impl Host {
                 // WebView clicks do not generate egui input. Every IPC must wake its event loop.
                 ipc_wake.request_repaint();
             })
-            // wry can load with_html through NavigateToString or a data URL.
             .with_navigation_handler(|url| {
-                url == "about:blank" || url.starts_with("data:text/html;charset=utf-8;base64,")
+                url == "about:blank" || url.starts_with("http://markora.localhost/app/")
             })
             .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny)
             .build_as_child(&parent)
@@ -185,12 +195,77 @@ impl wry::raw_window_handle::HasWindowHandle for ParentWindow {
     }
 }
 
-fn load_html() -> String {
+fn serve_app_asset(uri: &str) -> Option<wry::http::Response<Cow<'static, [u8]>>> {
+    let path = uri
+        .split(['?', '#'])
+        .next()
+        .unwrap_or(uri)
+        .strip_prefix("http://markora.localhost/")
+        .or_else(|| uri.strip_prefix("markora://localhost/"))?;
+    let rel = path.strip_prefix("app/")?;
+    let (content_type, body): (&'static str, Cow<'static, [u8]>) = match rel {
+        "index.html" => ("text/html; charset=utf-8", load_html_bytes()),
+        "fonts/space-grotesk-latin-400-normal.woff2" => (
+            "font/woff2",
+            Cow::Borrowed(include_bytes!(
+                "../assets/ui/fonts/space-grotesk-latin-400-normal.woff2"
+            )),
+        ),
+        "fonts/space-grotesk-latin-500-normal.woff2" => (
+            "font/woff2",
+            Cow::Borrowed(include_bytes!(
+                "../assets/ui/fonts/space-grotesk-latin-500-normal.woff2"
+            )),
+        ),
+        "fonts/space-grotesk-latin-700-normal.woff2" => (
+            "font/woff2",
+            Cow::Borrowed(include_bytes!(
+                "../assets/ui/fonts/space-grotesk-latin-700-normal.woff2"
+            )),
+        ),
+        "fonts/ibm-plex-mono-latin-400-normal.woff2" => (
+            "font/woff2",
+            Cow::Borrowed(include_bytes!(
+                "../assets/ui/fonts/ibm-plex-mono-latin-400-normal.woff2"
+            )),
+        ),
+        "fonts/ibm-plex-mono-latin-500-normal.woff2" => (
+            "font/woff2",
+            Cow::Borrowed(include_bytes!(
+                "../assets/ui/fonts/ibm-plex-mono-latin-500-normal.woff2"
+            )),
+        ),
+        "fonts/noto-sans-devanagari-devanagari-400-normal.woff2" => (
+            "font/woff2",
+            Cow::Borrowed(include_bytes!(
+                "../assets/ui/fonts/noto-sans-devanagari-devanagari-400-normal.woff2"
+            )),
+        ),
+        _ => return None,
+    };
+    Some(
+        wry::http::Response::builder()
+            .status(200)
+            .header("Content-Type", content_type)
+            .header(
+                "Cache-Control",
+                if rel == "index.html" {
+                    "no-store"
+                } else {
+                    "public, max-age=31536000, immutable"
+                },
+            )
+            .body(body)
+            .unwrap(),
+    )
+}
+
+fn load_html_bytes() -> Cow<'static, [u8]> {
     if cfg!(debug_assertions) {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/ui/index.html");
-        if let Ok(html) = std::fs::read_to_string(path) {
-            return html;
+        if let Ok(bytes) = std::fs::read(path) {
+            return Cow::Owned(bytes);
         }
     }
-    include_str!("../assets/ui/index.html").into()
+    Cow::Borrowed(include_bytes!("../assets/ui/index.html"))
 }

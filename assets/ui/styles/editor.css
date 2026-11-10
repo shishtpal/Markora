@@ -25,7 +25,8 @@
 }
 
 .markdown-body > :first-child,
-.live-block:first-child > :first-child {
+.preview-batch:first-child > :first-child,
+.live-block[data-block="0"] > :first-child {
   margin-top: 0;
 }
 
@@ -219,6 +220,23 @@
   min-height: 1.5em;
 }
 
+.live-batch.deferred,
+.preview-batch.deferred {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto var(--batch-height, 9600px);
+}
+
+@supports not (content-visibility: auto) {
+  .live-batch.deferred,
+  .preview-batch.deferred {
+    contain: layout style paint;
+  }
+}
+
+.live-batch:has(.editing) {
+  content-visibility: visible;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .live-block {
     transition: border-color 140ms ease, background-color 140ms ease;
@@ -237,6 +255,7 @@
 }
 
 .live-block.editing {
+  content-visibility: visible;
   border-color: var(--doc-accent, var(--accent));
   background: var(--surface);
   box-shadow: inset 3px 0 0 var(--doc-accent, var(--accent));
@@ -446,6 +465,12 @@ html[data-md-theme="mars"][data-color="dark"] #document {
 }
 
 @media print {
+  .preview-batch {
+    content-visibility: visible !important;
+    contain: none !important;
+    contain-intrinsic-size: none;
+  }
+
   @page {
     margin: 18mm 16mm;
   }

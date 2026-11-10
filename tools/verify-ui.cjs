@@ -9,7 +9,14 @@ const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 new vm.Script(script);
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
 assert.equal(ids.length, new Set(ids).size, "HTML IDs must be unique");
-assert(html.includes("data:font/woff2;base64,"), "Fonts must be embedded for with_html navigation");
+const fontRefs = [...html.matchAll(/\/app\/fonts\/([^"')]+)/g)].map((m) => m[1]);
+assert(fontRefs.length >= 6, "Bundled CSS must reference /app/fonts/*.woff2");
+for (const font of fontRefs) {
+  assert(
+    fs.existsSync(path.join(root, "assets/ui/fonts", font)),
+    `Missing font asset referenced by bundle: ${font}`,
+  );
+}
 assert(!html.includes("../fonts/"), "No unresolved font paths");
 assert(
   !html.includes("<!-- STYLES -->") && !html.includes("<!-- SCRIPTS -->"),

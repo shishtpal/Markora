@@ -17,30 +17,76 @@ fn escape_html(text: &str) -> String {
     out
 }
 
-fn theme_palette(color_mode: &str, md_theme: &str) -> (&'static str, &'static str, &'static str, &'static str, &'static str, &'static str) {
+fn theme_palette(
+    color_mode: &str,
+    md_theme: &str,
+) -> (
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+) {
     let dark = color_mode == "dark";
     match (md_theme, dark) {
-        ("paper", false) => ("#fcfaf4", "#2a241d", "#706658", "#e7e0d2", "#f3efe4", "#9e4722"),
-        ("paper", true) => ("#1b1916", "#efe9de", "#b0a594", "#37322a", "#25221d", "#e5986e"),
-        ("graphite", false) => ("#f8f9fa", "#1f2328", "#5e6670", "#dde1e6", "#edf0f3", "#3d4856"),
-        ("graphite", true) => ("#16181c", "#e6e9ef", "#9aa3b2", "#2e333b", "#202329", "#aeb8c7"),
-        ("forest", false) => ("#f5f9f6", "#152b20", "#4b6e5c", "#d6e4db", "#e9f2ec", "#0f764a"),
-        ("forest", true) => ("#101b16", "#e2f2e9", "#8cb39f", "#263d32", "#182921", "#6ce0a9"),
-        ("mars", false) => ("#fdf7f5", "#2e1915", "#7d524a", "#efdcd7", "#f7eae6", "#b83b28"),
-        ("mars", true) => ("#1c1312", "#f7e9e6", "#c49890", "#3e2926", "#291b19", "#ff8b78"),
-        ("github", false) => ("#ffffff", "#1f2328", "#59636e", "#d1d9e0", "#f6f8fa", "#0969da"),
-        ("github", true) => ("#0d1117", "#f0f6fc", "#9198a1", "#3d444d", "#151b23", "#4493f8"),
-        (_, true) => ("#101722", "#e8efff", "#a5b5d1", "#2d3e56", "#1d2a3b", "#6f9bff"),
-        (_, false) => ("#f4f7fc", "#10234b", "#5c6f91", "#e0e7f2", "#eef3fb", "#1246c5"),
+        ("paper", false) => (
+            "#fcfaf4", "#2a241d", "#706658", "#e7e0d2", "#f3efe4", "#9e4722",
+        ),
+        ("paper", true) => (
+            "#1b1916", "#efe9de", "#b0a594", "#37322a", "#25221d", "#e5986e",
+        ),
+        ("graphite", false) => (
+            "#f8f9fa", "#1f2328", "#5e6670", "#dde1e6", "#edf0f3", "#3d4856",
+        ),
+        ("graphite", true) => (
+            "#16181c", "#e6e9ef", "#9aa3b2", "#2e333b", "#202329", "#aeb8c7",
+        ),
+        ("forest", false) => (
+            "#f5f9f6", "#152b20", "#4b6e5c", "#d6e4db", "#e9f2ec", "#0f764a",
+        ),
+        ("forest", true) => (
+            "#101b16", "#e2f2e9", "#8cb39f", "#263d32", "#182921", "#6ce0a9",
+        ),
+        ("mars", false) => (
+            "#fdf7f5", "#2e1915", "#7d524a", "#efdcd7", "#f7eae6", "#b83b28",
+        ),
+        ("mars", true) => (
+            "#1c1312", "#f7e9e6", "#c49890", "#3e2926", "#291b19", "#ff8b78",
+        ),
+        ("github", false) => (
+            "#ffffff", "#1f2328", "#59636e", "#d1d9e0", "#f6f8fa", "#0969da",
+        ),
+        ("github", true) => (
+            "#0d1117", "#f0f6fc", "#9198a1", "#3d444d", "#151b23", "#4493f8",
+        ),
+        (_, true) => (
+            "#101722", "#e8efff", "#a5b5d1", "#2d3e56", "#1d2a3b", "#6f9bff",
+        ),
+        (_, false) => (
+            "#f4f7fc", "#10234b", "#5c6f91", "#e0e7f2", "#eef3fb", "#1246c5",
+        ),
     }
 }
 
-pub fn to_html(title: &str, body_html: &str, color_mode: &str, md_theme: &str, style: HtmlStyle) -> String {
-    let mode = if matches!(style, HtmlStyle::Light) { "light" } else { color_mode };
+pub fn to_html(
+    title: &str,
+    body_html: &str,
+    color_mode: &str,
+    md_theme: &str,
+    style: HtmlStyle,
+) -> String {
+    let mode = if matches!(style, HtmlStyle::Light) {
+        "light"
+    } else {
+        color_mode
+    };
     let (bg, text, muted, divider, code_bg, accent) = theme_palette(mode, md_theme);
     let font_body = match md_theme {
         "paper" if !matches!(style, HtmlStyle::Minimal) => "Georgia, 'Times New Roman', serif",
-        "mono" if !matches!(style, HtmlStyle::Minimal) => "ui-monospace, 'Cascadia Mono', Consolas, monospace",
+        "mono" if !matches!(style, HtmlStyle::Minimal) => {
+            "ui-monospace, 'Cascadia Mono', Consolas, monospace"
+        }
         _ => "system-ui, -apple-system, 'Segoe UI', sans-serif",
     };
     let css = if matches!(style, HtmlStyle::Minimal) {
