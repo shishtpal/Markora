@@ -12,6 +12,7 @@ const MAX_CHUNK: u64 = 1024 * 1024;
 #[derive(Default)]
 pub struct MediaRoots {
     pub docs: HashMap<u64, PathBuf>,
+    pub pdf_files: HashMap<u64, PathBuf>,
     pub folder: Option<PathBuf>,
 }
 
@@ -50,6 +51,7 @@ pub fn mime_type(path: &Path) -> &'static str {
         Some("svg") => "image/svg+xml",
         Some("bmp") => "image/bmp",
         Some("ico") => "image/x-icon",
+        Some("pdf") => "application/pdf",
         _ => "application/octet-stream",
     }
 }
@@ -79,6 +81,12 @@ pub fn resolve_media_path(roots: &MediaRoots, uri: &str) -> Option<PathBuf> {
         .or_else(|| without_query.strip_prefix("http://markora.localhost/"))
         .or_else(|| without_query.strip_prefix("https://markora.localhost/"))
         .or_else(|| without_query.strip_prefix('/'))?;
+    if let Some(rest) = path_part.strip_prefix("pdf/") {
+        let (id_str, _) = rest.split_once('/')?;
+        let doc_id: u64 = id_str.parse().ok()?;
+        let target = roots.pdf_files.get(&doc_id)?.canonicalize().ok()?;
+        return target.is_file().then_some(target);
+    }
     let rest = path_part.strip_prefix("doc/")?;
     let (id_str, encoded_rel) = rest.split_once('/')?;
     let doc_id: u64 = id_str.parse().ok()?;

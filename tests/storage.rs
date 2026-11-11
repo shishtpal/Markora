@@ -24,15 +24,22 @@ fn real_file_roundtrip_and_directory_filtering() {
     let dir = test_dir();
     std::fs::create_dir(dir.join("folder")).unwrap();
     storage::write_file(&dir.join("नोट.md"), "# नमस्ते 😀".as_bytes()).unwrap();
+    storage::write_file(&dir.join("spec.pdf"), b"%PDF-1.4\n").unwrap();
     storage::write_file(&dir.join("ignored.exe"), b"ignored").unwrap();
     assert_eq!(
         storage::read_markdown(&dir.join("नोट.md")).unwrap(),
         "# नमस्ते 😀"
     );
     let entries = storage::folder_entries(&dir).unwrap();
-    assert_eq!(entries.len(), 2);
+    assert_eq!(entries.len(), 3);
     assert!(entries[0].is_folder);
-    assert_eq!(entries[1].name, "नोट.md");
+    assert_eq!(entries[1].name, "spec.pdf");
+    assert_eq!(entries[2].name, "नोट.md");
+    assert_eq!(
+        storage::resolve_relative_link(Some(&dir), "spec.pdf#page=2").unwrap(),
+        Some(dir.join("spec.pdf"))
+    );
+    assert!(storage::resolve_relative_link(Some(&dir), "ignored.exe").is_err());
     assert!(storage::read_markdown(&dir.join("missing.md")).is_err());
     std::fs::remove_dir_all(dir).unwrap();
 }

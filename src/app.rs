@@ -6,6 +6,8 @@ mod fallback;
 mod files;
 #[cfg(test)]
 mod loading_tests;
+mod pdf_state;
+mod pdf_viewer;
 #[cfg(test)]
 mod tests;
 
@@ -13,10 +15,11 @@ use crate::{theme, webview_host::Host};
 use eframe::egui;
 use markora::{
     media::SharedMediaRoots,
-    model::{Prefs, PreparedDocument, Recent, Workspace},
+    model::{DocKind, Prefs, PreparedDocument, Recent, Workspace},
     protocol::FileEntry,
-    storage::Storage,
+    storage::{self, Storage},
 };
+use pdf_state::PdfViewerState;
 use std::{
     collections::{HashSet, VecDeque},
     path::PathBuf,
@@ -39,6 +42,7 @@ struct PendingClose {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) struct SyncedDocState {
     pub id: u64,
+    pub kind: DocKind,
     pub revision: u64,
     pub view_mode: markora::model::ViewMode,
     pub rendered_revision: u64,
@@ -87,6 +91,7 @@ pub struct Markora {
     synced_doc: Option<SyncedDocState>,
     client_known_markdown: Option<(u64, u64)>,
     fallback_buf: Option<(u64, u64, String)>,
+    pdf_viewer: PdfViewerState,
 }
 
 impl Markora {
@@ -134,6 +139,7 @@ impl Markora {
             synced_doc: None,
             client_known_markdown: None,
             fallback_buf: None,
+            pdf_viewer: PdfViewerState::default(),
         };
         if let Some(path) = initial_arg {
             app.open_path(path);
@@ -186,6 +192,7 @@ impl eframe::App for Markora {
         self.ensure_webview(&ctx);
         self.drain_bridge();
         self.drain_bg();
+        self.pdf_viewer.drain(&ctx);
         let exports = self
             .webview
             .as_ref()
@@ -193,7 +200,13 @@ impl eframe::App for Markora {
             .unwrap_or_default();
         for outcome in exports {
             match outcome {
-                Ok(path) => self.notify(format!("Exported {}", path.display())),
+                Ok(path) => {
+                    let message = format!("Exported {}", path.display());
+                    if storage::is_pdf_path(&path) {
+                        self.open_path(path);
+                    }
+                    self.notify(message);
+                }
                 Err(err) => self.fail(err),
             }
         }

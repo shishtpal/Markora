@@ -2,7 +2,16 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use crate::markdown::RenderedDocument;
+use crate::{markdown::RenderedDocument, pdf::PdfDocument};
+use std::sync::Arc;
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum DocKind {
+    #[default]
+    Markdown,
+    Pdf,
+}
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -13,84 +22,23 @@ pub enum ViewMode {
     Split,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(default, rename_all = "camelCase")]
-pub struct Prefs {
-    pub color_mode: String,
-    pub md_theme: String,
-    pub view_mode: ViewMode,
-    pub show_files: bool,
-    pub show_outline: bool,
-    pub focus_mode: bool,
-    pub split_ratio: f32,
-    pub font_scale: f32,
-    pub files_width: f32,
-    pub outline_width: f32,
-}
-
-impl Default for Prefs {
-    fn default() -> Self {
-        Self {
-            color_mode: "dark".into(),
-            md_theme: "cobalt".into(),
-            view_mode: ViewMode::Live,
-            show_files: true,
-            show_outline: true,
-            focus_mode: false,
-            split_ratio: 0.5,
-            font_scale: 1.0,
-            files_width: 240.0,
-            outline_width: 220.0,
-        }
-    }
-}
-
-impl Prefs {
-    pub fn validate(&mut self) {
-        if !matches!(self.color_mode.as_str(), "light" | "dark") {
-            self.color_mode = "dark".into();
-        }
-        if !Self::THEMES.contains(&self.md_theme.as_str()) {
-            self.md_theme = "cobalt".into();
-        }
-        self.split_ratio = finite_clamp(self.split_ratio, 0.2, 0.8, 0.5);
-        self.font_scale = finite_clamp(self.font_scale, 0.875, 1.5, 1.0);
-        self.files_width = finite_clamp(self.files_width, 160.0, 560.0, 240.0);
-        self.outline_width = finite_clamp(self.outline_width, 160.0, 480.0, 220.0);
-    }
-
-    pub const THEMES: [&'static str; 7] = [
-        "cobalt", "paper", "graphite", "forest", "mono", "mars", "github",
-    ];
-}
-
-fn finite_clamp(value: f32, min: f32, max: f32, default: f32) -> f32 {
-    if value.is_finite() {
-        value.clamp(min, max)
-    } else {
-        default
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Recent {
-    pub path: PathBuf,
-    pub title: String,
-    pub ts: u64,
-}
+pub use crate::prefs::{Prefs, Recent};
 
 #[derive(Debug)]
 pub struct PreparedDocument {
+    pub kind: DocKind,
     pub markdown: String,
     pub rendered: RenderedDocument,
     pub rendered_full: bool,
     pub word_count: usize,
     pub char_count: usize,
+    pub pdf: Option<PdfDocument>,
 }
 
 #[derive(Debug)]
 pub struct Document {
     pub id: u64,
+    pub kind: DocKind,
     pub path: Option<PathBuf>,
     pub markdown: String,
     pub saved_markdown: Option<String>,
@@ -101,6 +49,7 @@ pub struct Document {
     pub rendered_revision: u64,
     pub word_count: usize,
     pub char_count: usize,
+    pub pdf: Option<PdfDocument>,
 }
 
 const DEFER_SOURCE_RENDER_BYTES: usize = 64 * 1024;
@@ -114,12 +63,32 @@ impl Document {
         let (word_count, char_count) = crate::markdown::text_counts(&markdown);
         let (rendered, rendered_full) = Self::render_for_mode(&markdown, view_mode);
         PreparedDocument {
+            kind: DocKind::Markdown,
             markdown,
             rendered,
             rendered_full,
             word_count,
             char_count,
+            pdf: None,
         }
+    }
+
+    pub fn prepare_pdf(bytes: Vec<u8>, parse_full: bool) -> Result<PreparedDocument, String> {
+        let pdf = if parse_full {
+            Some(PdfDocument::parse(Arc::new(bytes))?)
+        } else {
+            crate::pdf::validate_header(&bytes)?;
+            None
+        };
+        Ok(PreparedDocument {
+            kind: DocKind::Pdf,
+            markdown: String::new(),
+            rendered: RenderedDocument::default(),
+            rendered_full: true,
+            word_count: 0,
+            char_count: 0,
+            pdf,
+        })
     }
 
     pub fn from_prepared(
@@ -139,6 +108,7 @@ impl Document {
     ) -> Self {
         Self {
             id,
+            kind: prepared.kind,
             path,
             saved_markdown: None,
             rendered: prepared.rendered,
@@ -149,7 +119,15 @@ impl Document {
             view_mode,
             word_count: prepared.word_count,
             char_count: prepared.char_count,
+            pdf: prepared.pdf,
         }
+    }
+
+    pub fn reload_pdf(&mut self, prepared: PreparedDocument) {
+        self.kind = DocKind::Pdf;
+        self.pdf = prepared.pdf;
+        self.revision += 1;
+        self.saved_markdown = None;
     }
 
     pub fn render_for_mode(markdown: &str, view_mode: ViewMode) -> (RenderedDocument, bool) {
@@ -169,7 +147,7 @@ impl Document {
     }
 
     pub fn ensure_rendered(&mut self) {
-        if !self.rendered_full {
+        if self.kind == DocKind::Markdown && !self.rendered_full {
             self.rendered = crate::markdown::render(&self.markdown);
             self.rendered_full = true;
             self.rendered_revision = self.revision;
@@ -177,6 +155,9 @@ impl Document {
     }
 
     pub fn set_view_mode(&mut self, view_mode: ViewMode) {
+        if self.kind != DocKind::Markdown {
+            return;
+        }
         self.view_mode = view_mode;
         if view_mode != ViewMode::Source {
             self.ensure_rendered();
@@ -184,7 +165,7 @@ impl Document {
     }
 
     pub fn edit(&mut self, markdown: String, revision: u64) {
-        if revision < self.revision {
+        if self.kind != DocKind::Markdown || revision < self.revision {
             return;
         }
         self.revision = revision;
@@ -210,7 +191,7 @@ impl Document {
     }
 
     pub fn dirty(&self) -> bool {
-        self.saved_markdown.is_some()
+        self.kind == DocKind::Markdown && self.saved_markdown.is_some()
     }
 
     pub fn title(&self) -> String {

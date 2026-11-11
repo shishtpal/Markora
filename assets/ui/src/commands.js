@@ -33,6 +33,24 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
       showError(`Unknown command: ${id}`);
       return;
     }
+    if (editor.document().kind === "pdf") {
+      if (id === "print") {
+        $("#pdf-frame")?.contentWindow?.focus();
+        $("#pdf-frame")?.contentWindow?.print();
+        return;
+      }
+      if (id === "find" || id === "find-next" || id === "find-prev") {
+        $("#pdf-frame")?.focus();
+        $("#status").textContent = "Click inside the PDF or press Ctrl+F to search PDF text";
+        return;
+      }
+      if (
+        ["export", "undo", "redo", "link"].includes(id) ||
+        formatting.has(id)
+      ) {
+        return;
+      }
+    }
     const local = {
       "command-palette": () => dialogs.palette(),
       settings: () => dialogs.settings(),

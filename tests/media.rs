@@ -38,5 +38,30 @@ fn resolves_local_media_with_spaces_and_blocks_traversal() {
     assert_eq!(partial.content_range.as_deref(), Some("bytes 2-5/10"));
     assert_eq!(partial.body, b"2345");
 
+    let pdf_path = dir.join("Sample Spec.pdf");
+    fs::write(&pdf_path, b"%PDF-1.4\nhello").unwrap();
+    roots.pdf_files.insert(9, pdf_path);
+    let pdf_full = serve_media(
+        &roots,
+        "http://markora.localhost/pdf/9/0/Sample%20Spec.pdf",
+        None,
+    );
+    assert_eq!(pdf_full.status, 200);
+    assert_eq!(pdf_full.content_type, "application/pdf");
+    assert_eq!(pdf_full.body, b"%PDF-1.4\nhello");
+    let pdf_part = serve_media(
+        &roots,
+        "http://markora.localhost/pdf/9/0/Sample%20Spec.pdf",
+        Some("bytes=0-3"),
+    );
+    assert_eq!(pdf_part.status, 206);
+    assert_eq!(pdf_part.body, b"%PDF");
+    let pdf_missing = serve_media(
+        &roots,
+        "http://markora.localhost/pdf/99/0/missing.pdf",
+        None,
+    );
+    assert_eq!(pdf_missing.status, 404);
+
     let _ = fs::remove_dir_all(&dir);
 }

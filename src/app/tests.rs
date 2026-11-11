@@ -49,6 +49,7 @@ impl Fixture {
             synced_doc: None,
             client_known_markdown: None,
             fallback_buf: None,
+            pdf_viewer: PdfViewerState::default(),
         };
         Self { app, dir }
     }
@@ -222,4 +223,59 @@ fn source_mode_export_html_ensures_deferred_document_is_rendered() {
             .unwrap()
             .contains("<h1>Big Heading</h1>")
     );
+}
+
+#[test]
+fn pdf_tabs_open_stay_readonly_and_reload_on_reopen() {
+    let mut fixture = Fixture::new();
+    let md_path = fixture.dir.join("notes.md");
+    let pdf_path = fixture.dir.join("guide.pdf");
+    std::fs::write(&md_path, "[Guide](guide.pdf)").unwrap();
+    let objs = [
+        "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+        "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+        "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n",
+    ];
+    let mut pdf = String::from("%PDF-1.4\n");
+    let mut offs = Vec::new();
+    for o in objs {
+        offs.push(pdf.len());
+        pdf.push_str(o);
+    }
+    let xref = pdf.len();
+    pdf.push_str("xref\n0 4\n0000000000 65535 f \n");
+    for off in offs {
+        pdf.push_str(&format!("{off:010} 00000 n \n"));
+    }
+    pdf.push_str(&format!(
+        "trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n"
+    ));
+    std::fs::write(&pdf_path, pdf).unwrap();
+
+    fixture.app.open_path(md_path);
+    let md_id = fixture.app.workspace.doc().id;
+    fixture.request(serde_json::json!({
+        "type": "openRelative",
+        "docId": md_id,
+        "path": "guide.pdf#page=1"
+    }));
+    let pdf_doc = fixture.app.workspace.doc();
+    assert_eq!(pdf_doc.kind, DocKind::Pdf, "status: {}", fixture.app.status);
+    assert!(!pdf_doc.dirty());
+    let pdf_id = pdf_doc.id;
+
+    // Edits and save commands must not dirty or overwrite a PDF tab.
+    fixture.request(serde_json::json!({
+        "type": "edit",
+        "draft": { "docId": pdf_id, "markdown": "corrupt", "revision": 5 }
+    }));
+    fixture.app.run_command("save");
+    assert_eq!(fixture.app.workspace.doc().markdown, "");
+    assert!(!fixture.app.workspace.doc().dirty());
+    assert_eq!(fixture.app.workspace.doc().revision, 0);
+
+    // Re-opening the same PDF (e.g. after export) increments its revision to refresh the viewer.
+    fixture.app.open_path(pdf_path);
+    assert_eq!(fixture.app.workspace.doc().id, pdf_id);
+    assert_eq!(fixture.app.workspace.doc().revision, 1);
 }

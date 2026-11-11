@@ -1,5 +1,5 @@
 //! Typed IPC contract. All actions carry the latest editor draft.
-use crate::model::{Prefs, ViewMode};
+use crate::model::{DocKind, Prefs, ViewMode};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -48,6 +48,11 @@ pub enum Action {
         command: String,
     },
     OpenPath {
+        path: String,
+    },
+    #[serde(rename_all = "camelCase")]
+    OpenRelative {
+        doc_id: u64,
         path: String,
     },
     OpenLink {
@@ -119,6 +124,7 @@ impl PrefsPatch {
 #[serde(rename_all = "camelCase")]
 pub struct TabView {
     pub id: u64,
+    pub kind: DocKind,
     pub title: String,
     pub dirty: bool,
     pub path: Option<String>,
@@ -136,12 +142,15 @@ pub struct FileEntry {
 #[serde(rename_all = "camelCase")]
 pub struct DocumentView<'a> {
     pub id: u64,
+    pub kind: DocKind,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub markdown: Option<&'a str>,
     pub revision: u64,
     pub view_mode: ViewMode,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rendered: Option<&'a crate::markdown::RenderedDocument>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pdf_url: Option<String>,
     pub word_count: usize,
     pub char_count: usize,
 }

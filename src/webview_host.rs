@@ -69,6 +69,11 @@ impl Host {
                                 .header("Content-Type", m.content_type)
                                 .header("Accept-Ranges", "bytes")
                                 .header("Access-Control-Allow-Origin", "*");
+                            if m.content_type == "application/pdf" {
+                                builder = builder
+                                    .header("Content-Disposition", "inline")
+                                    .header("Cache-Control", "no-store");
+                            }
                             if let Some(cr) = m.content_range {
                                 builder = builder.header("Content-Range", cr);
                             }
@@ -91,7 +96,9 @@ impl Host {
                 ipc_wake.request_repaint();
             })
             .with_navigation_handler(|url| {
-                url == "about:blank" || url.starts_with("http://markora.localhost/app/")
+                url == "about:blank"
+                    || url.starts_with("http://markora.localhost/app/")
+                    || url.starts_with("http://markora.localhost/pdf/")
             })
             .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny)
             .build_as_child(&parent)

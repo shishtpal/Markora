@@ -1,6 +1,10 @@
 //! File dialogs and storage operations; documents remain in the workspace.
 use super::*;
-use markora::{model::Document, storage};
+use markora::{
+    model::{DocKind, Document, ViewMode},
+    storage,
+};
+use std::path::Path;
 
 impl Markora {
     pub(super) fn drain_bg(&mut self) {
@@ -43,24 +47,23 @@ impl Markora {
         }
     }
 
-    fn finish_open_file(
-        &mut self,
-        path: PathBuf,
-        view_mode: markora::model::ViewMode,
-        prepared: PreparedDocument,
-    ) {
+    fn finish_open_file(&mut self, path: PathBuf, view_mode: ViewMode, prepared: PreparedDocument) {
         if let Some(doc) = self
             .workspace
             .tabs
-            .iter()
+            .iter_mut()
             .find(|d| d.path.as_ref() == Some(&path))
         {
+            if prepared.kind == DocKind::Pdf {
+                doc.reload_pdf(prepared);
+            }
             let id = doc.id;
             self.workspace.activate(id);
             self.needs_sync = true;
             return;
         }
         let replace_empty = self.workspace.tabs.len() == 1
+            && self.workspace.tabs[0].kind == DocKind::Markdown
             && self.workspace.tabs[0].path.is_none()
             && self.workspace.tabs[0].revision == 0
             && self.workspace.tabs[0].markdown.is_empty();
@@ -93,11 +96,13 @@ impl Markora {
             return;
         }
         let path = storage::normalize_path(&path);
-        if let Some(doc) = self
-            .workspace
-            .tabs
-            .iter()
-            .find(|d| d.path.as_ref() == Some(&path))
+        let is_pdf = storage::is_pdf_path(&path);
+        if !is_pdf
+            && let Some(doc) = self
+                .workspace
+                .tabs
+                .iter()
+                .find(|d| d.path.as_ref() == Some(&path))
         {
             let id = doc.id;
             self.workspace.activate(id);
@@ -108,6 +113,7 @@ impl Markora {
             return;
         }
         let view_mode = self.prefs.view_mode;
+        let parse_full_pdf = self.webview.is_none();
         if let Some(ctx) = self.egui_ctx.clone() {
             self.pending_opens.insert(path.clone());
             let name = path
@@ -118,9 +124,7 @@ impl Markora {
             self.notify(format!("Opening {name}…"));
             let tx = self.bg_tx.clone();
             std::thread::spawn(move || {
-                let result = storage::read_markdown(&path)
-                    .map(|markdown| Document::prepare(markdown, view_mode))
-                    .map_err(|e| e.to_string());
+                let result = storage::prepare_file(&path, view_mode, parse_full_pdf);
                 let _ = tx.send(BgEvent::FileLoaded {
                     path,
                     view_mode,
@@ -130,12 +134,26 @@ impl Markora {
             });
             return;
         }
-        match storage::read_markdown(&path) {
-            Ok(markdown) => {
-                let prepared = Document::prepare(markdown, view_mode);
-                self.finish_open_file(path, view_mode, prepared);
-            }
+        match storage::prepare_file(&path, view_mode, parse_full_pdf) {
+            Ok(prepared) => self.finish_open_file(path, view_mode, prepared),
             Err(error) => self.fail(format!("Could not open {}: {error}", path.display())),
+        }
+    }
+
+    pub(super) fn open_relative(&mut self, doc_id: u64, raw_href: &str) {
+        let base = self
+            .workspace
+            .tabs
+            .iter()
+            .find(|d| d.id == doc_id)
+            .and_then(|d| d.path.as_deref())
+            .and_then(Path::parent)
+            .map(Path::to_path_buf)
+            .or_else(|| self.folder.clone());
+        match storage::resolve_relative_link(base.as_deref(), raw_href) {
+            Ok(Some(target)) => self.open_path(target),
+            Ok(None) => {}
+            Err(error) => self.fail(error),
         }
     }
 
@@ -167,7 +185,9 @@ impl Markora {
 
     pub(super) fn pick_file(&mut self) {
         if let Some(path) = rfd::FileDialog::new()
+            .add_filter("Supported Files", &["md", "markdown", "txt", "pdf"])
             .add_filter("Markdown / Text", &["md", "markdown", "txt"])
+            .add_filter("PDF Documents", &["pdf"])
             .pick_file()
         {
             self.open_path(path);
@@ -184,6 +204,10 @@ impl Markora {
             return false;
         };
         let doc = &self.workspace.tabs[index];
+        if doc.kind != DocKind::Markdown {
+            self.notify("PDF documents are read-only");
+            return false;
+        }
         let path = if save_as || doc.path.is_none() {
             let mut dialog = rfd::FileDialog::new()
                 .add_filter("Markdown", &["md", "markdown", "txt"])

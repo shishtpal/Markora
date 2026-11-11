@@ -18,7 +18,8 @@ export function createChrome(send, editor) {
       button.setAttribute("aria-current", "page");
     }
     const icon = element("span", `file-icon${folder ? " is-folder" : ""}`);
-    icon.innerHTML = ICONS[folder ? "folder" : "file"];
+    const isPdf = !folder && /\.pdf$/i.test(name);
+    icon.innerHTML = ICONS[folder ? "folder" : isPdf ? "filePdf" : "file"];
     button.append(icon, element("span", "", name));
     button.onclick = () => send({ type: "openPath", path });
     return button;
@@ -97,7 +98,7 @@ export function createChrome(send, editor) {
           element(
             "p",
             "empty",
-            snapshot.folder ? "No Markdown files here." : "Open a folder to browse files.",
+            snapshot.folder ? "No supported files here." : "Open a folder to browse files.",
           ),
         );
     }
@@ -126,7 +127,9 @@ export function createChrome(send, editor) {
       }
       $("#outline").replaceChildren(frag);
       if (!doc.rendered.outline.length)
-        $("#outline").append(element("p", "empty", "Headings appear here."));
+        $("#outline").append(
+          element("p", "empty", doc.kind === "pdf" ? "Outline unavailable for PDFs." : "Headings appear here."),
+        );
     }
     $("#status").textContent = cleanPath(snapshot.status);
     $("#status").classList.toggle("error", snapshot.error);
@@ -137,8 +140,9 @@ export function createChrome(send, editor) {
     $("#counts").textContent = `${words} ${words === 1 ? "word" : "words"} · ${chars} characters`;
     $("#save-state").textContent = tab?.dirty ? "Unsaved" : "Saved";
     $("#save-state").classList.toggle("dirty", !!tab?.dirty);
-    $("#mode-status").textContent = doc.viewMode[0].toUpperCase() + doc.viewMode.slice(1);
-    $("#mode-status").dataset.mode = doc.viewMode;
+    const isPdfDoc = doc.kind === "pdf";
+    $("#mode-status").textContent = isPdfDoc ? "PDF" : doc.viewMode[0].toUpperCase() + doc.viewMode.slice(1);
+    $("#mode-status").dataset.mode = isPdfDoc ? "pdf" : doc.viewMode;
   }
   $("#tabs").addEventListener("keydown", (event) => {
     const tabs = $$('#tabs [role="tab"]');
@@ -153,16 +157,30 @@ export function createChrome(send, editor) {
     next?.click();
   });
   $("#mode-status").onclick = () => {
+    const mode = $("#mode-status").dataset.mode;
+    if (mode === "pdf") return;
     const order = ["live", "source", "split"];
-    const next = order[(order.indexOf($("#mode-status").dataset.mode) + 1) % order.length];
+    const next = order[(order.indexOf(mode) + 1) % order.length];
     send({ type: "command", command: `view-${next}` });
   };
   $("#dismiss-error").onclick = () => {
     $("#error-banner").hidden = true;
   };
-  document.addEventListener("dragover", (event) => event.preventDefault());
+  const showDropShield = (visible) => {
+    const shield = $("#pdf-drop-shield");
+    if (shield) shield.hidden = !visible || $("#pdf-pane").hidden;
+  };
+  window.addEventListener("dragenter", () => showDropShield(true));
+  document.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    showDropShield(true);
+  });
+  document.addEventListener("dragleave", (event) => {
+    if (!event.relatedTarget) showDropShield(false);
+  });
   document.addEventListener("drop", (event) => {
     event.preventDefault();
+    showDropShield(false);
     for (const file of event.dataTransfer.files) {
       const path = file.path || window.chrome?.webview?.getFilePath?.(file);
       if (path) send({ type: "openPath", path });
@@ -174,6 +192,8 @@ export function createChrome(send, editor) {
       event.preventDefault();
       const url = link.getAttribute("href");
       if (/^(https?:\/\/|mailto:)/i.test(url)) send({ type: "openLink", url });
+      else if (url && !url.startsWith("#"))
+        send({ type: "openRelative", docId: editor.document().id, path: url });
     }
   });
   return { accept };

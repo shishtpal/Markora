@@ -731,6 +731,49 @@ body.focus-mode #outline-panel {
   display: none;
 }
 
+.pdf-badge {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+#pdf-pane {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+#pdf-pane[hidden] {
+  display: none;
+}
+
+#pdf-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: var(--canvas);
+}
+
+#pdf-drop-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+#app[data-doc-kind="pdf"] .segments,
+#app[data-doc-kind="pdf"] .bar-divider,
+#app[data-doc-kind="pdf"] #formatbar,
+#app[data-doc-kind="pdf"] #counts,
+#app[data-doc-kind="pdf"] #save-state {
+  display: none;
+}
+
 @media (max-width: 1080px) {
   #document-path {
     display: none;

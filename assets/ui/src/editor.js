@@ -4,18 +4,21 @@ import { createLiveEditor } from "./live-editor.js";
 export function createEditor(onChange, onFlush = () => {}) {
   let doc = {
     id: 0,
+    kind: "markdown",
     markdown: "",
     revision: 0,
     viewMode: "live",
     rendered: { blocks: [], outline: [] },
     renderedMarkdown: "",
     previewHtml: null,
+    pdfUrl: null,
   };
   const source = $("#source-editor");
   const histories = new Map();
   let currentHistory;
   let lastPreview = null;
   let lastPreviewDocId = 0;
+  let lastPdfUrl = null;
   const live = createLiveEditor($("#live-document"), () => doc, change, onFlush);
 
   function change(markdown, record = true, immediate = false) {
@@ -63,8 +66,45 @@ export function createEditor(onChange, onFlush = () => {}) {
   $("#append-block").addEventListener("click", () => live.append());
 
   function accept(incoming) {
-    const switched = incoming.id !== doc.id;
+    const kind = incoming.kind || "markdown";
+    const switched = incoming.id !== doc.id || kind !== doc.kind;
     if (!switched && incoming.revision < doc.revision) return;
+    if (kind === "pdf") {
+      live.reset();
+      lastPreview = null;
+      lastPreviewDocId = 0;
+      doc = {
+        id: incoming.id,
+        kind: "pdf",
+        markdown: "",
+        revision: incoming.revision,
+        viewMode: incoming.viewMode,
+        rendered: { blocks: [], outline: [] },
+        renderedMarkdown: "",
+        previewHtml: null,
+        pdfUrl: incoming.pdfUrl || null,
+      };
+      $("#app").dataset.docKind = "pdf";
+      $("#document").dataset.mode = "pdf";
+      $("#pdf-badge").hidden = false;
+      $("#pdf-pane").hidden = false;
+      $("#live-pane").hidden = true;
+      $("#source-pane").hidden = true;
+      $("#split-resizer").hidden = true;
+      $("#findbar").hidden = true;
+      if (lastPdfUrl !== doc.pdfUrl) {
+        lastPdfUrl = doc.pdfUrl;
+        $("#pdf-frame").src = doc.pdfUrl || "about:blank";
+      }
+      return;
+    }
+    if (lastPdfUrl !== null) {
+      lastPdfUrl = null;
+      $("#pdf-frame").src = "about:blank";
+    }
+    $("#app").dataset.docKind = "markdown";
+    $("#pdf-badge").hidden = true;
+    $("#pdf-pane").hidden = true;
     const markdown = incoming.markdown ?? doc.markdown;
     const rendered = incoming.rendered ?? doc.rendered;
     const hasNewRendered = Boolean(incoming.rendered);
@@ -190,10 +230,13 @@ export function createEditor(onChange, onFlush = () => {}) {
     history,
     preparePrint: ensurePreview,
     draft: () =>
-      doc.id ? { docId: doc.id, markdown: doc.markdown, revision: doc.revision } : null,
+      doc.id && doc.kind !== "pdf"
+        ? { docId: doc.id, markdown: doc.markdown, revision: doc.revision }
+        : null,
     document: () => doc,
     focus() {
-      if (doc.viewMode === "live") live.focus();
+      if (doc.kind === "pdf") $("#pdf-frame").focus();
+      else if (doc.viewMode === "live") live.focus();
       else source.focus();
     },
     jump(offset, length = 0) {

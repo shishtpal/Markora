@@ -42,6 +42,8 @@
         </button>
       </div>
 
+      <span id="pdf-badge" class="pdf-badge" hidden>PDF · Read-only</span>
+
       <span class="bar-divider" aria-hidden="true"></span>
 
       <div id="formatbar" role="toolbar" focusgroup="toolbar wrap" aria-label="Markdown formatting" aria-controls="document">
@@ -139,6 +141,10 @@
           aria-label="Resize source and preview" aria-orientation="vertical"></div>
         <div id="preview-pane" class="scroll-pane">
           <div id="preview-document" class="markdown-body" aria-label="Markdown preview"></div>
+        </div>
+        <div id="pdf-pane" class="pdf-pane" hidden>
+          <iframe id="pdf-frame" title="PDF document"></iframe>
+          <div id="pdf-drop-shield" hidden></div>
         </div>
       </main>
 
@@ -326,7 +332,7 @@
     </div>
     <div class="about-hero">
       <span class="about-name">Markora<span class="about-dot">.</span></span>
-      <span class="about-version">v0.2.1-alpha</span>
+      <span class="about-version">v0.2.2-alpha</span>
     </div>
     <p class="about-summary">A fast, local Markdown workspace with Live, Source, and Split editing modes.</p>
     <div class="settings-group about-meta">

@@ -6,6 +6,7 @@ export const ICONS = {
   folder: SVG('<path d="M3 7V5a1 1 0 0 1 1-1h6l2 3h8a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>'),
   folderOpen: SVG('<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>'),
   file: SVG('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>'),
+  filePdf: SVG('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 14h2a1.5 1.5 0 0 0 0-3H8v6"/><path d="M14 11h1.5a2 2 0 0 1 0 4H14v-4Z"/>'),
   plus: SVG('<path d="M12 5v14M5 12h14"/>'),
   x: SVG('<path d="M18 6 6 18M6 6l12 12"/>'),
   arrowUp: SVG('<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>'),

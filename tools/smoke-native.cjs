@@ -304,6 +304,42 @@ async function main() {
     assert(printBox.h > 20, "print preview must render content");
     await call("Emulation.setEmulatedMedia", { media: "" });
 
+    // Create a minimal valid PDF and verify both relative-link opening and inline PDF viewing.
+    const pdfPath = path.join(artifacts, "smoke-guide.pdf");
+    const pdfStream = "BT /F1 18 Tf 72 720 Td (Markora Smoke PDF) Tj ET";
+    const pdfObjs = [
+      "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+      "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+      "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+      `4 0 obj\n<< /Length ${pdfStream.length} >>\nstream\n${pdfStream}\nendstream\nendobj\n`,
+      "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n",
+    ];
+    let pdfText = "%PDF-1.4\n";
+    const pdfOffsets = [];
+    for (const obj of pdfObjs) {
+      pdfOffsets.push(Buffer.byteLength(pdfText, "utf8"));
+      pdfText += obj;
+    }
+    const xrefOffset = Buffer.byteLength(pdfText, "utf8");
+    pdfText += `xref\n0 ${pdfObjs.length + 1}\n0000000000 65535 f \n`;
+    for (const off of pdfOffsets) pdfText += `${String(off).padStart(10, "0")} 00000 n \n`;
+    pdfText += `trailer\n<< /Size ${pdfObjs.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+    fs.writeFileSync(pdfPath, pdfText);
+
+    const mdWithPdfLink = path.join(artifacts, "with-pdf-link.md");
+    fs.writeFileSync(mdWithPdfLink, "# Links\n\n[Open Smoke PDF](smoke-guide.pdf)\n");
+    await evaluate(`window.ipc.postMessage(JSON.stringify({type:'openPath',path:${JSON.stringify(mdWithPdfLink)}}))`);
+    await wait(`document.title.includes('with-pdf-link.md') && document.querySelector('#live-document a[href="smoke-guide.pdf"]')`, "open md with relative pdf link");
+    await click('#live-document a[href="smoke-guide.pdf"]');
+    await wait(
+      `document.title.includes('smoke-guide.pdf') && document.querySelector('#document').dataset.mode==='pdf' && document.querySelector('#pdf-frame').src.includes('/pdf/')`,
+      "relative pdf link opens inline PDF viewer",
+    );
+    const pdfBox = await evaluate(`(() => { const r = document.querySelector('#pdf-frame').getBoundingClientRect(); return { w: r.width, h: r.height, hidden: document.querySelector('#pdf-pane').hidden }; })()`);
+    assert.equal(pdfBox.hidden, false);
+    assert(pdfBox.w > 200 && pdfBox.h > 200, "PDF iframe must fill workspace");
+    console.log("PASS relative .pdf link opens inline WebView2 PDF viewer");
+
     const largePath = path.join(artifacts, "large.md");
     let largeMd = "";
     const sections = 8000;

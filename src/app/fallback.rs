@@ -6,6 +6,10 @@ impl Markora {
     pub(super) fn fallback_ui(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         let mut command = None;
+        let active_doc = self.workspace.doc();
+        let is_pdf = active_doc.kind == DocKind::Pdf;
+        let active_id = active_doc.id;
+        let pdf_pages = active_doc.pdf.as_ref().map(|p| p.page_count()).unwrap_or(0);
         egui::Panel::top("toolbar").show(ui, |ui| {
             ui.horizontal(|ui| {
                 for (label, id) in [
@@ -18,7 +22,8 @@ impl Markora {
                     ("Outline", "toggle-outline"),
                     ("Theme", "toggle-theme"),
                 ] {
-                    if ui.button(label).clicked() {
+                    let enabled = !(is_pdf && matches!(id, "save" | "save-as"));
+                    if ui.add_enabled(enabled, egui::Button::new(label)).clicked() {
                         command = Some(id);
                     }
                 }
@@ -47,7 +52,12 @@ impl Markora {
             });
         });
         egui::Panel::bottom("status").show(ui, |ui| {
-            ui.label(format!("{} · Native source editor", self.status));
+            let mode = if is_pdf {
+                "Native PDF viewer"
+            } else {
+                "Native source editor"
+            };
+            ui.label(format!("{} · {mode}", self.status));
         });
         if self.prefs.show_files && !self.prefs.focus_mode {
             egui::Panel::left("files")
@@ -73,15 +83,32 @@ impl Markora {
                 .resizable(true)
                 .default_size(self.prefs.outline_width)
                 .show(ui, |ui| {
-                    ui.heading("Outline");
+                    ui.heading(if is_pdf { "Pages" } else { "Outline" });
                     egui::ScrollArea::vertical().show(ui, |ui| {
-                        for heading in &self.workspace.doc().rendered.outline {
-                            ui.label(&heading.title);
+                        if is_pdf {
+                            let mut jump = None;
+                            for page in 0..pdf_pages {
+                                if ui.button(format!("Page {}", page + 1)).clicked() {
+                                    jump = Some(page);
+                                }
+                            }
+                            if let Some(page) = jump {
+                                self.pdf_viewer.jump_to_page(active_id, page);
+                            }
+                        } else {
+                            for heading in &self.workspace.doc().rendered.outline {
+                                ui.label(&heading.title);
+                            }
                         }
                     });
                 });
         }
         egui::CentralPanel::default().show(ui, |ui| {
+            if is_pdf {
+                let doc = &self.workspace.tabs[self.workspace.active];
+                self.pdf_viewer.ui(ui, doc);
+                return;
+            }
             let doc = self.workspace.doc_mut();
             let buf_stale = self
                 .fallback_buf
@@ -135,6 +162,23 @@ impl Markora {
                 });
             if let Some(choice) = choice {
                 self.resolve_unsaved(choice);
+            }
+        }
+        if is_pdf && !ctx.egui_wants_keyboard_input() {
+            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::PageDown)) {
+                self.pdf_viewer.step_page(active_id, 1, pdf_pages);
+            }
+            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::PageUp)) {
+                self.pdf_viewer.step_page(active_id, -1, pdf_pages);
+            }
+            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::Equals)) {
+                self.pdf_viewer.adjust_zoom(active_id, Some(1.15));
+            }
+            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::Minus)) {
+                self.pdf_viewer.adjust_zoom(active_id, Some(1.0 / 1.15));
+            }
+            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::Num0)) {
+                self.pdf_viewer.adjust_zoom(active_id, None);
             }
         }
         for (key, id) in [

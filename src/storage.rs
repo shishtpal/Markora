@@ -1,6 +1,7 @@
 //! Local settings and file I/O, independent of egui/WebView2.
 use crate::{
-    model::{Prefs, Recent},
+    media::percent_decode,
+    model::{Document, Prefs, PreparedDocument, Recent, ViewMode},
     protocol::FileEntry,
 };
 use serde::{Serialize, de::DeserializeOwned};
@@ -62,6 +63,21 @@ impl Storage {
     }
 }
 
+pub fn is_pdf_path(path: &Path) -> bool {
+    path.extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|e| e.eq_ignore_ascii_case("pdf"))
+}
+
+pub fn is_supported_path(path: &Path) -> bool {
+    path.extension().and_then(|e| e.to_str()).is_some_and(|e| {
+        matches!(
+            e.to_ascii_lowercase().as_str(),
+            "md" | "markdown" | "txt" | "pdf"
+        )
+    })
+}
+
 pub fn read_markdown(path: &Path) -> io::Result<String> {
     let mut text = std::fs::read_to_string(path)?;
     if text.starts_with('\u{feff}') {
@@ -95,11 +111,7 @@ pub fn folder_entries(dir: &Path) -> io::Result<Vec<FileEntry>> {
         let entry = entry?;
         let path = entry.path();
         let is_folder = path.is_dir();
-        if !is_folder
-            && !path.extension().and_then(|e| e.to_str()).is_some_and(|e| {
-                matches!(e.to_ascii_lowercase().as_str(), "md" | "markdown" | "txt")
-            })
-        {
+        if !is_folder && !is_supported_path(&path) {
             continue;
         }
         entries.push(FileEntry {
@@ -124,4 +136,51 @@ pub fn touch_recent(recents: &mut Vec<Recent>, path: PathBuf, title: String) {
         .as_secs();
     recents.insert(0, Recent { path, title, ts });
     recents.truncate(12);
+}
+
+pub fn prepare_file(
+    path: &Path,
+    view_mode: ViewMode,
+    parse_full_pdf: bool,
+) -> Result<PreparedDocument, String> {
+    if is_pdf_path(path) {
+        let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+        Document::prepare_pdf(bytes, parse_full_pdf)
+    } else {
+        read_markdown(path)
+            .map(|markdown| Document::prepare(markdown, view_mode))
+            .map_err(|e| e.to_string())
+    }
+}
+
+pub fn resolve_relative_link(
+    base: Option<&Path>,
+    raw_href: &str,
+) -> Result<Option<PathBuf>, String> {
+    let raw = raw_href.split(['?', '#']).next().unwrap_or(raw_href).trim();
+    let lower = raw.to_ascii_lowercase();
+    if raw.is_empty()
+        || raw.chars().any(char::is_control)
+        || lower.starts_with("javascript:")
+        || lower.starts_with("data:")
+    {
+        return Ok(None);
+    }
+    let decoded =
+        percent_decode(raw).ok_or_else(|| format!("Invalid relative link: {raw_href}"))?;
+    let rel = PathBuf::from(decoded.replace('\\', "/"));
+    let target = if rel.is_absolute() {
+        rel
+    } else if let Some(dir) = base {
+        dir.join(rel)
+    } else {
+        return Err("Save the document or open a folder to follow relative file links.".into());
+    };
+    if !target.is_file() {
+        return Err(format!("Linked file not found: {}", target.display()));
+    }
+    if !is_supported_path(&target) {
+        return Err(format!("Unsupported file type: {}", target.display()));
+    }
+    Ok(Some(target))
 }

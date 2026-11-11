@@ -9,6 +9,12 @@
       "source": "https://raw.githubusercontent.com/AccessKit/accesskit/a55d3e1a18bb9ef0e4bccc9083fb13c3e0ad8969/LICENSE-MIT"
     }
   ],
+  "alloc-stdlib@0.2.4": [
+    {
+      "path": "licenses/rust/alloc-stdlib-0.2.4-LICENSE",
+      "source": "https://raw.githubusercontent.com/dropbox/rust-alloc-no-stdlib/master/LICENSE"
+    }
+  ],
   "clipboard-win@5.4.3": [
     {
       "path": "licenses/rust/clipboard-win-5.4.3-LICENSE",

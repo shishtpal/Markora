@@ -1,17 +1,24 @@
 //! Native command dispatch and the shared unsaved-changes state machine.
 use super::*;
 use markora::{
-    model::ViewMode,
+    model::{DocKind, ViewMode},
     protocol::{ExportFormat, HtmlStyle, UnsavedChoice},
 };
 
 impl Markora {
     pub(super) fn run_command(&mut self, command: &str) {
-        let id = self.workspace.doc().id;
+        let doc = self.workspace.doc();
+        let id = doc.id;
+        let is_pdf = doc.kind == DocKind::Pdf;
         match command {
             "new" | "new-tab" => self.workspace.add(String::new(), self.prefs.view_mode),
             "open" => self.pick_file(),
             "open-folder" => self.pick_folder(),
+            "save" | "save-as" | "export-html" | "export-pdf" | "export-rtf" | "export-txt"
+                if is_pdf =>
+            {
+                self.notify("PDF documents are read-only");
+            }
             "save" => {
                 self.save_document(id, false);
             }
@@ -48,14 +55,18 @@ impl Markora {
                     % count;
             }
             "view-live" | "view-source" | "view-split" => {
-                let view = match command {
-                    "view-source" => ViewMode::Source,
-                    "view-split" => ViewMode::Split,
-                    _ => ViewMode::Live,
-                };
-                self.workspace.doc_mut().set_view_mode(view);
-                self.prefs.view_mode = view;
-                self.persist_prefs();
+                if is_pdf {
+                    self.notify("PDF tabs use the built-in PDF viewer");
+                } else {
+                    let view = match command {
+                        "view-source" => ViewMode::Source,
+                        "view-split" => ViewMode::Split,
+                        _ => ViewMode::Live,
+                    };
+                    self.workspace.doc_mut().set_view_mode(view);
+                    self.prefs.view_mode = view;
+                    self.persist_prefs();
+                }
             }
             "toggle-files" => {
                 self.prefs.show_files = !self.prefs.show_files;
@@ -161,8 +172,12 @@ impl Markora {
 
     fn complete_close(&mut self, action: CloseAction) {
         match action {
-            CloseAction::Tab(id) => self.workspace.close(id, self.prefs.view_mode),
+            CloseAction::Tab(id) => {
+                self.pdf_viewer.remove_tab(id);
+                self.workspace.close(id, self.prefs.view_mode);
+            }
             CloseAction::All => {
+                self.pdf_viewer.clear_all();
                 let ids: Vec<_> = self.workspace.tabs.iter().map(|d| d.id).collect();
                 for id in ids {
                     self.workspace.close(id, self.prefs.view_mode);
