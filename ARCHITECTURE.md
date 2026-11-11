@@ -96,10 +96,10 @@ on startup; release builds use the embedded copy. Rebuild the UI before Cargo
 when changing frontend sources. The watch command rebuilds sources automatically;
 restart the app to load a new bundle.
 
-Settings and recents use `.markora/`, with an AppData fallback when the local
-directory cannot be created. `MARKORA_DATA_DIR` overrides settings storage for
-isolated runs. Documents are saved to their selected paths; they are not stored
-inside the preferences files.
+Settings and recents use a `.markora/` directory alongside the `markora`
+executable, with an AppData fallback when that directory cannot be created.
+`MARKORA_DATA_DIR` overrides settings storage for isolated runs. Documents are
+saved to their selected paths; they are not stored inside the preferences files.
 
 ## Verification
 

@@ -15,19 +15,34 @@ pub struct Storage {
 
 impl Storage {
     pub fn discover() -> Self {
-        if let Some(dir) = std::env::var_os("MARKORA_DATA_DIR") {
-            return Self { dir: dir.into() };
+        Self::discover_with(
+            std::env::var_os("MARKORA_DATA_DIR").map(PathBuf::from),
+            std::env::current_exe().ok(),
+            std::env::var_os("APPDATA").map(PathBuf::from),
+        )
+    }
+
+    pub fn discover_with(
+        data_dir_override: Option<PathBuf>,
+        exe_path: Option<PathBuf>,
+        app_data: Option<PathBuf>,
+    ) -> Self {
+        if let Some(dir) = data_dir_override {
+            return Self { dir };
         }
-        let local = std::env::current_dir().unwrap_or_default().join(".markora");
-        let dir = if std::fs::create_dir_all(&local).is_ok() {
-            local
-        } else {
-            std::env::var_os("APPDATA")
-                .map(PathBuf::from)
-                .unwrap_or_default()
-                .join("Markora")
-        };
-        Self { dir }
+        if let Some(exe_dir) = exe_path
+            .as_deref()
+            .and_then(Path::parent)
+            .filter(|p| !p.as_os_str().is_empty())
+        {
+            let portable = exe_dir.join(".markora");
+            if std::fs::create_dir_all(&portable).is_ok() {
+                return Self { dir: portable };
+            }
+        }
+        Self {
+            dir: app_data.unwrap_or_default().join("Markora"),
+        }
     }
     pub fn read<T: DeserializeOwned + Default>(&self, name: &str) -> T {
         std::fs::read(self.dir.join(name))

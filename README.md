@@ -129,9 +129,10 @@ find, sidebar resizing and persistence, full-width layouts, unsaved changes and
 file open/save. It saves screenshots and diagnostics under `target/ui-smoke/`.
 Tests use isolated settings and fixtures.
 
-Preferences and recent files are stored in `.markora/`, with an AppData fallback
-when the local directory is unavailable. `MARKORA_DATA_DIR` selects an alternate
-settings directory. Markdown documents stay at their selected file paths.
+Preferences and recent files are stored in a single `.markora/` directory next to
+the `markora` executable, with an AppData fallback when that directory is
+unavailable. `MARKORA_DATA_DIR` selects an alternate settings directory.
+Markdown documents stay at their selected file paths.
 
 ## Publishing and license
 

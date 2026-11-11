@@ -65,3 +65,46 @@ fn preferences_and_recents_are_real_json() {
     assert_eq!(storage.prefs().files_width, 240.0);
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn storage_discover_uses_binary_directory_and_respects_overrides() {
+    let dir = test_dir();
+    let bin_dir = dir.join("bin");
+    let work_dir = dir.join("notes");
+    let override_dir = dir.join("override");
+    let app_data = dir.join("appdata");
+    std::fs::create_dir_all(&bin_dir).unwrap();
+    std::fs::create_dir_all(&work_dir).unwrap();
+
+    let exe_path = bin_dir.join("markora.exe");
+
+    // 1. Explicit MARKORA_DATA_DIR override wins.
+    let overridden = Storage::discover_with(
+        Some(override_dir.clone()),
+        Some(exe_path.clone()),
+        Some(app_data.clone()),
+    );
+    assert_eq!(overridden.dir, override_dir);
+    assert!(!bin_dir.join(".markora").exists());
+
+    // 2. Without override, `.markora` is created alongside the binary, not in `work_dir`.
+    let portable = Storage::discover_with(None, Some(exe_path), Some(app_data.clone()));
+    assert_eq!(portable.dir, bin_dir.join(".markora"));
+    assert!(bin_dir.join(".markora").is_dir());
+    assert!(!work_dir.join(".markora").exists());
+
+    // 3. When the binary directory cannot hold `.markora`, fall back to APPDATA/Markora.
+    let blocker = dir.join("not-a-dir");
+    std::fs::write(&blocker, b"file").unwrap();
+    let fallback = Storage::discover_with(
+        None,
+        Some(blocker.join("markora.exe")),
+        Some(app_data.clone()),
+    );
+    assert_eq!(fallback.dir, app_data.join("Markora"));
+
+    let no_exe = Storage::discover_with(None, None, Some(app_data.clone()));
+    assert_eq!(no_exe.dir, app_data.join("Markora"));
+
+    std::fs::remove_dir_all(dir).unwrap();
+}

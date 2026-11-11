@@ -2,6 +2,8 @@ node_modules/
 target/
 dist/
 .markora/
+.agents/
+
 .env
 .env.*
 !.env.example
