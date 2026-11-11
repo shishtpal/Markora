@@ -7,7 +7,7 @@ $version = [regex]::Match((Get-Content Cargo.toml -Raw), '(?m)^version = "([^"]+
 if (!$version) { throw 'Cargo.toml must declare a version' }
 $exportRoot = Join-Path $projectRoot ("target/source-export/markora-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $exportRoot -Force | Out-Null
-foreach ($item in @('.github', '.gitignore', 'Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', 'package.json', 'package-lock.json', 'README.md', 'ARCHITECTURE.md', 'DESIGN.md', 'PUBLISHING.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'licenses', 'src', 'tests', 'tools', 'assets')) {
+foreach ($item in @('.github', '.gitignore', 'Cargo.toml', 'Cargo.lock', 'build.rs', 'rust-toolchain.toml', 'package.json', 'package-lock.json', 'README.md', 'ARCHITECTURE.md', 'DESIGN.md', 'PUBLISHING.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'licenses', 'src', 'tests', 'tools', 'assets')) {
     Copy-Item -LiteralPath $item -Destination $exportRoot -Recurse -Force
 }
 if (Get-ChildItem -LiteralPath (Join-Path $exportRoot 'assets/ui/fonts') -Filter 'segoe*.ttf') {
