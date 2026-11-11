@@ -58,7 +58,7 @@ cargo run
 On Ubuntu 22.04 or newer, install native build dependencies first:
 
 ```bash
-sudo apt-get install build-essential pkg-config libx11-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libgl1-mesa-dev
+sudo apt-get install build-essential pkg-config libx11-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libegl1-mesa-dev libgl1-mesa-dev
 npm ci
 npm run build:ui
 cargo run --locked
