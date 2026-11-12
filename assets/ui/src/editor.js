@@ -2,6 +2,7 @@ import { $, resolveMedia } from "./dom.js";
 import { createLiveEditor } from "./live-editor.js";
 import { createImageEdits } from "./editor-images.js";
 import { createEditMode } from "./edit-mode.js";
+import { createEditorPosition } from "./editor-position.js";
 export function createEditor(onChange, onFlush = () => {}) {
   let doc = {
     id: 0,
@@ -24,6 +25,7 @@ export function createEditor(onChange, onFlush = () => {}) {
   const canEdit = () => editMode.canEdit();
   const live = createLiveEditor($("#live-document"), () => doc, change, onFlush, canEdit);
   const editMode = createEditMode(() => doc, () => Boolean(reader?.active()), live, onFlush);
+  const position = createEditorPosition(() => doc, source, live, editMode, () => Boolean(reader?.active()));
   const imageEdits = createImageEdits(
     () => doc,
     () => !canEdit(),
@@ -81,6 +83,7 @@ export function createEditor(onChange, onFlush = () => {}) {
     const kind = incoming.kind || "markdown";
     const switched = incoming.id !== doc.id || kind !== doc.kind;
     if (!switched && incoming.revision < doc.revision) return;
+    if (switched || incoming.viewMode !== doc.viewMode) position.save();
     if (switched || incoming.viewMode !== doc.viewMode) editMode.reset();
     if (kind === "pdf") {
       live.reset();
@@ -167,14 +170,8 @@ export function createEditor(onChange, onFlush = () => {}) {
     if (doc.viewMode === "split") ensurePreview();
     if (doc.viewMode === "live" && !reader?.active()) live.render();
     editMode.paint();
-    if (switched) {
-      source.scrollTop = 0;
-      $("#live-pane").scrollTop = 0;
-    }
-    if ((modeChanged || switched) && doc.viewMode !== "live" && !reader?.active()) {
-      if (source.value !== doc.markdown) source.value = doc.markdown;
-      source.focus();
-    }
+    if (switched || modeChanged) position.restore(switched);
+    else position.apply();
   }
   function editingSurface() {
     return doc.viewMode === "live" ? live.textarea() || live.focus() : source;
@@ -258,9 +255,12 @@ export function createEditor(onChange, onFlush = () => {}) {
       editMode.paint();
       if (doc.viewMode === "live") live.render();
     },
+    restorePosition: () => position.restore(false),
+    capturePosition: position.save,
     setReader: (value) => { reader = value; },
     isReading: () => Boolean(reader?.active()),
     accept,
+    retainTabs: (tabs) => position.retain(tabs, histories),
     format,
     history,
     replaceDocument(markdown) {

@@ -7,6 +7,7 @@ export function createReading(editor) {
     transition = 0,
     previewDoc = null;
   const preview = $("#preview-pane");
+  const positions = new Map();
   const hidden = [
     "#menubar",
     "#tabbar",
@@ -49,8 +50,10 @@ export function createReading(editor) {
     focus();
   }
   function before(next) {
+    if (active && previewDoc !== null) positions.set(previewDoc, [preview.scrollTop, preview.scrollLeft]);
     next = Boolean(next);
     if (next === active) return;
+    if (next) editor.capturePosition();
     transition++;
     if (next) saved = capture();
     active = next;
@@ -81,24 +84,27 @@ export function createReading(editor) {
           if (state.focus?.isConnected && state.focus.getClientRects().length) {
             state.focus.focus({ preventScroll: true });
             if (state.selection) state.focus.setSelectionRange(...state.selection);
-          } else editor.focus();
+          } else editor.restorePosition();
           for (const [node, top, left] of state.scroll) {
             if (node.isConnected) {
               node.scrollTop = top;
               node.scrollLeft = left;
             }
           }
-        } else editor.focus();
+        } else editor.restorePosition();
       });
     }
   }
-  function accept() {
+  function accept(tabs) {
+    const ids = new Set(tabs.map((tab) => tab.id));
+    for (const id of positions.keys()) if (!ids.has(id)) positions.delete(id);
     if (!active) return;
     const doc = editor.document();
     if (doc.kind !== "pdf") editor.preparePrint();
     if (previewDoc !== doc.id) {
       previewDoc = doc.id;
-      preview.scrollTop = 0;
+      preview.scrollTop = positions.get(doc.id)?.[0] || 0;
+      preview.scrollLeft = positions.get(doc.id)?.[1] || 0;
       if (!$("dialog[open]")) focus();
     }
   }

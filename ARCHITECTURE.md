@@ -67,6 +67,7 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
 | `command-list.js`, `commands.js` | Shared command catalog, menus, shortcuts, dispatch                   |
 | `editor.js`                      | Document draft, revisions, source/split editing, formatting, history |
 | `live-editor.js`                 | Rendered blocks with an active Markdown textarea                     |
+| `editor-position.js`, `live-position.js` | Per-tab selections, pane scroll and Live block restoration after layout |
 | `edit-mode.js`                   | Explicit Live edit gate and read-only controls                       |
 | `sidebar.js`                     | Accessible lazy file tree and collapsible recent-files panel         |
 | `layout.js`                      | Responsive sizing, pointer/keyboard resizers and saved widths        |
@@ -88,6 +89,12 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
    Host messages are sent only after that handshake, when the receiver exists.
 4. Revisions prevent stale drafts from replacing newer content. Frontend echoes
    do not replace an active textarea or reset its cursor.
+   Tab positions are browser-session state keyed by document ID and removed when
+   tabs close. Source/Split retain selection direction and both scroll axes;
+   Live retains its edit gate, source selection and visible block anchor. Pending
+   restoration waits for matching rendered Markdown and checks the active tab
+   before applying. Reading preview positions are also kept per tab. The native
+   fallback uses document-specific egui editor and scroll IDs.
 5. One Rust CommonMark parser generates preview HTML, live blocks, and outline.
    Block offsets sent to JavaScript use UTF-16 positions, including emoji.
 6. Live editing splices the active block's Markdown into its original source
@@ -204,6 +211,9 @@ keeps checkbox edits separate from Live block editing and image selection.
   boundaries/offsets, capture substitutions and result limits.
 - `node tools/smoke-find.cjs`: real WebView2 find/replace, navigation, undo/save,
   regex timeouts/cancellation, stale-result rejection and Live/Source/Split.
+- `node tools/smoke-position.cjs`: per-tab selections, independent Source/Split
+  scroll, deep Live anchors and editing, reading transitions, rapid activation,
+  closed-tab cleanup and empty paragraphs in real WebView2.
 
 The native suite creates fixtures, settings and WebView2 data under
 `target/ui-smoke/<run>/` and never uses the normal preferences directory. It also

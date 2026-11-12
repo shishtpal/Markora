@@ -111,23 +111,26 @@ impl Markora {
                 self.fallback_buf = Some((doc.id, doc.revision, doc.markdown.clone()));
             }
             let (_, rev, text) = self.fallback_buf.as_mut().expect("initialized");
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                let output = egui::TextEdit::multiline(text)
-                    .interactive(!self.reading.active)
-                    .code_editor()
-                    .desired_width(f32::INFINITY)
-                    .desired_rows(30)
-                    .show(ui);
-                if let Some(range) = output.cursor_range {
-                    let range = range.as_sorted_char_range();
-                    self.images.native_range = range.start.0..range.end.0;
-                }
-                if output.response.changed() {
-                    let next_rev = doc.revision + 1;
-                    *rev = next_rev;
-                    doc.edit(text.clone(), next_rev);
-                }
-            });
+            egui::ScrollArea::vertical()
+                .id_salt(("source-scroll", doc.id))
+                .show(ui, |ui| {
+                    let output = egui::TextEdit::multiline(text)
+                        .id_salt(("source-editor", doc.id))
+                        .interactive(!self.reading.active)
+                        .code_editor()
+                        .desired_width(f32::INFINITY)
+                        .desired_rows(30)
+                        .show(ui);
+                    if let Some(range) = output.cursor_range {
+                        let range = range.as_sorted_char_range();
+                        self.images.native_range = range.start.0..range.end.0;
+                    }
+                    if output.response.changed() {
+                        let next_rev = doc.revision + 1;
+                        *rev = next_rev;
+                        doc.edit(text.clone(), next_rev);
+                    }
+                });
         });
         if let Some(pending) = &self.pending
             && self.safety.conflict.is_none()

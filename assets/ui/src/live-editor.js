@@ -1,5 +1,6 @@
 import { connectLiveTasks } from "./live-tasks.js";
 import { element, resolveMedia } from "./dom.js";
+import { createLivePosition } from "./live-position.js";
 
 const INITIAL_BATCH = 60;
 const FRAME_BATCH = 150;
@@ -13,6 +14,7 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
   let nextBlock = null;
   let rafId = null;
   let renderedCount = 0;
+  const position = createLivePosition(root, getDocument, () => active, begin, ensureRenderedThrough);
 
   function cancelQueue() {
     if (rafId !== null) {
@@ -242,14 +244,9 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
     }
   });
   return {
-    selection() {
-      return active
-        ? {
-            start: active.before.length + active.textarea.selectionStart,
-            end: active.before.length + active.textarea.selectionEnd,
-          }
-        : null;
-    },
+    selection: position.selection,
+    capturePosition: position.capture,
+    restorePosition: (state, editable) => position.restore(state, editable, append),
     render,
     finish,
     append,

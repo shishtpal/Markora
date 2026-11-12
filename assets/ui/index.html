@@ -3584,9 +3584,83 @@ function connectLiveTasks(root, getDocument, change, canEdit = () => true) {
 
 return { connectLiveTasks };
 })();
+modules["live-position"] = (() => {
+const { $ } = modules["dom"];
+
+// Recreate the editing block from source offsets, without scrolling the caret into view.
+function createLivePosition(root, getDocument, getActive, begin, ensureRenderedThrough) {
+  const pane = $("#live-pane");
+  function selection() {
+    const active = getActive();
+    return active
+      ? {
+          start: active.before.length + active.textarea.selectionStart,
+          end: active.before.length + active.textarea.selectionEnd,
+          direction: active.textarea.selectionDirection,
+        }
+      : null;
+  }
+  return {
+    selection,
+    capture() {
+      const rect = pane.getBoundingClientRect();
+      // Hit testing avoids laying out offscreen content-visibility batches.
+      let node = null;
+      for (let y = rect.top + 1; y < rect.bottom && !node; y += 16) {
+        node = document.elementFromPoint(rect.left + rect.width / 2, y)?.closest("[data-block]");
+        if (node && !root.contains(node)) node = null;
+      }
+      const textarea = getActive()?.textarea;
+      return {
+        selection: selection(),
+        empty: getActive()?.index === -1 && !textarea.value,
+        anchor: node ? Number(node.dataset.block) : null,
+        offset: node ? node.getBoundingClientRect().top - rect.top : 0,
+        top: pane.scrollTop,
+        left: pane.scrollLeft,
+        textareaScroll: textarea ? [textarea.scrollTop, textarea.scrollLeft] : [0, 0],
+      };
+    },
+    restore(state, editable, append) {
+      const doc = getDocument();
+      if (doc.renderedMarkdown !== doc.markdown) return false;
+      const blocks = doc.rendered.blocks;
+      const anchor = state.anchor === null ? -1 : Math.min(state.anchor, blocks.length - 1);
+      if (anchor >= 0) ensureRenderedThrough(anchor);
+      if (editable && state.selection) {
+        const { start, end, direction } = state.selection;
+        const index = blocks.findIndex((block) => block.end > start);
+        const target = index < 0 ? blocks.length - 1 : index;
+        const textarea = state.empty || target < 0 ? append() : begin(target);
+        if (!textarea) return false;
+        const offset = getActive().before.length;
+        textarea.setSelectionRange(
+          Math.max(0, start - offset),
+          Math.max(0, end - offset),
+          direction,
+        );
+        textarea.scrollTop = state.textareaScroll[0];
+        textarea.scrollLeft = state.textareaScroll[1];
+        textarea.focus({ preventScroll: true });
+      }
+      const node = root.querySelector(`[data-block="${anchor}"]`);
+      if (node) {
+        node.scrollIntoView({ block: "start" });
+        pane.scrollTop +=
+          node.getBoundingClientRect().top - pane.getBoundingClientRect().top - state.offset;
+      } else pane.scrollTop = state.top;
+      pane.scrollLeft = state.left;
+      return true;
+    },
+  };
+}
+
+return { createLivePosition };
+})();
 modules["live-editor"] = (() => {
 const { connectLiveTasks } = modules["live-tasks"];
 const { element, resolveMedia } = modules["dom"];
+const { createLivePosition } = modules["live-position"];
 
 const INITIAL_BATCH = 60;
 const FRAME_BATCH = 150;
@@ -3600,6 +3674,7 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}, canEd
   let nextBlock = null;
   let rafId = null;
   let renderedCount = 0;
+  const position = createLivePosition(root, getDocument, () => active, begin, ensureRenderedThrough);
 
   function cancelQueue() {
     if (rafId !== null) {
@@ -3829,14 +3904,9 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}, canEd
     }
   });
   return {
-    selection() {
-      return active
-        ? {
-            start: active.before.length + active.textarea.selectionStart,
-            end: active.before.length + active.textarea.selectionEnd,
-          }
-        : null;
-    },
+    selection: position.selection,
+    capturePosition: position.capture,
+    restorePosition: (state, editable) => position.restore(state, editable, append),
     render,
     finish,
     append,
@@ -3966,6 +4036,8 @@ function createEditMode(getDocument, isReading, live, flush) {
   }
   return {
     canEdit,
+    enabled: () => enabled,
+    restore(value) { enabled = Boolean(value); paint(); },
     reset() {
       enabled = false;
     },
@@ -3985,11 +4057,99 @@ function createEditMode(getDocument, isReading, live, flush) {
 
 return { createEditMode };
 })();
+modules["editor-position"] = (() => {
+const { $ } = modules["dom"];
+
+// Browser-only tab state. Save before replacing shared DOM; restore after layout.
+function createEditorPosition(getDocument, source, live, editMode, isReading) {
+  const states = new Map();
+  const preview = $("#preview-pane");
+  let pending = null;
+  let frame = null;
+  function save() {
+    const doc = getDocument();
+    if (!doc.id || doc.kind === "pdf" || pending?.id === doc.id || isReading()) return;
+    const state = states.get(doc.id) || {};
+    if (doc.viewMode === "live") {
+      state.live = live.capturePosition();
+      state.enabled = editMode.enabled();
+    } else {
+      state.source = {
+        selection: [source.selectionStart, source.selectionEnd, source.selectionDirection],
+        top: source.scrollTop,
+        left: source.scrollLeft,
+      };
+      if (doc.viewMode === "split") state.preview = [preview.scrollTop, preview.scrollLeft];
+    }
+    states.set(doc.id, state);
+  }
+  function apply() {
+    if (!pending || frame !== null) return;
+    const restore = pending;
+    frame = requestAnimationFrame(() => {
+      frame = null;
+      const doc = getDocument();
+      if (pending !== restore || restore.id !== doc.id || restore.mode !== doc.viewMode) return;
+      if (isReading() || doc.kind === "pdf") {
+        pending = null;
+        return;
+      }
+      const state = states.get(doc.id) || {};
+      if (doc.viewMode === "live") {
+        if (
+          !live.restorePosition(
+            state.live || { anchor: 0, offset: 0, top: 0, left: 0 },
+            editMode.canEdit(),
+          )
+        )
+          return;
+        // Deferred batches resolve their intrinsic heights on the next layout.
+        if (!restore.settled) {
+          restore.settled = true;
+          apply();
+          return;
+        }
+      } else {
+        source.focus({ preventScroll: true });
+        source.setSelectionRange(...(state.source?.selection || [0, 0, "none"]));
+        source.scrollTop = state.source?.top || 0;
+        source.scrollLeft = state.source?.left || 0;
+        if (doc.viewMode === "split") {
+          preview.scrollTop = state.preview?.[0] || 0;
+          preview.scrollLeft = state.preview?.[1] || 0;
+        }
+      }
+      pending = null;
+    });
+  }
+  return {
+    save,
+    apply,
+    restore(switched) {
+      const doc = getDocument();
+      if (switched && doc.viewMode === "live") editMode.restore(states.get(doc.id)?.enabled);
+      if (frame !== null) cancelAnimationFrame(frame);
+      frame = null;
+      pending = { id: doc.id, mode: doc.viewMode };
+      apply();
+    },
+    retain(tabs, histories) {
+      const ids = new Set(tabs.map((tab) => tab.id));
+      for (const map of [states, histories]) {
+        for (const id of map.keys()) if (!ids.has(id)) map.delete(id);
+      }
+    },
+  };
+}
+
+return { createEditorPosition };
+})();
 modules["editor"] = (() => {
 const { $, resolveMedia } = modules["dom"];
 const { createLiveEditor } = modules["live-editor"];
 const { createImageEdits } = modules["editor-images"];
 const { createEditMode } = modules["edit-mode"];
+const { createEditorPosition } = modules["editor-position"];
 function createEditor(onChange, onFlush = () => {}) {
   let doc = {
     id: 0,
@@ -4012,6 +4172,7 @@ function createEditor(onChange, onFlush = () => {}) {
   const canEdit = () => editMode.canEdit();
   const live = createLiveEditor($("#live-document"), () => doc, change, onFlush, canEdit);
   const editMode = createEditMode(() => doc, () => Boolean(reader?.active()), live, onFlush);
+  const position = createEditorPosition(() => doc, source, live, editMode, () => Boolean(reader?.active()));
   const imageEdits = createImageEdits(
     () => doc,
     () => !canEdit(),
@@ -4069,6 +4230,7 @@ function createEditor(onChange, onFlush = () => {}) {
     const kind = incoming.kind || "markdown";
     const switched = incoming.id !== doc.id || kind !== doc.kind;
     if (!switched && incoming.revision < doc.revision) return;
+    if (switched || incoming.viewMode !== doc.viewMode) position.save();
     if (switched || incoming.viewMode !== doc.viewMode) editMode.reset();
     if (kind === "pdf") {
       live.reset();
@@ -4155,14 +4317,8 @@ function createEditor(onChange, onFlush = () => {}) {
     if (doc.viewMode === "split") ensurePreview();
     if (doc.viewMode === "live" && !reader?.active()) live.render();
     editMode.paint();
-    if (switched) {
-      source.scrollTop = 0;
-      $("#live-pane").scrollTop = 0;
-    }
-    if ((modeChanged || switched) && doc.viewMode !== "live" && !reader?.active()) {
-      if (source.value !== doc.markdown) source.value = doc.markdown;
-      source.focus();
-    }
+    if (switched || modeChanged) position.restore(switched);
+    else position.apply();
   }
   function editingSurface() {
     return doc.viewMode === "live" ? live.textarea() || live.focus() : source;
@@ -4246,9 +4402,12 @@ function createEditor(onChange, onFlush = () => {}) {
       editMode.paint();
       if (doc.viewMode === "live") live.render();
     },
+    restorePosition: () => position.restore(false),
+    capturePosition: position.save,
     setReader: (value) => { reader = value; },
     isReading: () => Boolean(reader?.active()),
     accept,
+    retainTabs: (tabs) => position.retain(tabs, histories),
     format,
     history,
     replaceDocument(markdown) {
@@ -4297,6 +4456,7 @@ function createReading(editor) {
     transition = 0,
     previewDoc = null;
   const preview = $("#preview-pane");
+  const positions = new Map();
   const hidden = [
     "#menubar",
     "#tabbar",
@@ -4339,8 +4499,10 @@ function createReading(editor) {
     focus();
   }
   function before(next) {
+    if (active && previewDoc !== null) positions.set(previewDoc, [preview.scrollTop, preview.scrollLeft]);
     next = Boolean(next);
     if (next === active) return;
+    if (next) editor.capturePosition();
     transition++;
     if (next) saved = capture();
     active = next;
@@ -4371,24 +4533,27 @@ function createReading(editor) {
           if (state.focus?.isConnected && state.focus.getClientRects().length) {
             state.focus.focus({ preventScroll: true });
             if (state.selection) state.focus.setSelectionRange(...state.selection);
-          } else editor.focus();
+          } else editor.restorePosition();
           for (const [node, top, left] of state.scroll) {
             if (node.isConnected) {
               node.scrollTop = top;
               node.scrollLeft = left;
             }
           }
-        } else editor.focus();
+        } else editor.restorePosition();
       });
     }
   }
-  function accept() {
+  function accept(tabs) {
+    const ids = new Set(tabs.map((tab) => tab.id));
+    for (const id of positions.keys()) if (!ids.has(id)) positions.delete(id);
     if (!active) return;
     const doc = editor.document();
     if (doc.kind !== "pdf") editor.preparePrint();
     if (previewDoc !== doc.id) {
       previewDoc = doc.id;
-      preview.scrollTop = 0;
+      preview.scrollTop = positions.get(doc.id)?.[0] || 0;
+      preview.scrollLeft = positions.get(doc.id)?.[1] || 0;
       if (!$("dialog[open]")) focus();
     }
   }
@@ -6109,9 +6274,10 @@ const bridge = createBridge((message) => {
   snapshot = message.snapshot;
   reading.before(snapshot.reading);
   if (snapshot.document) editor.accept(snapshot.document);
+  editor.retainTabs(snapshot.tabs);
   layout.accept(snapshot.prefs);
   chrome.accept(snapshot, editor.document());
-  reading.accept();
+  reading.accept(snapshot.tabs);
   dialogs.accept(snapshot);
   conflicts.accept(snapshot);
   commands.update();

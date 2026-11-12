@@ -43,9 +43,10 @@ const bridge = createBridge((message) => {
   snapshot = message.snapshot;
   reading.before(snapshot.reading);
   if (snapshot.document) editor.accept(snapshot.document);
+  editor.retainTabs(snapshot.tabs);
   layout.accept(snapshot.prefs);
   chrome.accept(snapshot, editor.document());
-  reading.accept();
+  reading.accept(snapshot.tabs);
   dialogs.accept(snapshot);
   conflicts.accept(snapshot);
   commands.update();

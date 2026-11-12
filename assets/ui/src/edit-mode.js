@@ -20,6 +20,8 @@ export function createEditMode(getDocument, isReading, live, flush) {
   }
   return {
     canEdit,
+    enabled: () => enabled,
+    restore(value) { enabled = Boolean(value); paint(); },
     reset() {
       enabled = false;
     },
