@@ -19,9 +19,11 @@ export function createEditor(onChange, onFlush = () => {}) {
   let lastPreview = null;
   let lastPreviewDocId = 0;
   let lastPdfUrl = null;
+  let reader = null;
   const live = createLiveEditor($("#live-document"), () => doc, change, onFlush);
 
   function change(markdown, record = true, immediate = false) {
+    if (reader?.active()) return;
     if (markdown === doc.markdown) return;
     doc.markdown = markdown;
     doc.revision++;
@@ -41,7 +43,7 @@ export function createEditor(onChange, onFlush = () => {}) {
       for (let start = 0; start < blocks.length; start += 150) {
         const slice = blocks.slice(start, start + 150);
         batches.push(
-          `<div class="preview-batch${start ? " deferred" : ""}" style="--batch-height:${slice.length * 64}px">${slice.map((b) => b.html).join("")}</div>`,
+          `<div class="preview-batch${start ? " deferred" : ""}" style="--batch-height:${slice.length * 64}px">${slice.map((b) => `<div data-source-start="${b.start}" data-source-end="${b.end}">${b.html}</div>`).join("")}</div>`,
         );
       }
       doc.previewHtml = batches.join("");
@@ -153,13 +155,13 @@ export function createEditor(onChange, onFlush = () => {}) {
     $("#source-pane").hidden = doc.viewMode === "live";
     $("#split-resizer").hidden = doc.viewMode !== "split";
     if (doc.viewMode === "split") ensurePreview();
-    if (doc.viewMode === "live") live.render();
-    if (switched && doc.viewMode === "live" && !doc.markdown) live.append();
+    if (doc.viewMode === "live" && !reader?.active()) live.render();
+    if (switched && doc.viewMode === "live" && !doc.markdown && !reader?.active()) live.append();
     if (switched) {
       source.scrollTop = 0;
       $("#live-pane").scrollTop = 0;
     }
-    if ((modeChanged || switched) && doc.viewMode !== "live") {
+    if ((modeChanged || switched) && doc.viewMode !== "live" && !reader?.active()) {
       if (source.value !== doc.markdown) source.value = doc.markdown;
       source.focus();
     }
@@ -179,6 +181,7 @@ export function createEditor(onChange, onFlush = () => {}) {
     textarea.focus();
   }
   function format(command, url) {
+    if (reader?.active()) return;
     const wraps = {
       bold: ["**", "**"],
       italic: ["*", "*"],
@@ -220,6 +223,7 @@ export function createEditor(onChange, onFlush = () => {}) {
     textarea.focus();
   }
   function history(direction) {
+    if (reader?.active()) return;
     if (!currentHistory) return;
     const { undo, redo } = currentHistory;
     let text;
@@ -235,12 +239,20 @@ export function createEditor(onChange, onFlush = () => {}) {
     live.reset();
     change(text, false, true);
   }
+
   return {
+    resumeEditing: () => {
+      if (doc.viewMode === "live") live.render();
+    },
+    setReader: (value) => {
+      reader = value;
+    },
+    isReading: () => Boolean(reader?.active()),
     accept,
     format,
     history,
     replaceDocument(markdown) {
-      if (doc.kind === "pdf" || markdown === doc.markdown) return;
+      if (reader?.active() || doc.kind === "pdf" || markdown === doc.markdown) return;
       live.reset();
       change(markdown, true, true);
     },
@@ -251,11 +263,13 @@ export function createEditor(onChange, onFlush = () => {}) {
         : null,
     document: () => doc,
     focus() {
+      if (reader?.active()) return reader.focus();
       if (doc.kind === "pdf") $("#pdf-frame").focus();
       else if (doc.viewMode === "live") live.focus();
       else source.focus();
     },
     jump(offset, length = 0) {
+      if (reader?.active()) return reader.jump(offset);
       if (doc.viewMode === "live") live.jump(offset, length);
       else {
         if (source.value !== doc.markdown) source.value = doc.markdown;

@@ -43,6 +43,27 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
   }
   function run(id) {
     closeMenus();
+    if (
+      editor.isReading() &&
+      (formatting.has(id) ||
+        [
+          "undo",
+          "redo",
+          "link",
+          "replace",
+          "find-toggle",
+          "replace-current",
+          "replace-all",
+          "view-live",
+          "view-source",
+          "view-split",
+          "toggle-focus",
+          "toggle-files",
+          "toggle-outline",
+          "reset-layout",
+        ].includes(id))
+    )
+      return;
     if (!ids.has(id)) {
       showError(`Unknown command: ${id}`);
       return;
@@ -215,8 +236,23 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
     if (button) run(button.dataset.command);
     else if (!event.target.closest(".menu")) closeMenus();
   });
+  function readingKey(key) {
+    if (key === "F11") return run("toggle-reading");
+    if (key !== "Escape") return;
+    const dialog = $("dialog[open]");
+    if (dialog) {
+      if (dialog.dispatchEvent(new Event("cancel", { cancelable: true }))) dialog.close();
+    } else if (!$("#findbar").hidden) find.close();
+    else if (editor.isReading()) run("exit-reading");
+  }
   document.addEventListener("keydown", (event) => {
-    if (event.isComposing || $("dialog[open]")) return;
+    if (event.isComposing || event.defaultPrevented || event.altKey) return;
+    if (event.key === "F11" && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      event.preventDefault();
+      if (!event.repeat) readingKey("F11");
+      return;
+    }
+    if ($("dialog[open]")) return;
     const mod = event.ctrlKey || event.metaKey;
     if (
       mod &&
@@ -235,7 +271,8 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
     if (event.key === "Escape") {
       closeMenus();
       if (!$("#findbar").hidden) return find.close();
-      if (getSnapshot()?.prefs.focusMode) command = "toggle-focus";
+      if (editor.isReading()) command = "exit-reading";
+      else if (getSnapshot()?.prefs.focusMode) command = "toggle-focus";
     }
     if (command) {
       event.preventDefault();
@@ -243,5 +280,5 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
     }
   });
   dialogs.setRun(run);
-  return { run, update: () => find.update() };
+  return { run, readingKey, update: () => find.update() };
 }

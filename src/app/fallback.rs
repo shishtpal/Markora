@@ -10,56 +10,59 @@ impl Markora {
         let is_pdf = active_doc.kind == DocKind::Pdf;
         let active_id = active_doc.id;
         let pdf_pages = active_doc.pdf.as_ref().map(|p| p.page_count()).unwrap_or(0);
-        egui::Panel::top("toolbar").show(ui, |ui| {
-            ui.horizontal(|ui| {
-                for (label, id) in [
-                    ("New", "new-tab"),
-                    ("Open", "open"),
-                    ("Folder", "open-folder"),
-                    ("Save", "save"),
-                    ("Save as", "save-as"),
-                    ("Files", "toggle-files"),
-                    ("Outline", "toggle-outline"),
-                    ("Theme", "toggle-theme"),
-                ] {
-                    let enabled = !(is_pdf && matches!(id, "save" | "save-as"));
-                    if ui.add_enabled(enabled, egui::Button::new(label)).clicked() {
-                        command = Some(id);
+        if !self.reading.active {
+            egui::Panel::top("toolbar").show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    for (label, id) in [
+                        ("New", "new-tab"),
+                        ("Open", "open"),
+                        ("Folder", "open-folder"),
+                        ("Save", "save"),
+                        ("Save as", "save-as"),
+                        ("Files", "toggle-files"),
+                        ("Outline", "toggle-outline"),
+                        ("Theme", "toggle-theme"),
+                    ] {
+                        let enabled = !(is_pdf && matches!(id, "save" | "save-as"));
+                        if ui.add_enabled(enabled, egui::Button::new(label)).clicked() {
+                            command = Some(id);
+                        }
                     }
-                }
+                });
+                ui.horizontal_wrapped(|ui| {
+                    let mut activate = None;
+                    let mut close = None;
+                    for doc in &self.workspace.tabs {
+                        let label =
+                            format!("{}{}", doc.title(), if doc.dirty() { " •" } else { "" });
+                        if ui
+                            .selectable_label(doc.id == self.workspace.doc().id, label)
+                            .clicked()
+                        {
+                            activate = Some(doc.id);
+                        }
+                        if ui.small_button("×").clicked() {
+                            close = Some(doc.id);
+                        }
+                    }
+                    if let Some(id) = activate {
+                        self.workspace.activate(id);
+                    }
+                    if let Some(id) = close {
+                        self.request_close(CloseAction::Tab(id));
+                    }
+                });
             });
-            ui.horizontal_wrapped(|ui| {
-                let mut activate = None;
-                let mut close = None;
-                for doc in &self.workspace.tabs {
-                    let label = format!("{}{}", doc.title(), if doc.dirty() { " •" } else { "" });
-                    if ui
-                        .selectable_label(doc.id == self.workspace.doc().id, label)
-                        .clicked()
-                    {
-                        activate = Some(doc.id);
-                    }
-                    if ui.small_button("×").clicked() {
-                        close = Some(doc.id);
-                    }
-                }
-                if let Some(id) = activate {
-                    self.workspace.activate(id);
-                }
-                if let Some(id) = close {
-                    self.request_close(CloseAction::Tab(id));
-                }
+            egui::Panel::bottom("status").show(ui, |ui| {
+                let mode = if is_pdf {
+                    "Native PDF viewer"
+                } else {
+                    "Native source editor"
+                };
+                ui.label(format!("{} · {mode}", self.status));
             });
-        });
-        egui::Panel::bottom("status").show(ui, |ui| {
-            let mode = if is_pdf {
-                "Native PDF viewer"
-            } else {
-                "Native source editor"
-            };
-            ui.label(format!("{} · {mode}", self.status));
-        });
-        if self.prefs.show_files && !self.prefs.focus_mode {
+        }
+        if self.prefs.show_files && !self.prefs.focus_mode && !self.reading.active {
             egui::Panel::left("files")
                 .resizable(true)
                 .default_size(self.prefs.files_width)
@@ -78,7 +81,7 @@ impl Markora {
                     }
                 });
         }
-        if self.prefs.show_outline && !self.prefs.focus_mode {
+        if self.prefs.show_outline && !self.prefs.focus_mode && !self.reading.active {
             egui::Panel::right("outline")
                 .resizable(true)
                 .default_size(self.prefs.outline_width)
@@ -122,6 +125,7 @@ impl Markora {
                 if ui
                     .add(
                         egui::TextEdit::multiline(text)
+                            .interactive(!self.reading.active)
                             .code_editor()
                             .desired_width(f32::INFINITY)
                             .desired_rows(30),

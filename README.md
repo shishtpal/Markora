@@ -42,6 +42,22 @@ The Live editor keeps the active block as Markdown source. Its edits, source
 editing, previews and file saves all use the same document model. There is no
 DOM-to-Markdown conversion step.
 
+## Fullscreen reading
+
+Press **F11**, or choose **View → Fullscreen reading view**, to read the current
+document fullscreen. Markdown uses a rendered, read-only preview; PDF tabs keep
+their existing viewer. Menus, tabs, formatting controls, sidebars and the status
+bar are hidden. Scrolling, copying, links and **Ctrl+F** remain available.
+
+Press **F11**, **Escape**, or **Exit reading** to return to editing. Escape closes
+an open dialog or find bar first. The previous editor mode, selection, scroll
+position and window placement are restored. Reading does not change saved focus
+or sidebar preferences and is not restored after restarting the app.
+
+On Linux and the native fallback interface, F11 shows the existing source or PDF
+view fullscreen with editing disabled; rendered Markdown reading requires the
+Windows web interface.
+
 ## Find and replace (Windows web interface)
 
 Use **Ctrl+F** to find or **Ctrl+H** for find and replace; both are also in the
@@ -143,6 +159,7 @@ the local asset protocol. Node and a web server are not needed at runtime.
 | Ctrl+Z / Ctrl+Shift+Z     | Undo / redo                  |
 | Ctrl+Shift+P / Ctrl+K     | Command palette              |
 | Ctrl+D                    | Focus mode                   |
+| F11                       | Fullscreen reading / exit    |
 | Ctrl+Shift+L              | Toggle light / dark          |
 | Ctrl+Shift+T              | Next Markdown theme          |
 | Ctrl+,                    | Settings                     |

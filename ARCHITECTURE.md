@@ -29,6 +29,8 @@ flowchart LR
 | `src/app/files.rs`                | File/folder dialogs, open/save, recents                 |
 | `src/app/export.rs`               | Exports and acknowledged print/PDF preparation          |
 | `src/app/fallback.rs`             | Native source editor when WebView2 is unavailable       |
+| `src/app/reading.rs`              | Transient reading state and native fullscreen lifecycle |
+| `src/webview_keys.rs`             | F11 and PDF reading Escape through WebView2 accelerators |
 | `src/model.rs`                    | Documents, revisions, dirty tracking, tabs, preferences |
 | `src/markdown.rs`                 | CommonMark/GFM HTML, source block ranges, outline       |
 | `src/protocol.rs`                 | Serde request and snapshot types                        |
@@ -60,6 +62,7 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
 | `editor.js`                      | Document draft, revisions, source/split editing, formatting, history |
 | `live-editor.js`                 | Rendered blocks with an active Markdown textarea                     |
 | `layout.js`                      | Responsive sizing, pointer/keyboard resizers and saved widths        |
+| `reading.js`                     | Read-only preview presentation and editor focus/selection/scroll restore |
 | `chrome.js`                      | Tabs, file lists, recents, outline, status and themes                |
 | `dialogs.js`, `find.js`          | Modal UI, palette, settings and document search                      |
 | `search-engine.js`               | Unicode-aware matching, bounded replacement and regex captures       |
@@ -91,6 +94,16 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
    work. Regex execution has a 1.5-second timeout; truncated match sets cannot
    be replaced in bulk. A replacement updates the document once through the
    editor's normal revision/history/IPC flow, making Replace All one undo step.
+
+F11 goes through the shared command catalog. WebView2 native accelerators forward
+F11 (and Escape while reading a PDF) to the page after their COM callback returns;
+the page sends a normal command with its latest draft. Rust owns transient reading
+state, prepares deferred Source rendering and requests native fullscreen through
+egui. State snapshots drive `reading.js`, which reuses the existing preview and
+keeps the Live/Source/Split mode and saved preferences intact. Winit restores native
+window placement on fullscreen exit. The frontend preserves editing focus,
+selection and scroll; find navigates rendered source-block anchors while mutation
+commands and pending replacements are disabled. The mode is not persisted.
 
 ## Build and persistence
 
@@ -140,7 +153,8 @@ optimistic conflict detection, not an exclusive lock on other applications.
 - `cargo clippy --all-targets -- -D warnings`: Rust checks.
 - `node tools/verify-ui.cjs`: bundle syntax, IDs, embedded fonts, 300-line module limit.
 - `node tools/smoke-native.cjs`: actual Rust + WebView2 menus, shortcuts, palette,
-  editing, resizing, width, unsaved changes and file save. Requires Windows.
+  editing, resizing, fullscreen reading and window restoration, width, unsaved
+  changes and file save. Requires Windows.
 - `node tools/smoke-safety.cjs`: external conflicts, Live reload, forced shutdown,
   restored tabs/drafts and graceful-exit discard in real WebView2 processes.
 - `node --test tools/test-search.cjs`: production search semantics, Unicode

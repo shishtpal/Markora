@@ -2278,6 +2278,47 @@ button.primary {
   overflow-wrap: anywhere;
   font-size: 0.86rem;
 }
+body.reading-mode :is( #menubar, #tabbar, #viewbar, #statusbar, #files-panel, #outline-panel, #files-resizer, #outline-resizer, #source-pane, #live-pane, #split-resizer ) {
+  display: none !important;
+}
+body.reading-mode #workspace {
+  grid-template-columns: minmax(0, 1fr);
+}
+body.reading-mode #document {
+  grid-column: 1;
+}
+body.reading-mode #document #preview-pane {
+  display: block;
+  flex: 1;
+}
+body.reading-mode #app[data-doc-kind="pdf"] #preview-pane {
+  display: none;
+}
+body.reading-mode .markdown-body {
+  padding: 56px clamp(24px, 5vw, 80px) 40px;
+}
+body.reading-mode .reading-match {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+#exit-reading {
+  position: fixed;
+  inset-block-start: 12px;
+  inset-inline-end: 16px;
+  z-index: 30;
+  padding: 6px 12px;
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 2px 10px #0002;
+}
+@media print {
+  #exit-reading {
+    display: none !important;
+  }
+}
 @property --tw-rotate-x {
   syntax: "*";
   inherits: false;
@@ -2445,6 +2486,8 @@ button.primary {
 
 <body>
   <div id="app" aria-label="Markora Markdown editor">
+    <button type="button" id="exit-reading" data-command="exit-reading" hidden
+      title="Exit fullscreen reading (F11 or Escape)">Exit reading · F11</button>
     <header id="menubar">
       <nav id="menus" role="menubar" aria-label="Application menus"></nav>
       <div class="spacer"></div>
@@ -2593,7 +2636,7 @@ button.primary {
         </div>
         <div id="split-resizer" class="resizer" hidden role="separator" tabindex="0"
           aria-label="Resize source and preview" aria-orientation="vertical"></div>
-        <div id="preview-pane" class="scroll-pane">
+        <div id="preview-pane" class="scroll-pane" tabindex="0" role="region" aria-label="Rendered document">
           <div id="preview-document" class="markdown-body" aria-label="Markdown preview"></div>
         </div>
         <div id="pdf-pane" class="pdf-pane" hidden>
@@ -3324,9 +3367,11 @@ function createEditor(onChange, onFlush = () => {}) {
   let lastPreview = null;
   let lastPreviewDocId = 0;
   let lastPdfUrl = null;
+  let reader = null;
   const live = createLiveEditor($("#live-document"), () => doc, change, onFlush);
 
   function change(markdown, record = true, immediate = false) {
+    if (reader?.active()) return;
     if (markdown === doc.markdown) return;
     doc.markdown = markdown;
     doc.revision++;
@@ -3346,7 +3391,7 @@ function createEditor(onChange, onFlush = () => {}) {
       for (let start = 0; start < blocks.length; start += 150) {
         const slice = blocks.slice(start, start + 150);
         batches.push(
-          `<div class="preview-batch${start ? " deferred" : ""}" style="--batch-height:${slice.length * 64}px">${slice.map((b) => b.html).join("")}</div>`,
+          `<div class="preview-batch${start ? " deferred" : ""}" style="--batch-height:${slice.length * 64}px">${slice.map((b) => `<div data-source-start="${b.start}" data-source-end="${b.end}">${b.html}</div>`).join("")}</div>`,
         );
       }
       doc.previewHtml = batches.join("");
@@ -3458,13 +3503,13 @@ function createEditor(onChange, onFlush = () => {}) {
     $("#source-pane").hidden = doc.viewMode === "live";
     $("#split-resizer").hidden = doc.viewMode !== "split";
     if (doc.viewMode === "split") ensurePreview();
-    if (doc.viewMode === "live") live.render();
-    if (switched && doc.viewMode === "live" && !doc.markdown) live.append();
+    if (doc.viewMode === "live" && !reader?.active()) live.render();
+    if (switched && doc.viewMode === "live" && !doc.markdown && !reader?.active()) live.append();
     if (switched) {
       source.scrollTop = 0;
       $("#live-pane").scrollTop = 0;
     }
-    if ((modeChanged || switched) && doc.viewMode !== "live") {
+    if ((modeChanged || switched) && doc.viewMode !== "live" && !reader?.active()) {
       if (source.value !== doc.markdown) source.value = doc.markdown;
       source.focus();
     }
@@ -3484,6 +3529,7 @@ function createEditor(onChange, onFlush = () => {}) {
     textarea.focus();
   }
   function format(command, url) {
+    if (reader?.active()) return;
     const wraps = {
       bold: ["**", "**"],
       italic: ["*", "*"],
@@ -3525,6 +3571,7 @@ function createEditor(onChange, onFlush = () => {}) {
     textarea.focus();
   }
   function history(direction) {
+    if (reader?.active()) return;
     if (!currentHistory) return;
     const { undo, redo } = currentHistory;
     let text;
@@ -3540,12 +3587,20 @@ function createEditor(onChange, onFlush = () => {}) {
     live.reset();
     change(text, false, true);
   }
+
   return {
+    resumeEditing: () => {
+      if (doc.viewMode === "live") live.render();
+    },
+    setReader: (value) => {
+      reader = value;
+    },
+    isReading: () => Boolean(reader?.active()),
     accept,
     format,
     history,
     replaceDocument(markdown) {
-      if (doc.kind === "pdf" || markdown === doc.markdown) return;
+      if (reader?.active() || doc.kind === "pdf" || markdown === doc.markdown) return;
       live.reset();
       change(markdown, true, true);
     },
@@ -3556,11 +3611,13 @@ function createEditor(onChange, onFlush = () => {}) {
         : null,
     document: () => doc,
     focus() {
+      if (reader?.active()) return reader.focus();
       if (doc.kind === "pdf") $("#pdf-frame").focus();
       else if (doc.viewMode === "live") live.focus();
       else source.focus();
     },
     jump(offset, length = 0) {
+      if (reader?.active()) return reader.jump(offset);
       if (doc.viewMode === "live") live.jump(offset, length);
       else {
         if (source.value !== doc.markdown) source.value = doc.markdown;
@@ -3577,6 +3634,120 @@ function createEditor(onChange, onFlush = () => {}) {
 }
 
 return { createEditor };
+})();
+modules["reading"] = (() => {
+const { $, $$ } = modules["dom"];
+
+// The native host owns the mode; this module preserves transient editing UI.
+function createReading(editor) {
+  let active = false,
+    saved = null,
+    transition = 0,
+    previewDoc = null;
+  const preview = $("#preview-pane");
+  const hidden = [
+    "#menubar",
+    "#tabbar",
+    "#viewbar",
+    "#statusbar",
+    "#files-panel",
+    "#outline-panel",
+    "#files-resizer",
+    "#outline-resizer",
+    "#source-pane",
+    "#live-pane",
+    "#split-resizer",
+  ].map($);
+
+  function capture() {
+    const focus = document.activeElement;
+    return {
+      id: editor.document().id,
+      focus,
+      selection:
+        focus instanceof HTMLTextAreaElement
+          ? [focus.selectionStart, focus.selectionEnd, focus.selectionDirection]
+          : null,
+      scroll: [$("#source-editor"), $("#live-pane"), preview, $(".block-editor")]
+        .filter(Boolean)
+        .map((node) => [node, node.scrollTop, node.scrollLeft]),
+    };
+  }
+  function focus() {
+    (editor.document().kind === "pdf" ? $("#pdf-frame") : preview).focus({ preventScroll: true });
+  }
+  function jump(offset) {
+    const blocks = $$("#preview-document [data-source-end]");
+    const block = blocks.find((b) => Number(b.dataset.sourceEnd) > offset) || blocks.at(-1);
+    $$(".reading-match").forEach((b) => b.classList.remove("reading-match"));
+    if (block) {
+      block.classList.add("reading-match");
+      block.scrollIntoView({ block: "center" });
+    }
+    focus();
+  }
+  function before(next) {
+    next = Boolean(next);
+    if (next === active) return;
+    transition++;
+    if (next) saved = capture();
+    active = next;
+    document.body.classList.toggle("reading-mode", active);
+    hidden.forEach((node) => {
+      node.inert = active;
+    });
+    $("#exit-reading").hidden = !active;
+    $("#find-toggle").disabled = active;
+    if (active) {
+      $("#replace-row").hidden = true;
+      $("#find-toggle").setAttribute("aria-expanded", "false");
+    }
+    $$("[data-command='toggle-reading']").forEach((button) => {
+      button.setAttribute("aria-pressed", String(active));
+    });
+
+    if (!active) {
+      editor.resumeEditing();
+      const state = saved,
+        token = transition;
+      saved = null;
+      previewDoc = null;
+      $$(".reading-match").forEach((b) => b.classList.remove("reading-match"));
+      requestAnimationFrame(() => {
+        if (active || token !== transition) return;
+        if (state?.id === editor.document().id) {
+          if (state.focus?.isConnected && state.focus.getClientRects().length) {
+            state.focus.focus({ preventScroll: true });
+            if (state.selection) state.focus.setSelectionRange(...state.selection);
+          } else editor.focus();
+          for (const [node, top, left] of state.scroll) {
+            if (node.isConnected) {
+              node.scrollTop = top;
+              node.scrollLeft = left;
+            }
+          }
+        } else editor.focus();
+      });
+    }
+  }
+  function accept() {
+    if (!active) return;
+    const doc = editor.document();
+    if (doc.kind !== "pdf") editor.preparePrint();
+    if (previewDoc !== doc.id) {
+      previewDoc = doc.id;
+      preview.scrollTop = 0;
+      if (!$("dialog[open]")) focus();
+    }
+  }
+  // Task lists remain selectable and copyable, but cannot change in reading mode.
+  $("#preview-document").addEventListener("click", (event) => {
+    if (active && event.target.closest("input")) event.preventDefault();
+  });
+  return { active: () => active, before, accept, focus, jump };
+}
+
+return { createReading };
 })();
 modules["layout"] = (() => {
 const { $, $$ } = modules["dom"];
@@ -3734,6 +3905,7 @@ const COMMANDS = [
   ["toggle-files", "Toggle files sidebar", "Ctrl+\\", "View"],
   ["toggle-outline", "Toggle outline sidebar", "", "View"],
   ["toggle-focus", "Toggle focus mode", "Ctrl+D", "View"],
+  ["toggle-reading", "Fullscreen reading view", "F11", "View"],
   ["toggle-theme", "Toggle light / dark", "Ctrl+Shift+L", "View"],
   ["md-theme-next", "Next Markdown theme", "Ctrl+Shift+T", "View"],
   ["reset-layout", "Reset sidebar widths", "", "View"],
@@ -3750,6 +3922,7 @@ const COMMANDS = [
   ["find-toggle", "Toggle replacement", "", null],
   ["replace-current", "Replace current match", "", null],
   ["replace-all", "Replace all matches", "", null],
+  ["exit-reading", "Exit fullscreen reading", "", null],
 ].map(([id, label, shortcut, menu]) => ({ id, label, shortcut, menu }));
 
 return { COMMANDS };
@@ -3910,6 +4083,7 @@ function createFind(editor) {
     replacing = false,
     generation = 0,
     lastDoc = null;
+  let wasReading = false;
 
   function request() {
     const doc = editor.document();
@@ -3943,7 +4117,12 @@ function createFind(editor) {
     input.setAttribute("aria-invalid", String(failed));
     for (const id of ["replace-one", "replace-all"])
       $("#" + id).disabled =
-        busy || replacing || failed || !hits.length || (id === "replace-all" && limited);
+        editor.isReading() ||
+        busy ||
+        replacing ||
+        failed ||
+        !hits.length ||
+        (id === "replace-all" && limited);
   }
   function stop() {
     clearTimeout(timer);
@@ -3997,13 +4176,23 @@ function createFind(editor) {
     });
     return pending;
   }
+
   function update() {
+    if (wasReading !== editor.isReading()) {
+      wasReading = editor.isReading();
+      stop();
+      replacing = false;
+      key = null;
+      if (wasReading) toggleReplace(false);
+      paint();
+    }
     if (bar.hidden || editor.document().kind === "pdf") {
       if (pending || replacing) stop();
       return;
     }
     if (!replacing) void ensure();
   }
+
   function changed() {
     stop();
     key = null;
@@ -4031,9 +4220,9 @@ function createFind(editor) {
     editor.jump(hit.start, hit.length);
   }
   async function replace(all = false) {
-    if (replacing) return;
+    if (replacing || editor.isReading()) return;
     const ready = await ensure();
-    if (replacing || !ready || !hits.length || (all && limited)) return;
+    if (replacing || editor.isReading() || !ready || !hits.length || (all && limited)) return;
     const before = stamp(),
       focus = document.activeElement,
       token = ++generation;
@@ -4046,7 +4235,7 @@ function createFind(editor) {
       index: Math.max(0, index),
     });
     replacing = false;
-    if (token !== generation || bar.hidden) {
+    if (token !== generation || bar.hidden || editor.isReading()) {
       paint();
       return;
     }
@@ -4070,6 +4259,7 @@ function createFind(editor) {
     }
   }
   function toggleReplace(show = $("#replace-row").hidden) {
+    show = show && !editor.isReading();
     $("#replace-row").hidden = !show;
     $("#find-toggle").setAttribute("aria-expanded", String(show));
     if (show) replacement.focus();
@@ -4401,6 +4591,27 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
   }
   function run(id) {
     closeMenus();
+    if (
+      editor.isReading() &&
+      (formatting.has(id) ||
+        [
+          "undo",
+          "redo",
+          "link",
+          "replace",
+          "find-toggle",
+          "replace-current",
+          "replace-all",
+          "view-live",
+          "view-source",
+          "view-split",
+          "toggle-focus",
+          "toggle-files",
+          "toggle-outline",
+          "reset-layout",
+        ].includes(id))
+    )
+      return;
     if (!ids.has(id)) {
       showError(`Unknown command: ${id}`);
       return;
@@ -4573,8 +4784,23 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
     if (button) run(button.dataset.command);
     else if (!event.target.closest(".menu")) closeMenus();
   });
+  function readingKey(key) {
+    if (key === "F11") return run("toggle-reading");
+    if (key !== "Escape") return;
+    const dialog = $("dialog[open]");
+    if (dialog) {
+      if (dialog.dispatchEvent(new Event("cancel", { cancelable: true }))) dialog.close();
+    } else if (!$("#findbar").hidden) find.close();
+    else if (editor.isReading()) run("exit-reading");
+  }
   document.addEventListener("keydown", (event) => {
-    if (event.isComposing || $("dialog[open]")) return;
+    if (event.isComposing || event.defaultPrevented || event.altKey) return;
+    if (event.key === "F11" && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      event.preventDefault();
+      if (!event.repeat) readingKey("F11");
+      return;
+    }
+    if ($("dialog[open]")) return;
     const mod = event.ctrlKey || event.metaKey;
     if (
       mod &&
@@ -4593,7 +4819,8 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
     if (event.key === "Escape") {
       closeMenus();
       if (!$("#findbar").hidden) return find.close();
-      if (getSnapshot()?.prefs.focusMode) command = "toggle-focus";
+      if (editor.isReading()) command = "exit-reading";
+      else if (getSnapshot()?.prefs.focusMode) command = "toggle-focus";
     }
     if (command) {
       event.preventDefault();
@@ -4601,7 +4828,7 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
     }
   });
   dialogs.setRun(run);
-  return { run, update: () => find.update() };
+  return { run, readingKey, update: () => find.update() };
 }
 
 return { createCommands };
@@ -4820,9 +5047,14 @@ const { createDialogs } = modules["dialogs"];
 const { createCommands } = modules["commands"];
 const { createChrome } = modules["chrome"];
 const { createConflictDialog } = modules["conflicts"];
+const { createReading } = modules["reading"];
 
 let snapshot = null;
 const bridge = createBridge((message) => {
+  if (message.type === "readingKey") {
+    commands.readingKey(message.key);
+    return;
+  }
   if (message.type === "preparePrint") {
     const doc = editor.document();
     if (doc.id !== message.docId || doc.revision !== message.revision) {
@@ -4831,9 +5063,11 @@ const bridge = createBridge((message) => {
     }
     editor.preparePrint();
     // Let the browser lay out the complete preview before native printing starts.
-    document.fonts.ready.then(() => requestAnimationFrame(() => {
-      bridge.send({ type: "printReady", token: message.token });
-    }));
+    document.fonts.ready.then(() =>
+      requestAnimationFrame(() => {
+        bridge.send({ type: "printReady", token: message.token });
+      }),
+    );
     return;
   }
   if (message.type === "requestClose") {
@@ -4842,9 +5076,11 @@ const bridge = createBridge((message) => {
   }
   if (message.type !== "state") return;
   snapshot = message.snapshot;
+  reading.before(snapshot.reading);
   if (snapshot.document) editor.accept(snapshot.document);
   layout.accept(snapshot.prefs);
   chrome.accept(snapshot, editor.document());
+  reading.accept();
   dialogs.accept(snapshot);
   conflicts.accept(snapshot);
   commands.update();
@@ -4855,6 +5091,8 @@ const editor = createEditor(
   () => bridge.flushEdit(),
 );
 bridge.setDraft(() => editor.draft());
+const reading = createReading(editor);
+editor.setReader(reading);
 const preferences = (patch) => bridge.send({ type: "preferences", patch });
 const layout = createLayout(preferences);
 const dialogs = createDialogs(bridge.send, preferences, editor);

@@ -14,6 +14,8 @@ use webview2_com::{
 };
 use windows_core::{HSTRING, Interface, PCWSTR};
 use wry::{WebView, WebViewBuilder, WebViewExtWindows};
+#[path = "webview_keys.rs"]
+mod keys;
 
 pub type ExportQueue = Arc<Mutex<VecDeque<Result<PathBuf, String>>>>;
 
@@ -22,6 +24,7 @@ pub struct Host {
     bounds: Option<wry::Rect>,
     exports: ExportQueue,
     wake: egui::Context,
+    reading_pdf: Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl Host {
@@ -37,6 +40,7 @@ impl Host {
         };
         let parent = ParentWindow(handle.hwnd.get());
         let ipc_wake = wake.clone();
+        let key_queue = queue.clone();
         let bg = if dark_mode {
             (17, 21, 29, 255)
         } else {
@@ -103,11 +107,13 @@ impl Host {
             .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny)
             .build_as_child(&parent)
             .map_err(|e| e.to_string())?;
+        let reading_pdf = keys::install(&webview, key_queue, wake.clone())?;
         Ok(Self {
             webview,
             bounds: None,
             exports: Arc::new(Mutex::new(VecDeque::new())),
             wake,
+            reading_pdf,
         })
     }
 
@@ -116,6 +122,11 @@ impl Host {
         self.webview
             .evaluate_script(&format!("window.markoraReceive({json})"))
             .map_err(|e| e.to_string())
+    }
+
+    pub fn set_reading_pdf(&self, active: bool) {
+        self.reading_pdf
+            .store(active, std::sync::atomic::Ordering::Relaxed);
     }
 
     pub fn print(&self) -> Result<(), String> {

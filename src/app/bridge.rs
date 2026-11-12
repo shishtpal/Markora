@@ -44,6 +44,7 @@ impl Markora {
                     self.client_known_markdown = None;
                 }
                 Action::Edit => {}
+                Action::ReadingKey { key } => self.forward_reading_key(key),
                 Action::PrintReady { token } => self.finish_print(token),
                 Action::Command { command } => self.run_command(&command),
                 Action::OpenPath { path } => self.open_path(path.into()),
@@ -180,6 +181,7 @@ impl Markora {
                 .collect(),
             document,
             active_doc_id: doc.id,
+            reading: self.reading.active,
             view_mode: doc.view_mode,
             word_count: doc.word_count,
             char_count: doc.char_count,

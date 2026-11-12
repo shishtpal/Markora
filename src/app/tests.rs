@@ -50,6 +50,7 @@ impl Fixture {
             client_known_markdown: None,
             fallback_buf: None,
             pdf_viewer: PdfViewerState::default(),
+            reading: reading::ReadingState::default(),
             safety: safety::SafetyState::default(),
         };
         Self { app, dir }

@@ -10,6 +10,7 @@ const order = [
   "bridge",
   "live-editor",
   "editor",
+  "reading",
   "layout",
   "command-list",
   "search-engine",

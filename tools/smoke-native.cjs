@@ -97,6 +97,7 @@ async function main() {
     await call("Input.dispatchKeyEvent", { type: "keyUp", key: "L", code: "KeyL", modifiers: 10 });
     await wait(`document.documentElement.dataset.color==='dark'`, "keyboard theme toggle");
     console.log("PASS File/View menus, draft ordering, split preview, theme menu and shortcut");
+    await require("./check-reading.cjs")(client, menu, app.pid, artifacts);
 
     await click('[data-command="command-palette"]');
     await evaluate(
@@ -345,6 +346,8 @@ async function main() {
     assert.equal(pdfBox.hidden, false);
     assert(pdfBox.w > 200 && pdfBox.h > 200, "PDF iframe must fill workspace");
     console.log("PASS relative .pdf link opens inline WebView2 PDF viewer");
+    const readingScreenshot = await require("./check-reading.cjs").pdf(client, app.pid);
+    fs.writeFileSync(path.join(artifacts, "pdf-reading.png"), Buffer.from(readingScreenshot.data, "base64"));
 
     const largePath = path.join(artifacts, "large.md");
     let largeMd = "";
@@ -393,9 +396,16 @@ async function main() {
     console.log(`PASS large Source open (${sourceOpenMs} ms)`);
     const changedLarge = largeMd + "\nLast **unsaved** paragraph.\n";
     await input(changedLarge);
+    await evaluate(`(()=>{const t=document.querySelector('#source-editor');t.focus();t.setSelectionRange(16000,16007);t.scrollTop=3000;window.readingScroll=t.scrollTop;})()`);
+    await menu("View", "toggle-reading");
+    await wait(`document.body.classList.contains('reading-mode') && document.querySelector('#preview-document').textContent.endsWith('Last unsaved paragraph.\\n')`,
+      "reading prepares the latest unsaved deferred Source document", 15000);
+    await click('#exit-reading');
+    await wait(`!document.body.classList.contains('reading-mode')`, "large Source reading exit");
+    await wait(`document.querySelector('#source-editor').selectionStart===16000 && document.querySelector('#source-editor').scrollTop===window.readingScroll`, "large Source selection and scroll restored");
     // A state response arriving while the large draft is debounced must not lose the edit.
     await menu("View", "view-split");
-    await wait(`document.querySelector('#preview-document').lastElementChild?.lastElementChild?.textContent==='Last unsaved paragraph.'`,
+    await wait(`[...document.querySelectorAll('#preview-document p')].at(-1)?.textContent==='Last unsaved paragraph.'`,
       "deferred Source render and immediate mode change preserve the newest draft");
     assert.equal(await evaluate(`document.querySelector('#source-editor').value`), changedLarge);
     console.log("PASS large debounced source draft reaches Split preview");
@@ -414,7 +424,7 @@ async function main() {
     })()`);
     await input(changedLarge + "\nLatest print **draft**.\n");
     await menu("File", "print");
-    await wait(`window.printAcknowledgement && document.querySelector('#preview-document').lastElementChild?.lastElementChild?.textContent==='Latest print draft.'`,
+    await wait(`window.printAcknowledgement && [...document.querySelectorAll('#preview-document p')].at(-1)?.textContent==='Latest print draft.'`,
       "native print waits for the newest deferred source preview");
     assert.deepEqual(client.errors, []);
     console.log(`PASS real file open, immediate edit+Save, ${Math.round(largeMd.length / 1024)} KiB file: Live ${openMs} ms / Source ${sourceOpenMs} ms, render completion and clean runtime`);

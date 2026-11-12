@@ -9,6 +9,9 @@ mod files;
 mod loading_tests;
 mod pdf_state;
 mod pdf_viewer;
+mod reading;
+#[cfg(test)]
+mod reading_tests;
 mod safety;
 #[cfg(test)]
 mod safety_tests;
@@ -99,6 +102,7 @@ pub struct Markora {
     client_known_markdown: Option<(u64, u64)>,
     fallback_buf: Option<(u64, u64, String)>,
     pdf_viewer: PdfViewerState,
+    reading: reading::ReadingState,
     safety: safety::SafetyState,
 }
 
@@ -148,6 +152,7 @@ impl Markora {
             client_known_markdown: None,
             fallback_buf: None,
             pdf_viewer: PdfViewerState::default(),
+            reading: reading::ReadingState::default(),
             safety: safety::SafetyState::default(),
         };
         if let Some(path) = initial_arg {
@@ -202,6 +207,7 @@ impl eframe::App for Markora {
         self.ensure_webview(&ctx);
         self.drain_bridge();
         self.drain_bg();
+        self.reading_frame(&ctx);
         self.pdf_viewer.drain(&ctx);
         let exports = self
             .webview

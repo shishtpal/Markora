@@ -40,6 +40,7 @@ export const COMMANDS = [
   ["toggle-files", "Toggle files sidebar", "Ctrl+\\", "View"],
   ["toggle-outline", "Toggle outline sidebar", "", "View"],
   ["toggle-focus", "Toggle focus mode", "Ctrl+D", "View"],
+  ["toggle-reading", "Fullscreen reading view", "F11", "View"],
   ["toggle-theme", "Toggle light / dark", "Ctrl+Shift+L", "View"],
   ["md-theme-next", "Next Markdown theme", "Ctrl+Shift+T", "View"],
   ["reset-layout", "Reset sidebar widths", "", "View"],
@@ -56,4 +57,5 @@ export const COMMANDS = [
   ["find-toggle", "Toggle replacement", "", null],
   ["replace-current", "Replace current match", "", null],
   ["replace-all", "Replace all matches", "", null],
+  ["exit-reading", "Exit fullscreen reading", "", null],
 ].map(([id, label, shortcut, menu]) => ({ id, label, shortcut, menu }));

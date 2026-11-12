@@ -2271,6 +2271,47 @@ button.primary {
   overflow-wrap: anywhere;
   font-size: 0.86rem;
 }
+body.reading-mode :is( #menubar, #tabbar, #viewbar, #statusbar, #files-panel, #outline-panel, #files-resizer, #outline-resizer, #source-pane, #live-pane, #split-resizer ) {
+  display: none !important;
+}
+body.reading-mode #workspace {
+  grid-template-columns: minmax(0, 1fr);
+}
+body.reading-mode #document {
+  grid-column: 1;
+}
+body.reading-mode #document #preview-pane {
+  display: block;
+  flex: 1;
+}
+body.reading-mode #app[data-doc-kind="pdf"] #preview-pane {
+  display: none;
+}
+body.reading-mode .markdown-body {
+  padding: 56px clamp(24px, 5vw, 80px) 40px;
+}
+body.reading-mode .reading-match {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+#exit-reading {
+  position: fixed;
+  inset-block-start: 12px;
+  inset-inline-end: 16px;
+  z-index: 30;
+  padding: 6px 12px;
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 2px 10px #0002;
+}
+@media print {
+  #exit-reading {
+    display: none !important;
+  }
+}
 @property --tw-rotate-x {
   syntax: "*";
   inherits: false;

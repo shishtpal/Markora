@@ -7,6 +7,8 @@ use eframe::egui;
 pub struct Host;
 
 impl Host {
+    pub fn set_reading_pdf(&self, _active: bool) {}
+
     pub fn create(
         _handle: Option<raw_window_handle::RawWindowHandle>,
         _queue: BridgeQueue,

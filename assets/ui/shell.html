@@ -9,6 +9,8 @@
 
 <body>
   <div id="app" aria-label="Markora Markdown editor">
+    <button type="button" id="exit-reading" data-command="exit-reading" hidden
+      title="Exit fullscreen reading (F11 or Escape)">Exit reading · F11</button>
     <header id="menubar">
       <nav id="menus" role="menubar" aria-label="Application menus"></nav>
       <div class="spacer"></div>
@@ -157,7 +159,7 @@
         </div>
         <div id="split-resizer" class="resizer" hidden role="separator" tabindex="0"
           aria-label="Resize source and preview" aria-orientation="vertical"></div>
-        <div id="preview-pane" class="scroll-pane">
+        <div id="preview-pane" class="scroll-pane" tabindex="0" role="region" aria-label="Rendered document">
           <div id="preview-document" class="markdown-body" aria-label="Markdown preview"></div>
         </div>
         <div id="pdf-pane" class="pdf-pane" hidden>

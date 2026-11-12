@@ -22,7 +22,7 @@ windows-core = "0.61"
 wry = "0.55"
 # Pinned by wry 0.55 for a deterministic WebView2 placement.
 # (generic `wry` re-export is enough for the child-window API)
-windows-sys = { version = "0.59", features = ["Win32_UI_Shell"] }
+windows-sys = { version = "0.59", features = ["Win32_UI_Shell", "Win32_UI_Input_KeyboardAndMouse"] }
 
 [target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"

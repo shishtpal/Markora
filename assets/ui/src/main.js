@@ -7,9 +7,14 @@ import { createDialogs } from "./dialogs.js";
 import { createCommands } from "./commands.js";
 import { createChrome } from "./chrome.js";
 import { createConflictDialog } from "./conflicts.js";
+import { createReading } from "./reading.js";
 
 let snapshot = null;
 const bridge = createBridge((message) => {
+  if (message.type === "readingKey") {
+    commands.readingKey(message.key);
+    return;
+  }
   if (message.type === "preparePrint") {
     const doc = editor.document();
     if (doc.id !== message.docId || doc.revision !== message.revision) {
@@ -18,9 +23,11 @@ const bridge = createBridge((message) => {
     }
     editor.preparePrint();
     // Let the browser lay out the complete preview before native printing starts.
-    document.fonts.ready.then(() => requestAnimationFrame(() => {
-      bridge.send({ type: "printReady", token: message.token });
-    }));
+    document.fonts.ready.then(() =>
+      requestAnimationFrame(() => {
+        bridge.send({ type: "printReady", token: message.token });
+      }),
+    );
     return;
   }
   if (message.type === "requestClose") {
@@ -29,9 +36,11 @@ const bridge = createBridge((message) => {
   }
   if (message.type !== "state") return;
   snapshot = message.snapshot;
+  reading.before(snapshot.reading);
   if (snapshot.document) editor.accept(snapshot.document);
   layout.accept(snapshot.prefs);
   chrome.accept(snapshot, editor.document());
+  reading.accept();
   dialogs.accept(snapshot);
   conflicts.accept(snapshot);
   commands.update();
@@ -42,6 +51,8 @@ const editor = createEditor(
   () => bridge.flushEdit(),
 );
 bridge.setDraft(() => editor.draft());
+const reading = createReading(editor);
+editor.setReader(reading);
 const preferences = (patch) => bridge.send({ type: "preferences", patch });
 const layout = createLayout(preferences);
 const dialogs = createDialogs(bridge.send, preferences, editor);

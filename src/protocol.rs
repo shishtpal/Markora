@@ -41,6 +41,9 @@ pub enum HtmlStyle {
 pub enum Action {
     Ready,
     Edit,
+    ReadingKey {
+        key: ReadingKey,
+    },
     PrintReady {
         token: u64,
     },
@@ -88,6 +91,12 @@ pub enum UnsavedChoice {
     Save,
     Discard,
     Cancel,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum ReadingKey {
+    F11,
+    Escape,
 }
 
 #[derive(Debug, Deserialize)]
@@ -175,6 +184,7 @@ pub struct Snapshot<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub document: Option<DocumentView<'a>>,
     pub active_doc_id: u64,
+    pub reading: bool,
     pub view_mode: ViewMode,
     pub word_count: usize,
     pub char_count: usize,

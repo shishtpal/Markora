@@ -21,6 +21,7 @@ export function createFind(editor) {
     replacing = false,
     generation = 0,
     lastDoc = null;
+  let wasReading = false;
 
   function request() {
     const doc = editor.document();
@@ -54,7 +55,12 @@ export function createFind(editor) {
     input.setAttribute("aria-invalid", String(failed));
     for (const id of ["replace-one", "replace-all"])
       $("#" + id).disabled =
-        busy || replacing || failed || !hits.length || (id === "replace-all" && limited);
+        editor.isReading() ||
+        busy ||
+        replacing ||
+        failed ||
+        !hits.length ||
+        (id === "replace-all" && limited);
   }
   function stop() {
     clearTimeout(timer);
@@ -110,6 +116,14 @@ export function createFind(editor) {
   }
 
   function update() {
+    if (wasReading !== editor.isReading()) {
+      wasReading = editor.isReading();
+      stop();
+      replacing = false;
+      key = null;
+      if (wasReading) toggleReplace(false);
+      paint();
+    }
     if (bar.hidden || editor.document().kind === "pdf") {
       if (pending || replacing) stop();
       return;
@@ -144,9 +158,9 @@ export function createFind(editor) {
     editor.jump(hit.start, hit.length);
   }
   async function replace(all = false) {
-    if (replacing) return;
+    if (replacing || editor.isReading()) return;
     const ready = await ensure();
-    if (replacing || !ready || !hits.length || (all && limited)) return;
+    if (replacing || editor.isReading() || !ready || !hits.length || (all && limited)) return;
     const before = stamp(),
       focus = document.activeElement,
       token = ++generation;
@@ -159,7 +173,7 @@ export function createFind(editor) {
       index: Math.max(0, index),
     });
     replacing = false;
-    if (token !== generation || bar.hidden) {
+    if (token !== generation || bar.hidden || editor.isReading()) {
       paint();
       return;
     }
@@ -183,6 +197,7 @@ export function createFind(editor) {
     }
   }
   function toggleReplace(show = $("#replace-row").hidden) {
+    show = show && !editor.isReading();
     $("#replace-row").hidden = !show;
     $("#find-toggle").setAttribute("aria-expanded", String(show));
     if (show) replacement.focus();
