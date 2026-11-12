@@ -288,6 +288,10 @@ input[type="range"]#font-scale:focus-visible {
   font-weight: 500;
 }
 
+#conflict-dialog .dialog-actions {
+  flex-wrap: wrap;
+}
+
 button.primary {
   background: var(--accent);
   border-color: var(--accent);

@@ -70,7 +70,7 @@ export function createDialogs(send, preferences, editor) {
       return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
     };
     $$("dialog").forEach((dialog) => {
-      if (dialog === unsaved) return;
+      if (dialog === unsaved || dialog.id === "conflict-dialog") return;
       let pressedOutside = false;
       dialog.addEventListener("pointerdown", (e) => {
         pressedOutside = e.target === dialog && outside(e, dialog);
@@ -171,7 +171,7 @@ export function createDialogs(send, preferences, editor) {
       $("#show-outline").checked = prefs.showOutline;
       if (document.activeElement !== scaleInput) scaleInput.value = prefs.fontScale;
       syncScaleDisplay(prefs.fontScale);
-      if (snapshot.pending) {
+      if (snapshot.pending && !snapshot.conflict) {
         $("#unsaved-description").textContent =
           `Save changes to “${snapshot.pending}” before closing?`;
         if (pendingTitle !== snapshot.pending)

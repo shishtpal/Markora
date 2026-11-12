@@ -70,6 +70,10 @@ pub enum Action {
     ResolveUnsaved {
         choice: UnsavedChoice,
     },
+    ResolveConflict {
+        choice: ConflictChoice,
+        token: u64,
+    },
     #[serde(rename_all = "camelCase")]
     Export {
         format: ExportFormat,
@@ -83,6 +87,15 @@ pub enum Action {
 pub enum UnsavedChoice {
     Save,
     Discard,
+    Cancel,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ConflictChoice {
+    Reload,
+    Keep,
+    SaveAs,
     Cancel,
 }
 
@@ -172,4 +185,14 @@ pub struct Snapshot<'a> {
     pub status: &'a str,
     pub error: bool,
     pub pending: Option<String>,
+    pub conflict: Option<ConflictView<'a>>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConflictView<'a> {
+    pub token: u64,
+    pub doc_id: u64,
+    pub path: &'a str,
+    pub deleted: bool,
 }

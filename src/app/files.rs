@@ -11,6 +11,7 @@ impl Markora {
         let events: Vec<_> = self.bg_rx.try_iter().collect();
         for event in events {
             match event {
+                BgEvent::DiskScan(observations) => self.apply_observations(observations),
                 BgEvent::FileLoaded {
                     path,
                     view_mode,
@@ -196,76 +197,6 @@ impl Markora {
     pub(super) fn pick_folder(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
             self.open_folder(path);
-        }
-    }
-
-    pub(super) fn save_document(&mut self, id: u64, save_as: bool) -> bool {
-        let Some(index) = self.workspace.tabs.iter().position(|d| d.id == id) else {
-            return false;
-        };
-        let doc = &self.workspace.tabs[index];
-        if doc.kind != DocKind::Markdown {
-            self.notify("PDF documents are read-only");
-            return false;
-        }
-        let path = if save_as || doc.path.is_none() {
-            let mut dialog = rfd::FileDialog::new()
-                .add_filter("Markdown", &["md", "markdown", "txt"])
-                .set_file_name(
-                    doc.path
-                        .as_ref()
-                        .and_then(|p| p.file_name())
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("untitled.md"),
-                );
-            if let Some(parent) = doc.path.as_ref().and_then(|p| p.parent()) {
-                dialog = dialog.set_directory(parent);
-            }
-            let Some(path) = dialog.save_file() else {
-                return false;
-            };
-            if path.extension().is_none() {
-                path.with_extension("md")
-            } else {
-                path
-            }
-        } else {
-            doc.path.clone().expect("checked path")
-        };
-        let path = storage::normalize_path(&path);
-        if self
-            .workspace
-            .tabs
-            .iter()
-            .any(|d| d.id != id && d.path.as_ref() == Some(&path))
-        {
-            self.fail("That file is already open in another tab. Choose another name.");
-            return false;
-        }
-        match storage::write_file(&path, self.workspace.tabs[index].markdown.as_bytes()) {
-            Ok(()) => {
-                let doc = &mut self.workspace.tabs[index];
-                doc.path = Some(path.clone());
-                doc.mark_saved();
-                let title = doc.title();
-                if let Some(parent) = path.parent() {
-                    self.open_folder(parent.into());
-                }
-                self.touch_recent(path.clone(), title);
-                self.notify(format!("Saved {}", path.display()));
-                true
-            }
-            Err(error) => {
-                self.fail(format!("Could not save {}: {error}", path.display()));
-                false
-            }
-        }
-    }
-
-    fn touch_recent(&mut self, path: PathBuf, title: String) {
-        storage::touch_recent(&mut self.recents, path, title);
-        if let Err(error) = self.storage.write("recents.json", &self.recents) {
-            self.fail(format!("Could not save recent files: {error}"));
         }
     }
 }

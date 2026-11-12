@@ -134,7 +134,9 @@ impl Markora {
                 }
             });
         });
-        if let Some(pending) = &self.pending {
+        if let Some(pending) = &self.pending
+            && self.safety.conflict.is_none()
+        {
             let title = pending
                 .documents
                 .front()

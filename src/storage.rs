@@ -97,13 +97,7 @@ pub fn normalize_path(path: &Path) -> PathBuf {
     })
 }
 
-pub fn write_file(path: &Path, contents: &[u8]) -> io::Result<()> {
-    use std::io::Write;
-    // Truncate only after the destination has opened successfully; propagate all errors.
-    let mut file = std::fs::File::create(path)?;
-    file.write_all(contents)?;
-    file.sync_all()
-}
+pub use crate::file_io::write_file;
 
 pub fn folder_entries(dir: &Path) -> io::Result<Vec<FileEntry>> {
     let mut entries = Vec::new();
@@ -147,9 +141,13 @@ pub fn prepare_file(
         let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
         Document::prepare_pdf(bytes, parse_full_pdf)
     } else {
-        read_markdown(path)
-            .map(|markdown| Document::prepare(markdown, view_mode))
-            .map_err(|e| e.to_string())
+        let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+        let version = crate::file_io::FileVersion::of(&bytes);
+        let markdown = String::from_utf8(bytes).map_err(|e| e.to_string())?;
+        let mut prepared =
+            Document::prepare(markdown.trim_start_matches('\u{feff}').into(), view_mode);
+        prepared.disk_version = version;
+        Ok(prepared)
     }
 }
 

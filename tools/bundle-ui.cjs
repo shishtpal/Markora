@@ -14,6 +14,7 @@ const order = [
   "command-list",
   "find",
   "dialogs",
+  "conflicts",
   "commands",
   "chrome",
   "main",

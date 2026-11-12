@@ -26,6 +26,7 @@ pub use crate::prefs::{Prefs, Recent};
 
 #[derive(Debug)]
 pub struct PreparedDocument {
+    pub disk_version: crate::file_io::FileVersion,
     pub kind: DocKind,
     pub markdown: String,
     pub rendered: RenderedDocument,
@@ -37,6 +38,7 @@ pub struct PreparedDocument {
 
 #[derive(Debug)]
 pub struct Document {
+    pub disk_version: crate::file_io::FileVersion,
     pub id: u64,
     pub kind: DocKind,
     pub path: Option<PathBuf>,
@@ -63,6 +65,7 @@ impl Document {
         let (word_count, char_count) = crate::markdown::text_counts(&markdown);
         let (rendered, rendered_full) = Self::render_for_mode(&markdown, view_mode);
         PreparedDocument {
+            disk_version: Default::default(),
             kind: DocKind::Markdown,
             markdown,
             rendered,
@@ -81,6 +84,7 @@ impl Document {
             None
         };
         Ok(PreparedDocument {
+            disk_version: Default::default(),
             kind: DocKind::Pdf,
             markdown: String::new(),
             rendered: RenderedDocument::default(),
@@ -107,6 +111,7 @@ impl Document {
         prepared: PreparedDocument,
     ) -> Self {
         Self {
+            disk_version: prepared.disk_version,
             id,
             kind: prepared.kind,
             path,

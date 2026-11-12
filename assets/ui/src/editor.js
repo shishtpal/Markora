@@ -106,6 +106,13 @@ export function createEditor(onChange, onFlush = () => {}) {
     $("#pdf-badge").hidden = true;
     $("#pdf-pane").hidden = true;
     const markdown = incoming.markdown ?? doc.markdown;
+    const replaced = !switched && incoming.markdown !== undefined && markdown !== doc.markdown;
+    if (replaced) {
+      live.reset();
+      lastPreview = null;
+      currentHistory.undo.push(markdown);
+      currentHistory.redo = [];
+    }
     const rendered = incoming.rendered ?? doc.rendered;
     const hasNewRendered = Boolean(incoming.rendered);
     if (switched) {
@@ -122,6 +129,7 @@ export function createEditor(onChange, onFlush = () => {}) {
       hasNewRendered && (incoming.viewMode !== "source" || rendered.blocks.length > 0 || !markdown);
     doc = {
       id: incoming.id,
+      kind: "markdown",
       markdown,
       revision: incoming.revision,
       viewMode: incoming.viewMode,

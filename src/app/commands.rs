@@ -123,6 +123,7 @@ impl Markora {
         if self.pending.is_some() {
             return;
         }
+        self.safety.discarded.clear();
         let documents = self
             .workspace
             .tabs
@@ -149,7 +150,7 @@ impl Markora {
             return;
         };
         match choice {
-            UnsavedChoice::Cancel => {}
+            UnsavedChoice::Cancel => self.safety.discarded.clear(),
             UnsavedChoice::Save | UnsavedChoice::Discard => {
                 if let Some(id) = pending.documents.front()
                     && matches!(choice, UnsavedChoice::Save)
@@ -158,6 +159,11 @@ impl Markora {
                     self.pending = Some(pending);
                     self.needs_sync = true;
                     return;
+                }
+                if matches!(choice, UnsavedChoice::Discard)
+                    && let Some(id) = pending.documents.front()
+                {
+                    self.safety.discarded.push(*id);
                 }
                 pending.documents.pop_front();
                 if pending.documents.is_empty() {
@@ -183,7 +189,7 @@ impl Markora {
                     self.workspace.close(id, self.prefs.view_mode);
                 }
             }
-            CloseAction::Exit => self.allow_close = true,
+            CloseAction::Exit => self.allow_close = self.flush_session(),
         }
     }
 }

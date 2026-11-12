@@ -228,6 +228,11 @@
   .flex-wrap {
     flex-wrap: wrap;
   }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .border {
     border-style: var(--tw-border-style);
     border-width: 1px;
@@ -1969,6 +1974,9 @@ input[type="range"]#font-scale:focus-visible {
   padding: 6px 13px;
   font-size: 0.86rem;
   font-weight: 500;
+}
+#conflict-dialog .dialog-actions {
+  flex-wrap: wrap;
 }
 button.primary {
   background: var(--accent);

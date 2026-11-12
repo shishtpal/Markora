@@ -50,6 +50,7 @@ impl Fixture {
             client_known_markdown: None,
             fallback_buf: None,
             pdf_viewer: PdfViewerState::default(),
+            safety: safety::SafetyState::default(),
         };
         Self { app, dir }
     }
@@ -64,6 +65,7 @@ impl Fixture {
 }
 impl Drop for Fixture {
     fn drop(&mut self) {
+        self.app.safety.writer.take();
         let _ = std::fs::remove_dir_all(&self.dir);
     }
 }

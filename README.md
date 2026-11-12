@@ -42,6 +42,33 @@ The Live editor keeps the active block as Markdown source. Its edits, source
 editing, previews and file saves all use the same document model. There is no
 DOM-to-Markdown conversion step.
 
+## Saving, recovery and external changes
+
+- Markdown, settings and recovery writes use a synced temporary file beside the
+  destination, followed by replacement. A failed write does not truncate the
+  existing file. Read-only destinations remain protected.
+- Open tabs, their order, active tab, view modes, folder and Markdown drafts are
+  checkpointed to `.markora/session.json`. Checkpoints run after a short idle
+  period, or about every two seconds during continuous typing. Recovery does
+  not automatically save drafts into their document files.
+- Restarting restores saved tabs and unsaved drafts, including untitled notes.
+  Clean saved tabs reopen the current disk contents. Missing Markdown files
+  retain their cached text as recoverable drafts. Explicitly discarded drafts
+  are excluded from the session on a successful normal exit.
+- Open Markdown files are checked in the background about every two seconds,
+  and again before saving. External edits or deletion offer **Reload**, **Keep
+  Mine**, **Save As** and **Later**. Reload replaces the draft; Keep Mine
+  acknowledges the reviewed disk version and preserves your draft. If a save
+  triggered the dialog, Keep Mine resumes that save. Later postpones the prompt
+  for that disk version; saving still requires review.
+- One running instance owns recovery for each settings directory. Additional
+  instances can edit files but report that session recovery is unavailable.
+  A malformed recovery file is preserved instead of silently overwritten.
+
+Recovery covers the last completed checkpoint; edits made immediately before a
+forced shutdown can be newer. Conflict checks are optimistic: another process
+can still write in the small interval between the final check and replacement.
+
 ## Build and run
 
 Requires Rust 1.95 (pinned in `rust-toolchain.toml`) and Node.js 24 or newer.
@@ -121,6 +148,7 @@ cargo clippy --locked --all-targets -- -D warnings
 node tools/verify-ui.cjs
 cargo build
 node tools/smoke-native.cjs
+node tools/smoke-safety.cjs
 ```
 
 The Windows native suite runs the actual Rust host and WebView2 interface. It checks menu
@@ -128,6 +156,8 @@ and keyboard dispatch, palette, source/split/live editing, formatting, undo,
 find, sidebar resizing and persistence, full-width layouts, unsaved changes and
 file open/save. It saves screenshots and diagnostics under `target/ui-smoke/`.
 Tests use isolated settings and fixtures.
+The safety suite also force-stops and restarts the host to verify draft recovery,
+external-change dialogs, reload while editing a Live block, and discard on exit.
 
 Preferences and recent files are stored in a single `.markora/` directory next to
 the `markora` executable, with an AppData fallback when that directory is

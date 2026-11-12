@@ -1,6 +1,7 @@
 //! Application lifecycle. File operations, IPC, commands and fallback live in submodules.
 mod bridge;
 mod commands;
+mod conflict;
 mod export;
 mod fallback;
 mod files;
@@ -8,6 +9,11 @@ mod files;
 mod loading_tests;
 mod pdf_state;
 mod pdf_viewer;
+mod safety;
+#[cfg(test)]
+mod safety_tests;
+mod save;
+mod session;
 #[cfg(test)]
 mod tests;
 
@@ -50,6 +56,7 @@ pub(super) struct SyncedDocState {
 }
 
 pub(super) enum BgEvent {
+    DiskScan(Vec<safety::Observation>),
     FileLoaded {
         path: PathBuf,
         view_mode: markora::model::ViewMode,
@@ -92,6 +99,7 @@ pub struct Markora {
     client_known_markdown: Option<(u64, u64)>,
     fallback_buf: Option<(u64, u64, String)>,
     pdf_viewer: PdfViewerState,
+    safety: safety::SafetyState,
 }
 
 impl Markora {
@@ -140,11 +148,13 @@ impl Markora {
             client_known_markdown: None,
             fallback_buf: None,
             pdf_viewer: PdfViewerState::default(),
+            safety: safety::SafetyState::default(),
         };
         if let Some(path) = initial_arg {
             app.open_path(path);
         }
         app.ensure_webview(&cc.egui_ctx);
+        app.initialize_session();
         app
     }
 
@@ -181,7 +191,7 @@ impl Markora {
             Err(error) if cfg!(windows) => {
                 self.fail(format!("{error}. Using native source editor."));
             }
-            Err(_) => self.notify("Ready"),
+            Err(_) => {}
         }
     }
 }
@@ -251,8 +261,14 @@ impl eframe::App for Markora {
                 });
         } else {
             self.fallback_ui(ui);
+            self.conflict_ui(&ctx);
         }
 
+        if !self.allow_close {
+            self.scan_files(&ctx);
+            self.checkpoint_session();
+            ctx.request_repaint_after(std::time::Duration::from_millis(500));
+        }
         self.sync_webview();
         if self.allow_close {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);

@@ -6,6 +6,7 @@ import { createLayout } from "./layout.js";
 import { createDialogs } from "./dialogs.js";
 import { createCommands } from "./commands.js";
 import { createChrome } from "./chrome.js";
+import { createConflictDialog } from "./conflicts.js";
 
 let snapshot = null;
 const bridge = createBridge((message) => {
@@ -32,6 +33,7 @@ const bridge = createBridge((message) => {
   layout.accept(snapshot.prefs);
   chrome.accept(snapshot, editor.document());
   dialogs.accept(snapshot);
+  conflicts.accept(snapshot);
   commands.update();
 });
 
@@ -43,6 +45,7 @@ bridge.setDraft(() => editor.draft());
 const preferences = (patch) => bridge.send({ type: "preferences", patch });
 const layout = createLayout(preferences);
 const dialogs = createDialogs(bridge.send, preferences, editor);
+const conflicts = createConflictDialog(bridge.send);
 const commands = createCommands({
   send: bridge.send,
   editor,

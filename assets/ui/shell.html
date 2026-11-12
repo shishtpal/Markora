@@ -231,6 +231,17 @@
     </div>
   </dialog>
 
+  <dialog id="conflict-dialog" closedby="none" aria-labelledby="conflict-title" aria-describedby="conflict-description">
+    <h2 id="conflict-title">File changed on disk</h2>
+    <p id="conflict-path" style="overflow-wrap:anywhere"></p>
+    <p id="conflict-description"></p>
+    <div class="dialog-actions">
+      <button type="button" data-conflict="cancel">Later</button>
+      <button type="button" data-conflict="saveAs">Save As…</button>
+      <button type="button" data-conflict="keep">Keep Mine</button>
+      <button type="button" data-conflict="reload" class="primary">Reload</button>
+    </div>
+  </dialog>
   <dialog id="unsaved-dialog" closedby="none" aria-labelledby="unsaved-title">
     <div class="dialog-heading">
       <span class="dialog-title-row">

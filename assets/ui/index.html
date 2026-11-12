@@ -235,6 +235,11 @@
   .flex-wrap {
     flex-wrap: wrap;
   }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .border {
     border-style: var(--tw-border-style);
     border-width: 1px;
@@ -1977,6 +1982,9 @@ input[type="range"]#font-scale:focus-visible {
   font-size: 0.86rem;
   font-weight: 500;
 }
+#conflict-dialog .dialog-actions {
+  flex-wrap: wrap;
+}
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
@@ -2619,6 +2627,17 @@ button.primary {
     </div>
   </dialog>
 
+  <dialog id="conflict-dialog" closedby="none" aria-labelledby="conflict-title" aria-describedby="conflict-description">
+    <h2 id="conflict-title">File changed on disk</h2>
+    <p id="conflict-path" style="overflow-wrap:anywhere"></p>
+    <p id="conflict-description"></p>
+    <div class="dialog-actions">
+      <button type="button" data-conflict="cancel">Later</button>
+      <button type="button" data-conflict="saveAs">Save As…</button>
+      <button type="button" data-conflict="keep">Keep Mine</button>
+      <button type="button" data-conflict="reload" class="primary">Reload</button>
+    </div>
+  </dialog>
   <dialog id="unsaved-dialog" closedby="none" aria-labelledby="unsaved-title">
     <div class="dialog-heading">
       <span class="dialog-title-row">
@@ -3334,6 +3353,13 @@ function createEditor(onChange, onFlush = () => {}) {
     $("#pdf-badge").hidden = true;
     $("#pdf-pane").hidden = true;
     const markdown = incoming.markdown ?? doc.markdown;
+    const replaced = !switched && incoming.markdown !== undefined && markdown !== doc.markdown;
+    if (replaced) {
+      live.reset();
+      lastPreview = null;
+      currentHistory.undo.push(markdown);
+      currentHistory.redo = [];
+    }
     const rendered = incoming.rendered ?? doc.rendered;
     const hasNewRendered = Boolean(incoming.rendered);
     if (switched) {
@@ -3350,6 +3376,7 @@ function createEditor(onChange, onFlush = () => {}) {
       hasNewRendered && (incoming.viewMode !== "source" || rendered.blocks.length > 0 || !markdown);
     doc = {
       id: incoming.id,
+      kind: "markdown",
       markdown,
       revision: incoming.revision,
       viewMode: incoming.viewMode,
@@ -3810,7 +3837,7 @@ function createDialogs(send, preferences, editor) {
       return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
     };
     $$("dialog").forEach((dialog) => {
-      if (dialog === unsaved) return;
+      if (dialog === unsaved || dialog.id === "conflict-dialog") return;
       let pressedOutside = false;
       dialog.addEventListener("pointerdown", (e) => {
         pressedOutside = e.target === dialog && outside(e, dialog);
@@ -3911,7 +3938,7 @@ function createDialogs(send, preferences, editor) {
       $("#show-outline").checked = prefs.showOutline;
       if (document.activeElement !== scaleInput) scaleInput.value = prefs.fontScale;
       syncScaleDisplay(prefs.fontScale);
-      if (snapshot.pending) {
+      if (snapshot.pending && !snapshot.conflict) {
         $("#unsaved-description").textContent =
           `Save changes to “${snapshot.pending}” before closing?`;
         if (pendingTitle !== snapshot.pending)
@@ -3924,6 +3951,42 @@ function createDialogs(send, preferences, editor) {
 }
 
 return { createDialogs };
+})();
+modules["conflicts"] = (() => {
+const { $, $$ } = modules["dom"];
+
+function createConflictDialog(send) {
+  const dialog = $("#conflict-dialog");
+  let token = null;
+  $$("[data-conflict]").forEach((button) => {
+    button.onclick = () => send({ type: "resolveConflict", choice: button.dataset.conflict, token });
+  });
+  dialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    send({ type: "resolveConflict", choice: "cancel", token });
+  });
+  return {
+    accept(snapshot) {
+      const conflict = snapshot.conflict;
+      token = conflict?.token ?? null;
+      if (!conflict) {
+        if (dialog.open) dialog.close();
+        return;
+      }
+      $("#conflict-path").textContent = conflict.path;
+      $("#conflict-description").textContent = conflict.deleted
+        ? "This file was deleted outside Markora. Keep your draft to recreate it, or save a copy elsewhere."
+        : "This file changed outside Markora. Reload replaces your draft with the disk version. Keep Mine preserves your draft for saving.";
+      $('[data-conflict="reload"]').disabled = conflict.deleted;
+      if (!dialog.open) {
+        $$("dialog[open]").forEach((other) => other.close());
+        dialog.showModal();
+      }
+    },
+  };
+}
+
+return { createConflictDialog };
 })();
 modules["commands"] = (() => {
 const { $, $$, element, showError } = modules["dom"];
@@ -4333,6 +4396,7 @@ const { createLayout } = modules["layout"];
 const { createDialogs } = modules["dialogs"];
 const { createCommands } = modules["commands"];
 const { createChrome } = modules["chrome"];
+const { createConflictDialog } = modules["conflicts"];
 
 let snapshot = null;
 const bridge = createBridge((message) => {
@@ -4359,6 +4423,7 @@ const bridge = createBridge((message) => {
   layout.accept(snapshot.prefs);
   chrome.accept(snapshot, editor.document());
   dialogs.accept(snapshot);
+  conflicts.accept(snapshot);
   commands.update();
 });
 
@@ -4370,6 +4435,7 @@ bridge.setDraft(() => editor.draft());
 const preferences = (patch) => bridge.send({ type: "preferences", patch });
 const layout = createLayout(preferences);
 const dialogs = createDialogs(bridge.send, preferences, editor);
+const conflicts = createConflictDialog(bridge.send);
 const commands = createCommands({
   send: bridge.send,
   editor,

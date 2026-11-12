@@ -33,6 +33,12 @@ flowchart LR
 | `src/markdown.rs`                 | CommonMark/GFM HTML, source block ranges, outline       |
 | `src/protocol.rs`                 | Serde request and snapshot types                        |
 | `src/storage.rs`                  | Settings persistence and filesystem operations          |
+| `src/file_io.rs`                  | Same-directory atomic writes and content fingerprints   |
+| `src/recovery.rs`                 | Versioned sessions, exclusive lock and ordered writer   |
+| `src/app/session.rs`              | Startup restore, checkpoint scheduling and exit flush   |
+| `src/app/safety.rs`               | Background file scans and external-change resolution    |
+| `src/app/conflict.rs`             | Conflict choices, close continuation and native dialog  |
+| `src/app/save.rs`                 | Save dialogs, checked writes and saved baselines         |
 | `src/webview_host.rs`             | Child webview, IPC wakeup, bounds and message delivery  |
 | `src/webview_fallback.rs`         | Non-Windows adapter selecting the native source editor  |
 | `src/theme.rs`, `src/platform.rs` | Native styling/fonts and external URL opening           |
@@ -56,6 +62,7 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
 | `layout.js`                      | Responsive sizing, pointer/keyboard resizers and saved widths        |
 | `chrome.js`                      | Tabs, file lists, recents, outline, status and themes                |
 | `dialogs.js`, `find.js`          | Modal UI, palette, settings and document search                      |
+| `conflicts.js`                   | External file-change dialog and resolution actions                 |
 | `dom.js`                         | Small shared DOM helpers                                             |
 
 ## Data flow and invariants
@@ -101,6 +108,24 @@ executable, with an AppData fallback when that directory cannot be created.
 `MARKORA_DATA_DIR` overrides settings storage for isolated runs. Documents are
 saved to their selected paths; they are not stored inside the preferences files.
 
+`session.json` separately stores Markdown drafts, their last saved baseline and
+disk content fingerprint, plus tab order, selection, view modes and folder.
+Clean files reopen from disk; dirty drafts retain their original fingerprint so
+offline changes still require review. An exclusive `session.lock` file lock
+prevents multiple instances from overwriting the same recovery session. Corrupt
+or unknown-version sessions disable recovery writes and retain the original.
+One worker serializes checkpoints through a bounded queue; an explicit exit
+waits for its final checkpoint. Discarded untitled drafts are omitted, and
+discarded file-backed drafts restore from disk. Cancel leaves drafts intact.
+
+The event loop requests a repaint every 500 ms to schedule recovery and file
+monitoring. A debounced checkpoint runs after 750 ms of inactivity, with a
+two-second maximum scheduling interval while typing. File content fingerprints
+are scanned off the UI thread every two seconds; results with an outdated path
+or baseline are ignored. Saves compare the expected fingerprint both before
+writing the temporary file and immediately before replacement. This is
+optimistic conflict detection, not an exclusive lock on other applications.
+
 ## Verification
 
 - `cargo test`: production model, parser, storage, protocol and host regressions.
@@ -108,6 +133,8 @@ saved to their selected paths; they are not stored inside the preferences files.
 - `node tools/verify-ui.cjs`: bundle syntax, IDs, embedded fonts, 300-line module limit.
 - `node tools/smoke-native.cjs`: actual Rust + WebView2 menus, shortcuts, palette,
   editing, resizing, width, unsaved changes and file save. Requires Windows.
+- `node tools/smoke-safety.cjs`: external conflicts, Live reload, forced shutdown,
+  restored tabs/drafts and graceful-exit discard in real WebView2 processes.
 
 The native suite creates fixtures, settings and WebView2 data under
 `target/ui-smoke/<run>/` and never uses the normal preferences directory. It also

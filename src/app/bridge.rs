@@ -66,6 +66,16 @@ impl Markora {
                     self.persist_prefs();
                 }
                 Action::ResolveUnsaved { choice } => self.resolve_unsaved(choice),
+                Action::ResolveConflict { choice, token } => {
+                    if self
+                        .safety
+                        .conflict
+                        .as_ref()
+                        .is_some_and(|c| c.token == token)
+                    {
+                        self.resolve_conflict(choice);
+                    }
+                }
                 Action::Export { format, html_style } => {
                     self.export_document(format, html_style);
                 }
@@ -182,6 +192,16 @@ impl Markora {
             recents: &self.recents,
             status: &self.status,
             error: self.error,
+            conflict: self
+                .safety
+                .conflict
+                .as_ref()
+                .map(|c| markora::protocol::ConflictView {
+                    token: c.token,
+                    doc_id: c.doc_id,
+                    path: &c.path,
+                    deleted: c.deleted,
+                }),
             pending: self
                 .pending
                 .as_ref()
