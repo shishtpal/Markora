@@ -10,6 +10,8 @@ const order = [
   "bridge",
   "live-tasks",
   "live-position",
+  "table-editing",
+  "markdown-keys",
   "live-editor",
   "editor-images",
   "edit-mode",

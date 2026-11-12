@@ -67,6 +67,7 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
 | `command-list.js`, `commands.js` | Shared command catalog, menus, shortcuts, dispatch                   |
 | `editor.js`                      | Document draft, revisions, source/split editing, formatting, history |
 | `live-editor.js`                 | Rendered blocks with an active Markdown textarea                     |
+| `markdown-keys.js`, `table-editing.js` | Shared Markdown keyboard edits, list continuation, indentation and table navigation |
 | `editor-position.js`, `live-position.js` | Per-tab selections, pane scroll and Live block restoration after layout |
 | `edit-mode.js`                   | Explicit Live edit gate and read-only controls                       |
 | `sidebar.js`                     | Accessible lazy file tree and collapsible recent-files panel         |
@@ -121,6 +122,14 @@ selection and scroll; find navigates rendered source-block anchors while mutatio
 commands and pending replacements are disabled. The mode is not persisted.
 
 ## Build and persistence
+
+`markdown-keys.js` computes UTF-16 text/selection changes for Source, Split and
+both existing and appended Live block textareas. Live supplies the preceding
+document source so fenced-code detection uses document context. `table-editing.js`
+recognizes header/separator tables and escaped pipes, selects cells and appends
+rows. Navigation only changes selection; mutations dispatch one normal input
+event through the existing revision/history/preview/save flow. Read-only states,
+composition and modified system shortcuts bypass the handler.
 
 `node tools/build-ui.cjs` compiles Tailwind, bundles the named-import JavaScript
 modules, and validates their dependency order. Rust embeds the HTML and fonts,

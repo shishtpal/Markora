@@ -1,6 +1,7 @@
 import { connectLiveTasks } from "./live-tasks.js";
 import { element, resolveMedia } from "./dom.js";
 import { createLivePosition } from "./live-position.js";
+import { handleMarkdownKey } from "./markdown-keys.js";
 
 const INITIAL_BATCH = 60;
 const FRAME_BATCH = 150;
@@ -164,11 +165,7 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
         const offset = active.before.length + textarea.value.length;
         append(offset);
       }
-      if (event.key === "Tab") {
-        event.preventDefault();
-        textarea.setRangeText("    ", textarea.selectionStart, textarea.selectionEnd, "end");
-        textarea.dispatchEvent(new Event("input"));
-      }
+      handleMarkdownKey(event, textarea, canEdit, active?.before || "");
     });
     resize(textarea);
     textarea.focus();
@@ -220,6 +217,7 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
         event.stopPropagation();
         finish();
       }
+      handleMarkdownKey(event, textarea, canEdit, active?.before || "");
     });
     resize(textarea);
     textarea.focus();

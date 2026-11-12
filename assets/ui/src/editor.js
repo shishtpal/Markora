@@ -3,6 +3,7 @@ import { createLiveEditor } from "./live-editor.js";
 import { createImageEdits } from "./editor-images.js";
 import { createEditMode } from "./edit-mode.js";
 import { createEditorPosition } from "./editor-position.js";
+import { handleMarkdownKey } from "./markdown-keys.js";
 export function createEditor(onChange, onFlush = () => {}) {
   let doc = {
     id: 0,
@@ -73,10 +74,7 @@ export function createEditor(onChange, onFlush = () => {}) {
   });
   source.addEventListener("input", () => change(source.value));
   source.addEventListener("keydown", (event) => {
-    if (event.key !== "Tab") return;
-    event.preventDefault();
-    source.setRangeText("    ", source.selectionStart, source.selectionEnd, "end");
-    source.dispatchEvent(new Event("input"));
+    handleMarkdownKey(event, source, canEdit);
   });
   $("#append-block").addEventListener("click", () => live.append());
   function accept(incoming) {

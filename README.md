@@ -47,6 +47,26 @@ The Live editor keeps the active block as Markdown source. Its edits, source
 editing, previews and file saves all use the same document model. There is no
 DOM-to-Markdown conversion step.
 
+### Markdown keyboard editing
+
+These shortcuts work in Source, Split and active Live blocks, including new
+paragraphs (Windows web interface):
+
+- **Enter** continues bullets, numbered lists and task lists at the same indent.
+  Numbers increment and new tasks start unchecked. Enter on an empty item removes
+  its marker. **Shift+Enter** inserts a plain newline.
+- **Tab / Shift+Tab** indent or outdent selected lines or the current list item
+  by four spaces. Outside lists, Tab inserts four spaces at the caret; Shift+Tab
+  removes up to four leading spaces or one tab. Enter preserves leading indentation.
+- In a Markdown table, **Tab / Shift+Tab** select the next or previous cell,
+  skipping the separator row. **Enter** moves down in the same column. Moving
+  forward past the last row adds an empty row. Type to replace a selected cell;
+  Shift+Enter inserts a plain newline. Tables must have a header and separator row.
+- Fenced code keeps literal list and table text. Each generated edit is one Undo
+  step; moving between existing table cells does not create an Undo step.
+
+The native Linux/fallback source editor retains its existing keyboard behavior.
+
 ## Fullscreen reading
 
 Press **F11**, or choose **View → Fullscreen reading view**, to read the current
@@ -237,6 +257,7 @@ cargo test --locked
 cargo clippy --locked --all-targets -- -D warnings
 node tools/verify-ui.cjs
 node --test tools/test-search.cjs
+node --test tools/test-markdown-keys.cjs
 cargo build
 node tools/smoke-native.cjs
 node tools/smoke-sidebar.cjs
@@ -244,6 +265,7 @@ node tools/smoke-safety.cjs
 node tools/smoke-images.cjs
 node tools/smoke-images.cjs --dom
 node tools/smoke-find.cjs
+node tools/smoke-editing.cjs
 ```
 
 The Windows native suite runs the actual Rust host and WebView2 interface. It checks menu
