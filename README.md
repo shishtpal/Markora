@@ -42,6 +42,31 @@ The Live editor keeps the active block as Markdown source. Its edits, source
 editing, previews and file saves all use the same document model. There is no
 DOM-to-Markdown conversion step.
 
+## Find and replace (Windows web interface)
+
+Use **Ctrl+F** to find or **Ctrl+H** for find and replace; both are also in the
+Edit menu and command palette. **Aa** matches case, **Word** matches whole words,
+and **.*** enables regular expressions. Options can be combined. Whole-word
+boundaries recognize Unicode letters, combining marks, numbers and connectors
+such as underscores. Search covers the Markdown source, including its syntax.
+
+- **F3 / Shift+F3** or **Enter / Shift+Enter** in the find field navigate and wrap
+  around matches. Escape closes the bar.
+- **Replace** changes the selected match, or the first match if none is selected,
+  then selects the next match. **Replace all** changes all matches in the active
+  document as one undo step. An empty replacement deletes matching text.
+- In the replacement field, **Enter** replaces one match and **Ctrl+Enter**
+  replaces all. Literal mode treats replacement text literally. Regex mode
+  supports numbered and named captures (`$1`, `$<name>`), `$&` for the match,
+  and `$$` for a literal dollar sign. Patterns use JavaScript Unicode regex
+  syntax with multiline anchors; enter the pattern without `/…/` delimiters.
+- Replacements work in Live, Source and Split, update previews and dirty state,
+  and use the normal undo, save and recovery flows. PDF tabs remain read-only.
+- Invalid patterns display an error. Searches run outside the UI thread and
+  cancel after 1.5 seconds. At most 100,000 matches are displayed; refine a
+  limited search before replacing all. Replacement results are limited to
+  32 million characters. Cancelled, failed or stale results do not edit a document.
+
 ## Saving, recovery and external changes
 
 - Markdown, settings and recovery writes use a synced temporary file beside the
@@ -114,6 +139,7 @@ the local asset protocol. Node and a web server are not needed at runtime.
 | Ctrl+1 / Ctrl+2 / Ctrl+3  | Live / Source / Split        |
 | Ctrl+B / Ctrl+I / Ctrl+L  | Bold / italic / link         |
 | Ctrl+F / F3 / Shift+F3    | Find / next / previous match |
+| Ctrl+H                    | Find and replace             |
 | Ctrl+Z / Ctrl+Shift+Z     | Undo / redo                  |
 | Ctrl+Shift+P / Ctrl+K     | Command palette              |
 | Ctrl+D                    | Focus mode                   |
@@ -146,9 +172,11 @@ cargo fmt --all -- --check
 cargo test --locked
 cargo clippy --locked --all-targets -- -D warnings
 node tools/verify-ui.cjs
+node --test tools/test-search.cjs
 cargo build
 node tools/smoke-native.cjs
 node tools/smoke-safety.cjs
+node tools/smoke-find.cjs
 ```
 
 The Windows native suite runs the actual Rust host and WebView2 interface. It checks menu
@@ -158,6 +186,8 @@ file open/save. It saves screenshots and diagnostics under `target/ui-smoke/`.
 Tests use isolated settings and fixtures.
 The safety suite also force-stops and restarts the host to verify draft recovery,
 external-change dialogs, reload while editing a Live block, and discard on exit.
+The find suite checks search options, captures, Unicode, replacement/undo/save,
+worker cancellation and timeouts, stale results and all three Markdown modes.
 
 Preferences and recent files are stored in a single `.markora/` directory next to
 the `markora` executable, with an AppData fallback when that directory is

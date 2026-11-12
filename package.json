@@ -6,8 +6,10 @@
   "scripts": {
     "build:ui": "node tools/build-ui.cjs",
     "build:ui:watch": "node tools/build-ui.cjs --watch",
-    "test": "cargo test",
-    "test:ui": "node tools/verify-ui.cjs && node tools/smoke-native.cjs && node tools/smoke-safety.cjs",
+    "test": "node --test tools/test-search.cjs && cargo test",
+    "test:search": "node --test tools/test-search.cjs",
+    "test:find": "node tools/smoke-find.cjs",
+    "test:ui": "node tools/verify-ui.cjs && node tools/smoke-native.cjs && node tools/smoke-safety.cjs && node tools/smoke-find.cjs",
     "test:safety": "node tools/smoke-safety.cjs"
   },
   "devDependencies": {

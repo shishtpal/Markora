@@ -12,6 +12,8 @@ const order = [
   "editor",
   "layout",
   "command-list",
+  "search-engine",
+  "search-worker",
   "find",
   "dialogs",
   "conflicts",

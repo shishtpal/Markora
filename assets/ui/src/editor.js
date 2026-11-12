@@ -40,7 +40,9 @@ export function createEditor(onChange, onFlush = () => {}) {
       const blocks = doc.rendered.blocks;
       for (let start = 0; start < blocks.length; start += 150) {
         const slice = blocks.slice(start, start + 150);
-        batches.push(`<div class="preview-batch${start ? " deferred" : ""}" style="--batch-height:${slice.length * 64}px">${slice.map((b) => b.html).join("")}</div>`);
+        batches.push(
+          `<div class="preview-batch${start ? " deferred" : ""}" style="--batch-height:${slice.length * 64}px">${slice.map((b) => b.html).join("")}</div>`,
+        );
       }
       doc.previewHtml = batches.join("");
     }
@@ -119,8 +121,7 @@ export function createEditor(onChange, onFlush = () => {}) {
       live.reset();
       lastPreview = null;
       lastPreviewDocId = 0;
-      if (!histories.has(incoming.id))
-        histories.set(incoming.id, { undo: [markdown], redo: [] });
+      if (!histories.has(incoming.id)) histories.set(incoming.id, { undo: [markdown], redo: [] });
       currentHistory = histories.get(incoming.id);
     }
     const modeChanged = incoming.viewMode !== doc.viewMode;
@@ -135,7 +136,9 @@ export function createEditor(onChange, onFlush = () => {}) {
       viewMode: incoming.viewMode,
       rendered,
       renderedMarkdown: switched
-        ? (incoming.viewMode !== "source" || rendered.blocks.length > 0 || !markdown ? markdown : "")
+        ? incoming.viewMode !== "source" || rendered.blocks.length > 0 || !markdown
+          ? markdown
+          : ""
         : canLiveRender
           ? markdown
           : doc.renderedMarkdown,
@@ -236,6 +239,11 @@ export function createEditor(onChange, onFlush = () => {}) {
     accept,
     format,
     history,
+    replaceDocument(markdown) {
+      if (doc.kind === "pdf" || markdown === doc.markdown) return;
+      live.reset();
+      change(markdown, true, true);
+    },
     preparePrint: ensurePreview,
     draft: () =>
       doc.id && doc.kind !== "pdf"

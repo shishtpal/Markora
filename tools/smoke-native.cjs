@@ -182,8 +182,12 @@ async function main() {
       `document.querySelector('#files-resizer').getAttribute('aria-valuenow')==='310'`,
       "files width persisted",
     );
-    await delay(100);
-    const prefs = JSON.parse(fs.readFileSync(path.join(artifacts, "settings/prefs.json"), "utf8"));
+    let prefs;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      prefs = JSON.parse(fs.readFileSync(path.join(artifacts, "settings/prefs.json"), "utf8"));
+      if (prefs.filesWidth === 310 && prefs.outlineWidth === 280) break;
+      await delay(50);
+    }
     assert.equal(prefs.filesWidth, 310);
     assert.equal(prefs.outlineWidth, 280);
     console.log("PASS both sidebar pointer resizers and saved widths");
@@ -240,6 +244,7 @@ async function main() {
       '# Saved by menu\n\nनमस्ते 😀\n\n<audio src="Todos.assets\\Krishna Madam 2021-09-16 09-50-50.wav" />\n- [ ] Krishna School Mam\n  - [x] TC format for counter signature\n  - [ ] Attendance Sheet\n<audio src="Todos.assets\\Krishna Madam 2021-09-16 09-50-50.wav" />\n- [ ] Kapil Goyal Mathura\n  - [ ] Manually Enter Fees Fine Amount\n  - [x] Manually Adjust Headwise Fees\n\nAfter audio.\n';
     await input(saved);
     await menu("File", "save");
+    for (let attempt = 0; attempt < 100 && fs.readFileSync(fixture, "utf8") !== saved; attempt++) await delay(50);
     await wait(
       `document.querySelector('#save-state').textContent==='Saved'`,
       "save acknowledgement",
@@ -276,6 +281,7 @@ async function main() {
     assert(todoLayout.nestedLeft > todoLayout.topLeft + 10, `nested todo list must be indented: ${JSON.stringify(todoLayout)}`);
     await click('#live-document li ul li:nth-child(2) input[type="checkbox"]');
     await menu("File", "save");
+    for (let attempt = 0; attempt < 100 && !fs.readFileSync(fixture, "utf8").includes('  - [x] Attendance Sheet'); attempt++) await delay(50);
     await wait(`document.querySelector('#save-state').textContent==='Saved'`);
     assert(fs.readFileSync(fixture, "utf8").includes('  - [x] Attendance Sheet'),
       "clicking nested todo checkbox toggles saved Markdown");

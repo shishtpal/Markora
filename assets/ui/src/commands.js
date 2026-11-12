@@ -3,8 +3,18 @@ import { COMMANDS } from "./command-list.js";
 import { createFind } from "./find.js";
 
 const SEPARATORS = new Set([
-  "save", "export", "close-tab", "exit", "find", "heading-1", "list",
-  "toggle-files", "toggle-theme", "tab-next", "settings", "about",
+  "save",
+  "export",
+  "close-tab",
+  "exit",
+  "find",
+  "heading-1",
+  "list",
+  "toggle-files",
+  "toggle-theme",
+  "tab-next",
+  "settings",
+  "about",
 ]);
 
 export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
@@ -14,14 +24,18 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
   const triggers = [];
 
   function closeMenus() {
-    $$(".dropdown").forEach((node) => { node.hidden = true; });
+    $$(".dropdown").forEach((node) => {
+      node.hidden = true;
+    });
     triggers.forEach((node) => node.setAttribute("aria-expanded", "false"));
   }
   function openMenu(index, focusItem = false) {
     closeMenus();
     const trigger = triggers[index];
     if (!trigger) return;
-    triggers.forEach((t, i) => { t.tabIndex = i === index ? 0 : -1; });
+    triggers.forEach((t, i) => {
+      t.tabIndex = i === index ? 0 : -1;
+    });
     const dropdown = trigger.nextElementSibling;
     dropdown.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
@@ -45,7 +59,16 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
         return;
       }
       if (
-        ["export", "undo", "redo", "link"].includes(id) ||
+        [
+          "export",
+          "undo",
+          "redo",
+          "link",
+          "replace",
+          "find-toggle",
+          "replace-current",
+          "replace-all",
+        ].includes(id) ||
         formatting.has(id)
       ) {
         return;
@@ -58,6 +81,10 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
       about: () => dialogs.about(),
       export: () => dialogs.exportDoc(),
       find: () => find.open(),
+      replace: () => find.open(true),
+      "find-toggle": () => find.toggleReplace(),
+      "replace-current": () => find.replace(),
+      "replace-all": () => find.replaceAll(),
       "find-next": () => find.next(),
       "find-prev": () => find.previous(),
       "find-close": () => find.close(),
@@ -110,10 +137,14 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
         openMenu(menuIndex, true);
       } else if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
         event.preventDefault();
-        const next = (menuIndex + (event.key === "ArrowRight" ? 1 : -1) + triggers.length) % triggers.length;
+        const next =
+          (menuIndex + (event.key === "ArrowRight" ? 1 : -1) + triggers.length) % triggers.length;
         const wasOpen = triggers.some((t) => t.getAttribute("aria-expanded") === "true");
         if (wasOpen) openMenu(next, false);
-        else triggers.forEach((t, i) => { t.tabIndex = i === next ? 0 : -1; });
+        else
+          triggers.forEach((t, i) => {
+            t.tabIndex = i === next ? 0 : -1;
+          });
         triggers[next].focus({ preventScroll: true });
       }
     };
@@ -122,13 +153,16 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
       const current = buttons.indexOf(document.activeElement);
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
-        buttons[(current + (event.key === "ArrowDown" ? 1 : buttons.length - 1)) % buttons.length]?.focus();
+        buttons[
+          (current + (event.key === "ArrowDown" ? 1 : buttons.length - 1)) % buttons.length
+        ]?.focus();
       } else if (event.key === "Home" || event.key === "End") {
         event.preventDefault();
         buttons[event.key === "Home" ? 0 : buttons.length - 1]?.focus();
       } else if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
         event.preventDefault();
-        const next = (menuIndex + (event.key === "ArrowRight" ? 1 : -1) + triggers.length) % triggers.length;
+        const next =
+          (menuIndex + (event.key === "ArrowRight" ? 1 : -1) + triggers.length) % triggers.length;
         openMenu(next, true);
       } else if (event.key === "Escape") {
         event.stopPropagation();
@@ -145,14 +179,28 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
   if (!("focusGroup" in HTMLElement.prototype)) {
     const bar = $("#formatbar");
     const items = [...bar.querySelectorAll("button")];
-    items.forEach((b, i) => { b.tabIndex = i ? -1 : 0; });
+    items.forEach((b, i) => {
+      b.tabIndex = i ? -1 : 0;
+    });
     bar.addEventListener("focusin", ({ target }) => {
-      if (items.includes(target)) items.forEach((b) => { b.tabIndex = b === target ? 0 : -1; });
+      if (items.includes(target))
+        items.forEach((b) => {
+          b.tabIndex = b === target ? 0 : -1;
+        });
     });
     bar.addEventListener("keydown", (event) => {
       const i = items.indexOf(document.activeElement);
       if (i < 0) return;
-      const move = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : event.key === "Home" ? -i : event.key === "End" ? items.length - 1 - i : 0;
+      const move =
+        event.key === "ArrowRight"
+          ? 1
+          : event.key === "ArrowLeft"
+            ? -1
+            : event.key === "Home"
+              ? -i
+              : event.key === "End"
+                ? items.length - 1 - i
+                : 0;
       if (!move && event.key !== "Home" && event.key !== "End") return;
       event.preventDefault();
       items[(i + move + items.length) % items.length].focus();
@@ -170,9 +218,17 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
   document.addEventListener("keydown", (event) => {
     if (event.isComposing || $("dialog[open]")) return;
     const mod = event.ctrlKey || event.metaKey;
+    if (
+      mod &&
+      event.target.closest("#findbar input") &&
+      ["z", "y"].includes(event.key.toLowerCase())
+    )
+      return;
     const prefix = `${mod ? "Ctrl+" : ""}${event.shiftKey ? "Shift+" : ""}`;
     const key = event.key.length === 1 ? event.key.toUpperCase() : event.key;
-    let command = COMMANDS.find((c) => c.shortcut.toLowerCase() === (prefix + key).toLowerCase())?.id;
+    let command = COMMANDS.find(
+      (c) => c.shortcut.toLowerCase() === (prefix + key).toLowerCase(),
+    )?.id;
     if (mod && key === "T" && !event.shiftKey) command = "new-tab";
     if (mod && key === "K") command = "command-palette";
     if (mod && key === "Y") command = "redo";

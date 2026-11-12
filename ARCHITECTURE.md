@@ -38,7 +38,7 @@ flowchart LR
 | `src/app/session.rs`              | Startup restore, checkpoint scheduling and exit flush   |
 | `src/app/safety.rs`               | Background file scans and external-change resolution    |
 | `src/app/conflict.rs`             | Conflict choices, close continuation and native dialog  |
-| `src/app/save.rs`                 | Save dialogs, checked writes and saved baselines         |
+| `src/app/save.rs`                 | Save dialogs, checked writes and saved baselines        |
 | `src/webview_host.rs`             | Child webview, IPC wakeup, bounds and message delivery  |
 | `src/webview_fallback.rs`         | Non-Windows adapter selecting the native source editor  |
 | `src/theme.rs`, `src/platform.rs` | Native styling/fonts and external URL opening           |
@@ -62,7 +62,9 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
 | `layout.js`                      | Responsive sizing, pointer/keyboard resizers and saved widths        |
 | `chrome.js`                      | Tabs, file lists, recents, outline, status and themes                |
 | `dialogs.js`, `find.js`          | Modal UI, palette, settings and document search                      |
-| `conflicts.js`                   | External file-change dialog and resolution actions                 |
+| `search-engine.js`               | Unicode-aware matching, bounded replacement and regex captures       |
+| `search-worker.js`               | Cancellable worker execution with search timeouts                    |
+| `conflicts.js`                   | External file-change dialog and resolution actions                   |
 | `dom.js`                         | Small shared DOM helpers                                             |
 
 ## Data flow and invariants
@@ -83,6 +85,12 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
    dirty document and offers Save, Discard, or Cancel inside the visible UI.
 8. Grid columns have explicit placement, so hiding a sidebar frees its width.
    No editor view has a fixed maximum document width.
+9. Find and replace searches the Markdown model in a Blob worker, bundled fully
+   offline. Results are accepted only for the originating document, revision,
+   query and options. Changing the query or closing the bar cancels outstanding
+   work. Regex execution has a 1.5-second timeout; truncated match sets cannot
+   be replaced in bulk. A replacement updates the document once through the
+   editor's normal revision/history/IPC flow, making Replace All one undo step.
 
 ## Build and persistence
 
@@ -135,6 +143,10 @@ optimistic conflict detection, not an exclusive lock on other applications.
   editing, resizing, width, unsaved changes and file save. Requires Windows.
 - `node tools/smoke-safety.cjs`: external conflicts, Live reload, forced shutdown,
   restored tabs/drafts and graceful-exit discard in real WebView2 processes.
+- `node --test tools/test-search.cjs`: production search semantics, Unicode
+  boundaries/offsets, capture substitutions and result limits.
+- `node tools/smoke-find.cjs`: real WebView2 find/replace, navigation, undo/save,
+  regex timeouts/cancellation, stale-result rejection and Live/Source/Split.
 
 The native suite creates fixtures, settings and WebView2 data under
 `target/ui-smoke/<run>/` and never uses the normal preferences directory. It also

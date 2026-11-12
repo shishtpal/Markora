@@ -79,12 +79,19 @@
       </div>
     </div>
 
-    <div id="findbar" role="search" aria-label="Find in document" hidden>
+    <div id="findbar" role="search" aria-label="Find and replace in document" hidden>
+      <div class="find-row">
+      <button type="button" id="find-toggle" data-command="find-toggle" aria-expanded="false" aria-controls="replace-row" title="Show or hide replacement">Replace</button>
       <label class="find-field" for="find-input">
         <span class="btn-icon" data-icon="search"></span>
         <span class="sr-only">Find</span>
-        <input id="find-input" placeholder="Find in document…" autocomplete="off">
+        <input id="find-input" placeholder="Find in document…" autocomplete="off" spellcheck="false" aria-describedby="find-message">
       </label>
+      <div class="find-options" role="group" aria-label="Search options">
+        <button type="button" id="find-case" data-find-option aria-pressed="false" aria-label="Match case" title="Match case">Aa</button>
+        <button type="button" id="find-word" data-find-option aria-pressed="false" aria-label="Match whole word" title="Match whole word">Word</button>
+        <button type="button" id="find-regex" data-find-option aria-pressed="false" aria-label="Use regular expression" title="Use regular expression">.*</button>
+      </div>
       <span id="find-count" aria-live="polite"></span>
       <div class="find-actions">
         <button type="button" class="icon-button" data-command="find-prev" aria-label="Previous match" title="Previous match (Shift+F3)">
@@ -97,6 +104,17 @@
           <span class="btn-icon" data-icon="x"></span>
         </button>
       </div>
+      </div>
+      <div class="find-row" id="replace-row" hidden>
+        <label class="find-field" for="replace-input">
+          <span class="sr-only">Replace with</span>
+          <input id="replace-input" placeholder="Replace with…" autocomplete="off" spellcheck="false" aria-describedby="replacement-hint">
+        </label>
+        <button type="button" id="replace-one" data-command="replace-current" disabled title="Replace current match (Enter in replacement field)">Replace</button>
+        <button type="button" id="replace-all" data-command="replace-all" disabled title="Replace all matches (Ctrl+Enter in replacement field)">Replace all</button>
+        <span id="replacement-hint">Regex captures: $1, $&lt;name&gt;, $&amp;. Empty text deletes matches.</span>
+      </div>
+      <p id="find-message" role="status" aria-live="polite"></p>
     </div>
 
     <div id="workspace">

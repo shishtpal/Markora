@@ -18,6 +18,7 @@ export const COMMANDS = [
   ["undo", "Undo", "Ctrl+Z", "Edit"],
   ["redo", "Redo", "Ctrl+Shift+Z", "Edit"],
   ["find", "Find", "Ctrl+F", "Edit"],
+  ["replace", "Find and replace", "Ctrl+H", "Edit"],
   ["find-next", "Next match", "F3", "Edit"],
   ["find-prev", "Previous match", "Shift+F3", "Edit"],
   ["bold", "Bold", "Ctrl+B", "Format"],
@@ -52,4 +53,7 @@ export const COMMANDS = [
   ["folder-up", "Parent folder", "", null],
   ["clear-recents", "Clear recent files", "", null],
   ["find-close", "Close find", "", null],
+  ["find-toggle", "Toggle replacement", "", null],
+  ["replace-current", "Replace current match", "", null],
+  ["replace-all", "Replace all matches", "", null],
 ].map(([id, label, shortcut, menu]) => ({ id, label, shortcut, menu }));

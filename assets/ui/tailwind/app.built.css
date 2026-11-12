@@ -823,7 +823,7 @@ kbd {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: var(--files-size) var(--files-grip) minmax(0, 1fr) var(--outline-grip) var(--outline-size);
+  grid-template-columns: var(--files-size) var(--files-grip) minmax(0, 1fr) var(--outline-grip) var( --outline-size );
 }
 aside {
   min-width: 0;
@@ -975,6 +975,8 @@ body.resizing {
   user-select: none;
 }
 #findbar {
+  flex-direction: column;
+  align-items: stretch;
   font-size: 0.84rem;
   background: var(--surface);
   padding: 6px 12px;
@@ -988,7 +990,8 @@ body.resizing {
   border: 1px solid var(--frame);
   border-radius: 6px;
   padding: 0 8px;
-  width: min(360px, 45vw);
+  width: min(360px, 100%);
+  flex: 1 1 220px;
 }
 .find-field:focus-within {
   border-color: var(--accent);
@@ -997,12 +1000,49 @@ body.resizing {
 .find-field .btn-icon {
   color: var(--muted);
 }
-#find-input {
+#find-input, #replace-input {
+  min-width: 0;
   flex: 1;
   border: 0;
   background: transparent;
   padding: 4px 0;
   outline: none;
+}
+.find-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.find-options {
+  display: inline-flex;
+  gap: 3px;
+}
+.find-options button, #find-toggle, #replace-one, #replace-all {
+  border: 1px solid var(--divider);
+  border-radius: 4px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+.find-options button[aria-pressed="true"], #find-toggle[aria-expanded="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+#replacement-hint {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+#find-message {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+#find-message:empty {
+  display: none;
+}
+#findbar:has([aria-invalid="true"]) #find-message {
+  color: var(--error);
 }
 #find-count {
   font: 500 0.76rem var(--font-mono);

@@ -830,7 +830,7 @@ kbd {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: var(--files-size) var(--files-grip) minmax(0, 1fr) var(--outline-grip) var(--outline-size);
+  grid-template-columns: var(--files-size) var(--files-grip) minmax(0, 1fr) var(--outline-grip) var( --outline-size );
 }
 aside {
   min-width: 0;
@@ -982,6 +982,8 @@ body.resizing {
   user-select: none;
 }
 #findbar {
+  flex-direction: column;
+  align-items: stretch;
   font-size: 0.84rem;
   background: var(--surface);
   padding: 6px 12px;
@@ -995,7 +997,8 @@ body.resizing {
   border: 1px solid var(--frame);
   border-radius: 6px;
   padding: 0 8px;
-  width: min(360px, 45vw);
+  width: min(360px, 100%);
+  flex: 1 1 220px;
 }
 .find-field:focus-within {
   border-color: var(--accent);
@@ -1004,12 +1007,49 @@ body.resizing {
 .find-field .btn-icon {
   color: var(--muted);
 }
-#find-input {
+#find-input, #replace-input {
+  min-width: 0;
   flex: 1;
   border: 0;
   background: transparent;
   padding: 4px 0;
   outline: none;
+}
+.find-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.find-options {
+  display: inline-flex;
+  gap: 3px;
+}
+.find-options button, #find-toggle, #replace-one, #replace-all {
+  border: 1px solid var(--divider);
+  border-radius: 4px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+.find-options button[aria-pressed="true"], #find-toggle[aria-expanded="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+#replacement-hint {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+#find-message {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+#find-message:empty {
+  display: none;
+}
+#findbar:has([aria-invalid="true"]) #find-message {
+  color: var(--error);
 }
 #find-count {
   font: 500 0.76rem var(--font-mono);
@@ -2475,12 +2515,19 @@ button.primary {
       </div>
     </div>
 
-    <div id="findbar" role="search" aria-label="Find in document" hidden>
+    <div id="findbar" role="search" aria-label="Find and replace in document" hidden>
+      <div class="find-row">
+      <button type="button" id="find-toggle" data-command="find-toggle" aria-expanded="false" aria-controls="replace-row" title="Show or hide replacement">Replace</button>
       <label class="find-field" for="find-input">
         <span class="btn-icon" data-icon="search"></span>
         <span class="sr-only">Find</span>
-        <input id="find-input" placeholder="Find in document…" autocomplete="off">
+        <input id="find-input" placeholder="Find in document…" autocomplete="off" spellcheck="false" aria-describedby="find-message">
       </label>
+      <div class="find-options" role="group" aria-label="Search options">
+        <button type="button" id="find-case" data-find-option aria-pressed="false" aria-label="Match case" title="Match case">Aa</button>
+        <button type="button" id="find-word" data-find-option aria-pressed="false" aria-label="Match whole word" title="Match whole word">Word</button>
+        <button type="button" id="find-regex" data-find-option aria-pressed="false" aria-label="Use regular expression" title="Use regular expression">.*</button>
+      </div>
       <span id="find-count" aria-live="polite"></span>
       <div class="find-actions">
         <button type="button" class="icon-button" data-command="find-prev" aria-label="Previous match" title="Previous match (Shift+F3)">
@@ -2493,6 +2540,17 @@ button.primary {
           <span class="btn-icon" data-icon="x"></span>
         </button>
       </div>
+      </div>
+      <div class="find-row" id="replace-row" hidden>
+        <label class="find-field" for="replace-input">
+          <span class="sr-only">Replace with</span>
+          <input id="replace-input" placeholder="Replace with…" autocomplete="off" spellcheck="false" aria-describedby="replacement-hint">
+        </label>
+        <button type="button" id="replace-one" data-command="replace-current" disabled title="Replace current match (Enter in replacement field)">Replace</button>
+        <button type="button" id="replace-all" data-command="replace-all" disabled title="Replace all matches (Ctrl+Enter in replacement field)">Replace all</button>
+        <span id="replacement-hint">Regex captures: $1, $&lt;name&gt;, $&amp;. Empty text deletes matches.</span>
+      </div>
+      <p id="find-message" role="status" aria-live="polite"></p>
     </div>
 
     <div id="workspace">
@@ -3287,7 +3345,9 @@ function createEditor(onChange, onFlush = () => {}) {
       const blocks = doc.rendered.blocks;
       for (let start = 0; start < blocks.length; start += 150) {
         const slice = blocks.slice(start, start + 150);
-        batches.push(`<div class="preview-batch${start ? " deferred" : ""}" style="--batch-height:${slice.length * 64}px">${slice.map((b) => b.html).join("")}</div>`);
+        batches.push(
+          `<div class="preview-batch${start ? " deferred" : ""}" style="--batch-height:${slice.length * 64}px">${slice.map((b) => b.html).join("")}</div>`,
+        );
       }
       doc.previewHtml = batches.join("");
     }
@@ -3366,8 +3426,7 @@ function createEditor(onChange, onFlush = () => {}) {
       live.reset();
       lastPreview = null;
       lastPreviewDocId = 0;
-      if (!histories.has(incoming.id))
-        histories.set(incoming.id, { undo: [markdown], redo: [] });
+      if (!histories.has(incoming.id)) histories.set(incoming.id, { undo: [markdown], redo: [] });
       currentHistory = histories.get(incoming.id);
     }
     const modeChanged = incoming.viewMode !== doc.viewMode;
@@ -3382,7 +3441,9 @@ function createEditor(onChange, onFlush = () => {}) {
       viewMode: incoming.viewMode,
       rendered,
       renderedMarkdown: switched
-        ? (incoming.viewMode !== "source" || rendered.blocks.length > 0 || !markdown ? markdown : "")
+        ? incoming.viewMode !== "source" || rendered.blocks.length > 0 || !markdown
+          ? markdown
+          : ""
         : canLiveRender
           ? markdown
           : doc.renderedMarkdown,
@@ -3483,6 +3544,11 @@ function createEditor(onChange, onFlush = () => {}) {
     accept,
     format,
     history,
+    replaceDocument(markdown) {
+      if (doc.kind === "pdf" || markdown === doc.markdown) return;
+      live.reset();
+      change(markdown, true, true);
+    },
     preparePrint: ensurePreview,
     draft: () =>
       doc.id && doc.kind !== "pdf"
@@ -3646,6 +3712,7 @@ const COMMANDS = [
   ["undo", "Undo", "Ctrl+Z", "Edit"],
   ["redo", "Redo", "Ctrl+Shift+Z", "Edit"],
   ["find", "Find", "Ctrl+F", "Edit"],
+  ["replace", "Find and replace", "Ctrl+H", "Edit"],
   ["find-next", "Next match", "F3", "Edit"],
   ["find-prev", "Previous match", "Shift+F3", "Edit"],
   ["bold", "Bold", "Ctrl+B", "Format"],
@@ -3680,85 +3747,385 @@ const COMMANDS = [
   ["folder-up", "Parent folder", "", null],
   ["clear-recents", "Clear recent files", "", null],
   ["find-close", "Close find", "", null],
+  ["find-toggle", "Toggle replacement", "", null],
+  ["replace-current", "Replace current match", "", null],
+  ["replace-all", "Replace all matches", "", null],
 ].map(([id, label, shortcut, menu]) => ({ id, label, shortcut, menu }));
 
 return { COMMANDS };
 })();
+modules["search-engine"] = (() => {
+// Self-contained so the exact production engine also runs inside a cancellable worker.
+function searchDocument(request) {
+  const {
+    text,
+    query,
+    caseSensitive,
+    wholeWord,
+    regex,
+    operation = "find",
+    replacement = "",
+    index = 0,
+  } = request;
+  const maximum = 100_000;
+  if (!query) return { hits: [], limited: false };
+  let pattern = regex ? query : query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (wholeWord) {
+    const word = "[\\p{L}\\p{M}\\p{N}\\p{Pc}]";
+    pattern = `(?<!${word})(?:${pattern})(?!${word})`;
+  }
+  const expression = new RegExp(pattern, `gmu${caseSensitive ? "" : "i"}`);
+  const matches = [];
+  let limited = false;
+  for (const match of text.matchAll(expression)) {
+    if (matches.length === maximum) {
+      limited = true;
+      break;
+    }
+    matches.push(match);
+  }
+  const hits = matches.map((match) => ({ start: match.index, length: match[0].length }));
+  if (operation === "find" || !matches.length) return { hits, limited, replaced: 0 };
+  if (limited && operation === "replaceAll")
+    throw new Error("More than 100,000 matches. Refine the search before replacing all.");
+  function expand(match) {
+    if (!regex) return replacement;
+    return replacement.replace(/\$(\$|&|`|'|<[^>]*>|\d{1,2})/g, (token, part) => {
+      if (part === "$") return "$";
+      if (part === "&") return match[0];
+      if (part === "`") return text.slice(0, match.index);
+      if (part === "'") return text.slice(match.index + match[0].length);
+      if (part.startsWith("<"))
+        return match.groups ? (match.groups[part.slice(1, -1)] ?? "") : token;
+      const number = Number(part);
+      if (number > 0 && number < match.length) return match[number] ?? "";
+      const first = Number(part[0]);
+      if (part.length === 2 && first > 0 && first < match.length)
+        return (match[first] ?? "") + part[1];
+      return token;
+    });
+  }
+  const selected =
+    operation === "replaceAll"
+      ? matches
+      : [matches[Math.max(0, Math.min(index, matches.length - 1))]];
+  const parts = [];
+  let cursor = 0,
+    size = 0,
+    anchor = 0;
+  function append(part) {
+    size += part.length;
+    if (size > 32 * 1024 * 1024)
+      throw new Error(
+        "Replacement result exceeds 32 million characters. Refine the search or replacement.",
+      );
+    parts.push(part);
+  }
+  for (const match of selected) {
+    const inserted = expand(match);
+    append(text.slice(cursor, match.index));
+    append(inserted);
+    cursor = match.index + match[0].length;
+    anchor = match.index + inserted.length;
+    // An empty replacement at an empty match still advances by one Unicode code point.
+    if (!match[0].length && !inserted.length)
+      anchor += text.codePointAt(match.index) > 0xffff ? 2 : 1;
+  }
+  append(text.slice(cursor));
+  return { hits, limited, text: parts.join(""), replaced: selected.length, anchor };
+}
+
+return { searchDocument };
+})();
+modules["search-worker"] = (() => {
+const { searchDocument } = modules["search-engine"];
+
+// Regex execution never runs on the UI thread, including patterns with backtracking.
+function createSearchRunner() {
+  const source = `self.onmessage=({data})=>{try{self.postMessage({result:(${searchDocument.toString()})(data)});}catch(error){self.postMessage({error:error.message});}};`;
+  const url = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
+  let cancel = () => {};
+  return {
+    run(request) {
+      cancel();
+      return new Promise((resolve) => {
+        let worker, timeout;
+        const finish = (result) => {
+          clearTimeout(timeout);
+          worker?.terminate();
+          cancel = () => {};
+          resolve(result);
+        };
+        cancel = () => finish(null);
+        try {
+          worker = new Worker(url);
+          worker.onmessage = ({ data }) => finish(data.error ? { error: data.error } : data.result);
+          worker.onerror = (event) => {
+            event.preventDefault();
+            finish({ error: event.message || "Search could not start. Try again." });
+          };
+          timeout = setTimeout(
+            () => finish({ error: "Search took too long. Simplify the expression and try again." }),
+            1500,
+          );
+          worker.postMessage(request);
+        } catch (error) {
+          finish({ error: error.message });
+        }
+      });
+    },
+    cancel() {
+      cancel();
+    },
+    destroy() {
+      cancel();
+      URL.revokeObjectURL(url);
+    },
+  };
+}
+
+return { createSearchRunner };
+})();
 modules["find"] = (() => {
-const { $ } = modules["dom"];
+const { $, $$ } = modules["dom"];
+const { createSearchRunner } = modules["search-worker"];
 
 function createFind(editor) {
-  const input = $("#find-input");
-  let index = -1;
-  let timer = null;
-  function matches() {
-    if (!input.value) return [];
-    const haystack = editor.document().markdown.toLowerCase();
-    const needle = input.value.toLowerCase();
-    const hits = [];
-    for (
-      let at = haystack.indexOf(needle);
-      at >= 0;
-      at = haystack.indexOf(needle, at + needle.length)
-    )
-      hits.push(at);
-    return hits;
+  const bar = $("#findbar"),
+    input = $("#find-input"),
+    replacement = $("#replace-input");
+  const count = $("#find-count"),
+    message = $("#find-message");
+  const runner = createSearchRunner();
+  let key = null,
+    pendingKey = null,
+    pending = null,
+    timer = null;
+  let hits = [],
+    index = -1,
+    anchor = null,
+    limited = false,
+    busy = false;
+  let failed = false,
+    replacing = false,
+    generation = 0,
+    lastDoc = null;
+
+  function request() {
+    const doc = editor.document();
+    return {
+      text: doc.markdown,
+      query: input.value,
+      caseSensitive: $("#find-case").getAttribute("aria-pressed") === "true",
+      wholeWord: $("#find-word").getAttribute("aria-pressed") === "true",
+      regex: $("#find-regex").getAttribute("aria-pressed") === "true",
+    };
   }
-  function update(jump = false, direction = 1) {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
+  function stamp() {
+    const doc = editor.document(),
+      options = request();
+    return JSON.stringify([
+      doc.id,
+      doc.revision,
+      options.query,
+      options.caseSensitive,
+      options.wholeWord,
+      options.regex,
+    ]);
+  }
+  function paint() {
+    count.textContent = busy
+      ? "Searching…"
+      : input.value
+        ? `${index >= 0 ? index + 1 : 0} / ${hits.length}${limited ? "+" : ""}`
+        : "";
+    count.classList.toggle("no-matches", Boolean(input.value) && !busy && !hits.length);
+    input.setAttribute("aria-invalid", String(failed));
+    for (const id of ["replace-one", "replace-all"])
+      $("#" + id).disabled =
+        busy || replacing || failed || !hits.length || (id === "replace-all" && limited);
+  }
+  function stop() {
+    clearTimeout(timer);
+    timer = null;
+    generation++;
+    runner.cancel();
+    pendingKey = null;
+    pending = null;
+    busy = false;
+  }
+  async function ensure() {
+    clearTimeout(timer);
+    timer = null;
+    if (bar.hidden || editor.document().kind === "pdf") return false;
+    const nextKey = stamp();
+    if (key === nextKey) return !failed;
+    if (pendingKey === nextKey) return pending;
+    const docId = editor.document().id;
+    if (lastDoc !== docId) {
+      anchor = null;
+      index = -1;
+      lastDoc = docId;
     }
-    const hits = matches();
-    if (jump && hits.length) index = index < 0 ? (direction > 0 ? 0 : hits.length - 1) : (index + direction + hits.length) % hits.length;
-    if (index >= hits.length) index = hits.length - 1;
-    $("#find-count").textContent = input.value
-      ? `${index >= 0 ? index + 1 : 0} / ${hits.length}`
-      : "";
-    $("#find-count").classList.toggle("no-matches", Boolean(input.value) && hits.length === 0);
-    if (jump && hits.length) editor.jump(hits[index], input.value.length);
-  }
-  input.addEventListener("input", () => {
-    index = -1;
-    if (editor.document().markdown.length > 100_000) {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = null;
+    const token = ++generation;
+    pendingKey = nextKey;
+    busy = true;
+    failed = false;
+    message.textContent = "";
+    paint();
+    pending = runner.run(request()).then((result) => {
+      if (token !== generation || bar.hidden) return false;
+      pendingKey = null;
+      pending = null;
+      busy = false;
+      if (stamp() !== nextKey) {
         update();
-      }, 100);
-    } else {
+        return false;
+      }
+      if (!result) return false;
+      key = nextKey;
+      hits = result.hits || [];
+      limited = Boolean(result.limited);
+      failed = Boolean(result.error);
+      index = anchor === null || !hits.length ? -1 : hits.findIndex((hit) => hit.start >= anchor);
+      if (anchor !== null && hits.length && index < 0) index = 0;
+      message.textContent =
+        result.error ||
+        (limited ? "Showing the first 100,000 matches. Refine the search to replace all." : "");
+      paint();
+      return !failed;
+    });
+    return pending;
+  }
+  function update() {
+    if (bar.hidden || editor.document().kind === "pdf") {
+      if (pending || replacing) stop();
+      return;
+    }
+    if (!replacing) void ensure();
+  }
+  function changed() {
+    stop();
+    key = null;
+    anchor = null;
+    hits = [];
+    index = -1;
+    failed = false;
+    message.textContent = "";
+    busy = true;
+    paint();
+    timer = setTimeout(update, 100);
+  }
+  async function navigate(direction) {
+    if (bar.hidden) open();
+    if (!(await ensure()) || !hits.length || replacing) return;
+    index =
+      index < 0
+        ? direction > 0
+          ? 0
+          : hits.length - 1
+        : (index + direction + hits.length) % hits.length;
+    const hit = hits[index];
+    anchor = hit.start;
+    paint();
+    editor.jump(hit.start, hit.length);
+  }
+  async function replace(all = false) {
+    if (replacing) return;
+    const ready = await ensure();
+    if (replacing || !ready || !hits.length || (all && limited)) return;
+    const before = stamp(),
+      focus = document.activeElement,
+      token = ++generation;
+    replacing = true;
+    paint();
+    const result = await runner.run({
+      ...request(),
+      operation: all ? "replaceAll" : "replace",
+      replacement: replacement.value,
+      index: Math.max(0, index),
+    });
+    replacing = false;
+    if (token !== generation || bar.hidden) {
+      paint();
+      return;
+    }
+    if (stamp() !== before) {
+      key = null;
       update();
+      return;
     }
-  });
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      update(true, event.shiftKey ? -1 : 1);
+    if (!result || result.error) {
+      message.textContent = result?.error || "Replacement cancelled.";
+      paint();
+      return;
     }
-    if (event.key === "Escape") close();
-  });
-  function open() {
-    $("#findbar").hidden = false;
+    if (result.text !== undefined) editor.replaceDocument(result.text);
+    key = null;
+    anchor = all ? null : result.anchor;
+    if (await ensure()) {
+      if (!all && index >= 0) editor.jump(hits[index].start, hits[index].length);
+      message.textContent = `Replaced ${result.replaced} ${result.replaced === 1 ? "match" : "matches"}.`;
+      if (bar.contains(focus)) focus.focus({ preventScroll: true });
+    }
+  }
+  function toggleReplace(show = $("#replace-row").hidden) {
+    $("#replace-row").hidden = !show;
+    $("#find-toggle").setAttribute("aria-expanded", String(show));
+    if (show) replacement.focus();
+  }
+  function open(showReplace = false) {
+    if (editor.document().kind === "pdf") return;
+    bar.hidden = false;
+    toggleReplace(showReplace);
     input.focus();
     input.select();
     update();
   }
   function close() {
-    $("#findbar").hidden = true;
+    stop();
+    bar.hidden = true;
     editor.focus();
   }
+
+  input.addEventListener("input", changed);
+  replacement.addEventListener("input", () => {
+    if (replacing) {
+      stop();
+      replacing = false;
+    }
+    paint();
+  });
+
+  for (const button of $$("[data-find-option]"))
+    button.onclick = () => {
+      button.setAttribute("aria-pressed", String(button.getAttribute("aria-pressed") !== "true"));
+      changed();
+    };
+  bar.addEventListener("keydown", (event) => {
+    if (event.isComposing) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      close();
+    }
+    if (event.key === "Enter" && (event.target === input || event.target === replacement)) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.target === replacement) void replace(event.ctrlKey || event.metaKey);
+      else void navigate(event.shiftKey ? -1 : 1);
+    }
+  });
+  window.addEventListener("pagehide", () => runner.destroy());
   return {
     open,
     close,
     update,
-    next: () => {
-      if ($("#findbar").hidden) open();
-      update(true);
-    },
-    previous: () => {
-      if ($("#findbar").hidden) open();
-      update(true, -1);
-    },
+    toggleReplace,
+    replace: () => replace(),
+    replaceAll: () => replace(true),
+    next: () => navigate(1),
+    previous: () => navigate(-1),
   };
 }
 
@@ -3994,8 +4361,18 @@ const { COMMANDS } = modules["command-list"];
 const { createFind } = modules["find"];
 
 const SEPARATORS = new Set([
-  "save", "export", "close-tab", "exit", "find", "heading-1", "list",
-  "toggle-files", "toggle-theme", "tab-next", "settings", "about",
+  "save",
+  "export",
+  "close-tab",
+  "exit",
+  "find",
+  "heading-1",
+  "list",
+  "toggle-files",
+  "toggle-theme",
+  "tab-next",
+  "settings",
+  "about",
 ]);
 
 function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
@@ -4005,14 +4382,18 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
   const triggers = [];
 
   function closeMenus() {
-    $$(".dropdown").forEach((node) => { node.hidden = true; });
+    $$(".dropdown").forEach((node) => {
+      node.hidden = true;
+    });
     triggers.forEach((node) => node.setAttribute("aria-expanded", "false"));
   }
   function openMenu(index, focusItem = false) {
     closeMenus();
     const trigger = triggers[index];
     if (!trigger) return;
-    triggers.forEach((t, i) => { t.tabIndex = i === index ? 0 : -1; });
+    triggers.forEach((t, i) => {
+      t.tabIndex = i === index ? 0 : -1;
+    });
     const dropdown = trigger.nextElementSibling;
     dropdown.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
@@ -4036,7 +4417,16 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
         return;
       }
       if (
-        ["export", "undo", "redo", "link"].includes(id) ||
+        [
+          "export",
+          "undo",
+          "redo",
+          "link",
+          "replace",
+          "find-toggle",
+          "replace-current",
+          "replace-all",
+        ].includes(id) ||
         formatting.has(id)
       ) {
         return;
@@ -4049,6 +4439,10 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
       about: () => dialogs.about(),
       export: () => dialogs.exportDoc(),
       find: () => find.open(),
+      replace: () => find.open(true),
+      "find-toggle": () => find.toggleReplace(),
+      "replace-current": () => find.replace(),
+      "replace-all": () => find.replaceAll(),
       "find-next": () => find.next(),
       "find-prev": () => find.previous(),
       "find-close": () => find.close(),
@@ -4101,10 +4495,14 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
         openMenu(menuIndex, true);
       } else if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
         event.preventDefault();
-        const next = (menuIndex + (event.key === "ArrowRight" ? 1 : -1) + triggers.length) % triggers.length;
+        const next =
+          (menuIndex + (event.key === "ArrowRight" ? 1 : -1) + triggers.length) % triggers.length;
         const wasOpen = triggers.some((t) => t.getAttribute("aria-expanded") === "true");
         if (wasOpen) openMenu(next, false);
-        else triggers.forEach((t, i) => { t.tabIndex = i === next ? 0 : -1; });
+        else
+          triggers.forEach((t, i) => {
+            t.tabIndex = i === next ? 0 : -1;
+          });
         triggers[next].focus({ preventScroll: true });
       }
     };
@@ -4113,13 +4511,16 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
       const current = buttons.indexOf(document.activeElement);
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
-        buttons[(current + (event.key === "ArrowDown" ? 1 : buttons.length - 1)) % buttons.length]?.focus();
+        buttons[
+          (current + (event.key === "ArrowDown" ? 1 : buttons.length - 1)) % buttons.length
+        ]?.focus();
       } else if (event.key === "Home" || event.key === "End") {
         event.preventDefault();
         buttons[event.key === "Home" ? 0 : buttons.length - 1]?.focus();
       } else if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
         event.preventDefault();
-        const next = (menuIndex + (event.key === "ArrowRight" ? 1 : -1) + triggers.length) % triggers.length;
+        const next =
+          (menuIndex + (event.key === "ArrowRight" ? 1 : -1) + triggers.length) % triggers.length;
         openMenu(next, true);
       } else if (event.key === "Escape") {
         event.stopPropagation();
@@ -4136,14 +4537,28 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
   if (!("focusGroup" in HTMLElement.prototype)) {
     const bar = $("#formatbar");
     const items = [...bar.querySelectorAll("button")];
-    items.forEach((b, i) => { b.tabIndex = i ? -1 : 0; });
+    items.forEach((b, i) => {
+      b.tabIndex = i ? -1 : 0;
+    });
     bar.addEventListener("focusin", ({ target }) => {
-      if (items.includes(target)) items.forEach((b) => { b.tabIndex = b === target ? 0 : -1; });
+      if (items.includes(target))
+        items.forEach((b) => {
+          b.tabIndex = b === target ? 0 : -1;
+        });
     });
     bar.addEventListener("keydown", (event) => {
       const i = items.indexOf(document.activeElement);
       if (i < 0) return;
-      const move = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : event.key === "Home" ? -i : event.key === "End" ? items.length - 1 - i : 0;
+      const move =
+        event.key === "ArrowRight"
+          ? 1
+          : event.key === "ArrowLeft"
+            ? -1
+            : event.key === "Home"
+              ? -i
+              : event.key === "End"
+                ? items.length - 1 - i
+                : 0;
       if (!move && event.key !== "Home" && event.key !== "End") return;
       event.preventDefault();
       items[(i + move + items.length) % items.length].focus();
@@ -4161,9 +4576,17 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
   document.addEventListener("keydown", (event) => {
     if (event.isComposing || $("dialog[open]")) return;
     const mod = event.ctrlKey || event.metaKey;
+    if (
+      mod &&
+      event.target.closest("#findbar input") &&
+      ["z", "y"].includes(event.key.toLowerCase())
+    )
+      return;
     const prefix = `${mod ? "Ctrl+" : ""}${event.shiftKey ? "Shift+" : ""}`;
     const key = event.key.length === 1 ? event.key.toUpperCase() : event.key;
-    let command = COMMANDS.find((c) => c.shortcut.toLowerCase() === (prefix + key).toLowerCase())?.id;
+    let command = COMMANDS.find(
+      (c) => c.shortcut.toLowerCase() === (prefix + key).toLowerCase(),
+    )?.id;
     if (mod && key === "T" && !event.shiftKey) command = "new-tab";
     if (mod && key === "K") command = "command-palette";
     if (mod && key === "Y") command = "redo";
