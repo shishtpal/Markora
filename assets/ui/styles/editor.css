@@ -239,7 +239,9 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .live-block {
-    transition: border-color 140ms ease, background-color 140ms ease;
+    transition:
+      border-color 140ms ease,
+      background-color 140ms ease;
   }
 }
 

@@ -6,10 +6,13 @@
   "scripts": {
     "build:ui": "node tools/build-ui.cjs",
     "build:ui:watch": "node tools/build-ui.cjs --watch",
-    "test": "node --test tools/test-search.cjs && cargo test",
+    "test": "node --test tools/test-search.cjs tools/test-images.cjs && cargo test",
     "test:search": "node --test tools/test-search.cjs",
     "test:find": "node tools/smoke-find.cjs",
-    "test:ui": "node tools/verify-ui.cjs && node tools/smoke-native.cjs && node tools/smoke-safety.cjs && node tools/smoke-find.cjs",
+    "test:ui": "node tools/verify-ui.cjs && node tools/smoke-native.cjs && node tools/smoke-safety.cjs && node tools/smoke-find.cjs && node tools/smoke-images.cjs --dom",
+    "test:images": "node tools/smoke-images.cjs --dom",
+    "test:images:desktop": "node tools/smoke-images.cjs",
+    "test:images:dom": "node tools/smoke-images.cjs --dom",
     "test:safety": "node tools/smoke-safety.cjs"
   },
   "devDependencies": {

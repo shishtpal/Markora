@@ -52,6 +52,7 @@ impl Fixture {
             pdf_viewer: PdfViewerState::default(),
             reading: reading::ReadingState::default(),
             safety: safety::SafetyState::default(),
+            images: images::ImageState::default(),
         };
         Self { app, dir }
     }

@@ -39,6 +39,14 @@ pub enum HtmlStyle {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum Action {
+    PickAssetFolder,
+    Image {
+        request: crate::image_protocol::ImageRequest,
+    },
+    NativeDrop {
+        paths: Vec<std::path::PathBuf>,
+        position: (i32, i32),
+    },
     Ready,
     Edit,
     ReadingKey {
@@ -111,6 +119,8 @@ pub enum ConflictChoice {
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct PrefsPatch {
+    pub asset_mode: Option<crate::asset_policy::AssetMode>,
+    pub asset_custom_path: Option<String>,
     pub color_mode: Option<String>,
     pub md_theme: Option<String>,
     pub view_mode: Option<ViewMode>,
@@ -127,6 +137,8 @@ impl PrefsPatch {
     pub fn apply(self, prefs: &mut Prefs) {
         macro_rules! assign { ($($field:ident),*) => { $(if let Some(v) = self.$field { prefs.$field = v; })* }; }
         assign!(
+            asset_mode,
+            asset_custom_path,
             color_mode,
             md_theme,
             view_mode,
@@ -180,6 +192,7 @@ pub struct DocumentView<'a> {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot<'a> {
+    pub image_import: Option<&'a crate::image_protocol::ImageReply>,
     pub tabs: Vec<TabView>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub document: Option<DocumentView<'a>>,

@@ -22,7 +22,9 @@ export function createDialogs(send, preferences, editor) {
   }
   function renderPalette() {
     const query = $("#palette-input").value.toLowerCase().trim();
-    hits = COMMANDS.filter((c) => c.menu && `${c.label} ${c.id} ${c.menu}`.toLowerCase().includes(query));
+    hits = COMMANDS.filter(
+      (c) => c.menu && `${c.label} ${c.id} ${c.menu}`.toLowerCase().includes(query),
+    );
     selected = Math.max(0, Math.min(selected, hits.length - 1));
     $("#palette-list").replaceChildren(
       ...hits.map((command, index) => {
@@ -31,7 +33,10 @@ export function createDialogs(send, preferences, editor) {
         button.setAttribute("role", "option");
         button.setAttribute("aria-selected", String(index === selected));
         const main = element("span", "palette-item-main");
-        main.append(element("span", "palette-cat", command.menu), element("span", "", command.label));
+        main.append(
+          element("span", "palette-cat", command.menu),
+          element("span", "", command.label),
+        );
         button.append(main);
         if (command.shortcut) button.append(element("kbd", "", command.shortcut));
         button.onclick = () => {
@@ -92,6 +97,9 @@ export function createDialogs(send, preferences, editor) {
   });
   $("#color-mode").onchange = (event) => preferences({ colorMode: event.target.value });
   $("#md-theme").onchange = (event) => preferences({ mdTheme: event.target.value });
+  $("#asset-mode").onchange = (event) => preferences({ assetMode: event.target.value });
+  $("#asset-custom-path").onchange = (event) => preferences({ assetCustomPath: event.target.value });
+  $("#asset-folder-browse").onclick = () => send({ type: "pickAssetFolder" });
   $("#show-files").onchange = (event) => preferences({ showFiles: event.target.checked });
   $("#show-outline").onchange = (event) => preferences({ showOutline: event.target.checked });
   scaleInput.oninput = (event) => {
@@ -143,7 +151,9 @@ export function createDialogs(send, preferences, editor) {
   );
 
   return {
-    setRun: (handler) => { run = handler; },
+    setRun: (handler) => {
+      run = handler;
+    },
     palette() {
       selected = 0;
       $("#palette-input").value = "";
@@ -151,9 +161,15 @@ export function createDialogs(send, preferences, editor) {
       show(palette);
       $("#palette-input").focus();
     },
-    settings() { show($("#settings-dialog")); },
-    help() { show($("#help-dialog")); },
-    about() { show($("#about-dialog")); },
+    settings() {
+      show($("#settings-dialog"));
+    },
+    help() {
+      show($("#help-dialog"));
+    },
+    about() {
+      show($("#about-dialog"));
+    },
     exportDoc() {
       updateExportOptions();
       show($("#export-dialog"));
@@ -167,6 +183,9 @@ export function createDialogs(send, preferences, editor) {
       const prefs = snapshot.prefs;
       $("#color-mode").value = prefs.colorMode;
       $("#md-theme").value = prefs.mdTheme;
+      $("#asset-mode").value = prefs.assetMode;
+      $("#asset-custom-settings").hidden = prefs.assetMode !== "custom";
+      if (document.activeElement !== $("#asset-custom-path")) $("#asset-custom-path").value = prefs.assetCustomPath;
       $("#show-files").checked = prefs.showFiles;
       $("#show-outline").checked = prefs.showOutline;
       if (document.activeElement !== scaleInput) scaleInput.value = prefs.fontScale;
@@ -175,7 +194,9 @@ export function createDialogs(send, preferences, editor) {
         $("#unsaved-description").textContent =
           `Save changes to “${snapshot.pending}” before closing?`;
         if (pendingTitle !== snapshot.pending)
-          $$("dialog[open]").forEach((d) => { if (d !== unsaved) d.close(); });
+          $$("dialog[open]").forEach((d) => {
+            if (d !== unsaved) d.close();
+          });
         show(unsaved);
       } else if (unsaved.open) unsaved.close();
       pendingTitle = snapshot.pending;

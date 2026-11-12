@@ -70,9 +70,34 @@ impl Markora {
                 }
             }
         };
-        match markora::file_io::write_checked(&path, doc.markdown.as_bytes(), Some(expected)) {
+        let relocated = if let Some(previous) = &doc.path
+            && previous != &path
+        {
+            markora::image_assets::relocate_references(
+                &doc.markdown,
+                previous,
+                &path,
+                &self.asset_policy(),
+                &self.images.known_paths,
+            )
+        } else {
+            Ok((doc.markdown.clone(), Vec::new()))
+        };
+        let (markdown, images) = match relocated {
+            Ok(result) => result,
+            Err(error) => {
+                self.fail(format!(
+                    "Could not copy imported images for Save As: {error}"
+                ));
+                return false;
+            }
+        };
+        match markora::file_io::write_checked(&path, markdown.as_bytes(), Some(expected)) {
             Ok(()) => {
                 let doc = &mut self.workspace.tabs[index];
+                if doc.markdown != markdown {
+                    doc.edit(markdown, doc.revision + 1);
+                }
                 doc.disk_version = markora::file_io::FileVersion::of(doc.markdown.as_bytes());
                 doc.path = Some(path.clone());
                 doc.mark_saved();
@@ -82,6 +107,11 @@ impl Markora {
                 }
                 self.touch_recent(path.clone(), title);
                 self.notify(format!("Saved {}", path.display()));
+                if let Err(error) = self.register_images(&images) {
+                    self.fail(format!(
+                        "Saved the note, but its image registry could not be saved: {error}"
+                    ));
+                }
                 true
             }
             Err(error) => {

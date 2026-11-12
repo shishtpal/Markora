@@ -4,7 +4,8 @@ export function createConflictDialog(send) {
   const dialog = $("#conflict-dialog");
   let token = null;
   $$("[data-conflict]").forEach((button) => {
-    button.onclick = () => send({ type: "resolveConflict", choice: button.dataset.conflict, token });
+    button.onclick = () =>
+      send({ type: "resolveConflict", choice: button.dataset.conflict, token });
   });
   dialog.addEventListener("cancel", (event) => {
     event.preventDefault();

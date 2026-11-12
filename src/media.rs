@@ -1,6 +1,6 @@
 //! Local media resolution and byte-range streaming for custom-protocol assets.
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs::File,
     io::{Read, Seek, SeekFrom},
     path::{Component, Path, PathBuf},
@@ -11,6 +11,7 @@ const MAX_CHUNK: u64 = 1024 * 1024;
 
 #[derive(Default)]
 pub struct MediaRoots {
+    pub imported_images: HashSet<PathBuf>,
     pub docs: HashMap<u64, PathBuf>,
     pub pdf_files: HashMap<u64, PathBuf>,
     pub folder: Option<PathBuf>,
@@ -87,22 +88,33 @@ pub fn resolve_media_path(roots: &MediaRoots, uri: &str) -> Option<PathBuf> {
         let target = roots.pdf_files.get(&doc_id)?.canonicalize().ok()?;
         return target.is_file().then_some(target);
     }
+    if let Some(encoded) = path_part.strip_prefix("imported/") {
+        let raw = percent_decode(encoded)?;
+        let target = crate::asset_policy::target(Path::new(""), &raw)?
+            .canonicalize()
+            .ok()?;
+        return (roots.imported_images.contains(&target) && target.is_file()).then_some(target);
+    }
     let rest = path_part.strip_prefix("doc/")?;
     let (id_str, encoded_rel) = rest.split_once('/')?;
     let doc_id: u64 = id_str.parse().ok()?;
-    let rel = percent_decode(encoded_rel)?.replace('\\', "/");
+    let rel = percent_decode(encoded_rel.strip_prefix("relative/").unwrap_or(encoded_rel))?
+        .replace('\\', "/");
     let mut clean = PathBuf::new();
     for comp in Path::new(&rel).components() {
         match comp {
             Component::Normal(part) => clean.push(part),
             Component::CurDir => {}
-            Component::ParentDir | Component::RootDir | Component::Prefix(_) => return None,
+            Component::ParentDir => clean.push(".."),
+            Component::RootDir | Component::Prefix(_) => return None,
         }
     }
     let base = roots.docs.get(&doc_id).or(roots.folder.as_ref())?;
     let base_canon = base.canonicalize().ok()?;
     let target = base_canon.join(&clean).canonicalize().ok()?;
-    if target.starts_with(&base_canon) && target.is_file() {
+    if (target.starts_with(&base_canon) || roots.imported_images.contains(&target))
+        && target.is_file()
+    {
         Some(target)
     } else {
         None

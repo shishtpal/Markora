@@ -83,6 +83,47 @@ such as underscores. Search covers the Markdown source, including its syntax.
   limited search before replacing all. Replacement results are limited to
   32 million characters. Cancelled, failed or stale results do not edit a document.
 
+## Image paste and drop
+
+Paste a clipboard screenshot, drop image files into the document workspace, or
+choose **Format → Insert image…**. Windows Live, Source and Split insert ordinary
+Markdown image links. Normal text paste and Markdown/PDF file drops keep their
+existing behavior. Drop images and documents separately.
+
+In **Settings → Image asset folders**, choose:
+
+- **Per file:** `<note-name>.assets/` beside each note (the default).
+- **Shared:** one `data.assets/` folder for all notes in the same directory.
+- **Custom:** an absolute folder shared by all notes, or a path relative to each
+  note's directory. Type a path or use **Browse…**. Paths on the same drive use
+  relative links; another drive uses `file:` URLs.
+
+The setting is saved and applies to new imports; existing links keep working.
+Files use content-based names. Identical bytes reuse the existing image; unrelated files are never
+overwritten. The original PNG, JPEG, WebP or GIF file bytes are preserved.
+Imports accept up to 10 images, 20 MiB each, 50 MiB per batch and 32 megapixels.
+Other formats must first be converted to a supported format.
+
+An untitled note asks for a save location before importing anything. Cancel
+leaves the draft and assets untouched. Imported links are dirty edits until you
+save the note, and each gesture is one Undo step. Undo retains the image files
+so Redo and draft recovery continue to work.
+
+Paste uses the current text selection. Dropping onto a rendered Live block
+inserts an image paragraph after it; Source and Split use the source selection.
+If you edit, switch tabs or enter reading view during an import, completed
+images remain on disk and **Insert at cursor** lets you insert them safely after
+returning to the original note. Images cannot be inserted into PDFs or reading
+view. Closing or dismissing an import does not automatically delete its assets.
+
+Save As copies referenced Markora images into the selected destination policy
+and updates their links. An absolute custom folder is reused without duplication.
+Copy errors stop the Markdown save and retain
+the original document. Moving a note manually requires moving its assets too.
+The native source interface supports image file drops at its selection; native
+bitmap clipboard import is not included.
+Its **Image folders** button exposes the same folder preferences.
+
 ## Saving, recovery and external changes
 
 - Markdown, settings and recovery writes use a synced temporary file beside the
@@ -193,6 +234,8 @@ node --test tools/test-search.cjs
 cargo build
 node tools/smoke-native.cjs
 node tools/smoke-safety.cjs
+node tools/smoke-images.cjs
+node tools/smoke-images.cjs --dom
 node tools/smoke-find.cjs
 ```
 

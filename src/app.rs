@@ -1,10 +1,14 @@
 //! Application lifecycle. File operations, IPC, commands and fallback live in submodules.
+mod asset_settings;
 mod bridge;
 mod commands;
 mod conflict;
 mod export;
 mod fallback;
 mod files;
+#[cfg(test)]
+mod image_tests;
+mod images;
 #[cfg(test)]
 mod loading_tests;
 mod pdf_state;
@@ -59,6 +63,10 @@ pub(super) struct SyncedDocState {
 }
 
 pub(super) enum BgEvent {
+    ImagesImported {
+        token: u64,
+        result: Result<Vec<markora::image_assets::ImportedImage>, String>,
+    },
     DiskScan(Vec<safety::Observation>),
     FileLoaded {
         path: PathBuf,
@@ -104,6 +112,7 @@ pub struct Markora {
     pdf_viewer: PdfViewerState,
     reading: reading::ReadingState,
     safety: safety::SafetyState,
+    images: images::ImageState,
 }
 
 impl Markora {
@@ -154,11 +163,13 @@ impl Markora {
             pdf_viewer: PdfViewerState::default(),
             reading: reading::ReadingState::default(),
             safety: safety::SafetyState::default(),
+            images: images::ImageState::default(),
         };
         if let Some(path) = initial_arg {
             app.open_path(path);
         }
         app.ensure_webview(&cc.egui_ctx);
+        app.initialize_image_registry();
         app.initialize_session();
         app
     }
@@ -249,8 +260,8 @@ impl eframe::App for Markora {
                 .map(|f| f.path().to_path_buf())
                 .collect::<Vec<_>>()
         });
-        for path in dropped {
-            self.open_path(path);
+        if self.webview.is_none() && !dropped.is_empty() {
+            self.native_drop(dropped, (0, 0));
         }
 
         if self.webview.is_some() {
@@ -268,6 +279,7 @@ impl eframe::App for Markora {
         } else {
             self.fallback_ui(ui);
             self.conflict_ui(&ctx);
+            self.asset_settings_ui(&ctx);
         }
 
         if !self.allow_close {

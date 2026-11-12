@@ -11,6 +11,7 @@ impl Markora {
         let events: Vec<_> = self.bg_rx.try_iter().collect();
         for event in events {
             match event {
+                BgEvent::ImagesImported { token, result } => self.finish_images(token, result),
                 BgEvent::DiskScan(observations) => self.apply_observations(observations),
                 BgEvent::FileLoaded {
                     path,

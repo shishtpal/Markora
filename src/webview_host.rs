@@ -14,6 +14,8 @@ use webview2_com::{
 };
 use windows_core::{HSTRING, Interface, PCWSTR};
 use wry::{WebView, WebViewBuilder, WebViewExtWindows};
+#[path = "webview_drop.rs"]
+mod drop_files;
 #[path = "webview_keys.rs"]
 mod keys;
 
@@ -47,6 +49,7 @@ impl Host {
             (255, 255, 255, 255)
         };
         let webview = WebViewBuilder::new()
+            .with_drag_drop_handler(drop_files::handler(queue.clone(), wake.clone()))
             .with_background_color(bg)
             .with_url("http://markora.localhost/app/index.html")
             .with_devtools(cfg!(debug_assertions))

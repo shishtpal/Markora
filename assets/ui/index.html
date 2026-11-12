@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en" data-color="dark" data-md-theme="cobalt">
-
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Markora</title><style>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markora</title>
+    <style>
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme, base, components, utilities;
@@ -173,9 +173,6 @@
   }
 }
 @layer utilities {
-  .\!visible {
-    visibility: visible !important;
-  }
   .visible {
     visibility: visible;
   }
@@ -189,6 +186,9 @@
     clip-path: inset(50%);
     white-space: nowrap;
     border-width: 0;
+  }
+  .absolute {
+    position: absolute;
   }
   .fixed {
     position: fixed;
@@ -1678,7 +1678,7 @@ html[data-md-theme="github"] .markdown-body :is(h1, h2, h3, h4, h5, h6) {
   letter-spacing: normal;
 }
 html[data-md-theme="github"] .markdown-body :is(h1, h2) {
-  padding-bottom: .3em;
+  padding-bottom: 0.3em;
   border-bottom: 1px solid var(--gh-subtle-border);
 }
 html[data-md-theme="github"] .markdown-body h1 {
@@ -1694,10 +1694,10 @@ html[data-md-theme="github"] .markdown-body h4 {
   font-size: 1em;
 }
 html[data-md-theme="github"] .markdown-body h5 {
-  font-size: .875em;
+  font-size: 0.875em;
 }
 html[data-md-theme="github"] .markdown-body h6 {
-  font-size: .85em;
+  font-size: 0.85em;
   color: var(--gh-muted);
 }
 html[data-md-theme="github"] .markdown-body > :first-child, html[data-md-theme="github"] .preview-batch:first-child > :first-child, html[data-md-theme="github"] .live-block[data-block="0"] > :first-child {
@@ -1711,7 +1711,7 @@ html[data-md-theme="github"] .markdown-body :is(ul, ol) {
   padding-left: 2em;
 }
 html[data-md-theme="github"] .markdown-body li + li {
-  margin-top: .25em;
+  margin-top: 0.25em;
 }
 html[data-md-theme="github"] .markdown-body li :is(ul, ol) {
   margin-bottom: 0;
@@ -1729,14 +1729,14 @@ html[data-md-theme="github"] .markdown-body a:hover {
 html[data-md-theme="github"] .markdown-body blockquote {
   padding: 0 1em;
   color: var(--gh-muted);
-  border-left: .25em solid var(--gh-border);
+  border-left: 0.25em solid var(--gh-border);
   background: transparent;
 }
 html[data-md-theme="github"] .markdown-body :is(code, pre) {
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
 }
 html[data-md-theme="github"] .markdown-body code {
-  padding: .2em .4em;
+  padding: 0.2em 0.4em;
   font-size: 85%;
   border-radius: 6px;
   background: var(--gh-code);
@@ -1767,7 +1767,7 @@ html[data-md-theme="github"] .markdown-body tr:nth-child(even) {
   background: var(--gh-inset);
 }
 html[data-md-theme="github"] .markdown-body hr {
-  height: .25em;
+  height: 0.25em;
   margin: 24px 0;
   border: 0;
   background: var(--gh-border);
@@ -2024,6 +2024,42 @@ input[type="range"]#font-scale:focus-visible {
 }
 #conflict-dialog .dialog-actions {
   flex-wrap: wrap;
+}
+#image-import-note {
+  position: fixed;
+  z-index: 90;
+  bottom: 42px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: max-content;
+  max-width: min(700px, 92vw);
+  padding: 12px 16px;
+  color: var(--text);
+  background: var(--surface-elevated);
+  border: 1px solid var(--frame);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+}
+#asset-custom-settings {
+  padding: 12px 0;
+  border-top: 1px solid var(--divider);
+}
+.asset-path-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+#asset-custom-path {
+  flex: 1;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid var(--frame);
+  border-radius: 4px;
+  background: var(--surface);
 }
 button.primary {
   background: var(--accent);
@@ -2482,385 +2518,687 @@ body.reading-mode .reading-match {
 }
 
 </style>
-</head>
+  </head>
 
-<body>
-  <div id="app" aria-label="Markora Markdown editor">
-    <button type="button" id="exit-reading" data-command="exit-reading" hidden
-      title="Exit fullscreen reading (F11 or Escape)">Exit reading · F11</button>
-    <header id="menubar">
-      <nav id="menus" role="menubar" aria-label="Application menus"></nav>
-      <div class="spacer"></div>
-      <button type="button" class="bar-action" data-command="command-palette" title="Command palette (Ctrl+Shift+P)">
-        <span class="btn-icon" data-icon="command"></span><span>Commands</span><kbd>Ctrl K</kbd>
+  <body>
+    <div id="app" aria-label="Markora Markdown editor">
+      <button
+        type="button"
+        id="exit-reading"
+        data-command="exit-reading"
+        hidden
+        title="Exit fullscreen reading (F11 or Escape)"
+      >
+        Exit reading · F11
       </button>
-      <button type="button" class="bar-action" data-command="toggle-theme" id="theme-toggle" title="Toggle light / dark (Ctrl+Shift+L)">
-        <span class="btn-icon" data-icon="sun"></span><span id="theme-toggle-label">Light mode</span>
-      </button>
-      <button type="button" class="bar-action icon-text" data-command="settings" title="Settings (Ctrl+,)">
-        <span class="btn-icon" data-icon="settings"></span><span>Settings</span>
-      </button>
-    </header>
+      <header id="menubar">
+        <nav id="menus" role="menubar" aria-label="Application menus"></nav>
+        <div class="spacer"></div>
+        <button
+          type="button"
+          class="bar-action"
+          data-command="command-palette"
+          title="Command palette (Ctrl+Shift+P)"
+        >
+          <span class="btn-icon" data-icon="command"></span><span>Commands</span><kbd>Ctrl K</kbd>
+        </button>
+        <button
+          type="button"
+          class="bar-action"
+          data-command="toggle-theme"
+          id="theme-toggle"
+          title="Toggle light / dark (Ctrl+Shift+L)"
+        >
+          <span class="btn-icon" data-icon="sun"></span
+          ><span id="theme-toggle-label">Light mode</span>
+        </button>
+        <button
+          type="button"
+          class="bar-action icon-text"
+          data-command="settings"
+          title="Settings (Ctrl+,)"
+        >
+          <span class="btn-icon" data-icon="settings"></span><span>Settings</span>
+        </button>
+      </header>
 
-    <div id="tabbar">
-      <div id="tabs" role="tablist" aria-label="Open documents"></div>
-      <button type="button" data-command="new-tab" class="icon-button" aria-label="New tab" title="New tab (Ctrl+N)">
-        <span class="btn-icon" data-icon="plus"></span>
-      </button>
-      <span id="document-path" title=""></span>
+      <div id="tabbar">
+        <div id="tabs" role="tablist" aria-label="Open documents"></div>
+        <button
+          type="button"
+          data-command="new-tab"
+          class="icon-button"
+          aria-label="New tab"
+          title="New tab (Ctrl+N)"
+        >
+          <span class="btn-icon" data-icon="plus"></span>
+        </button>
+        <span id="document-path" title=""></span>
+      </div>
+
+      <div id="viewbar">
+        <div class="segments" role="group" aria-label="Editor mode">
+          <button type="button" data-command="view-live" title="Live editor (Ctrl+1)">
+            <span class="btn-icon" data-icon="eye"></span><span>Live</span></button
+          ><button type="button" data-command="view-source" title="Source editor (Ctrl+2)">
+            <span class="btn-icon" data-icon="code"></span><span>Source</span></button
+          ><button type="button" data-command="view-split" title="Split editor (Ctrl+3)">
+            <span class="btn-icon" data-icon="columns"></span><span>Split</span>
+          </button>
+        </div>
+
+        <span id="pdf-badge" class="pdf-badge" hidden>PDF · Read-only</span>
+
+        <span class="bar-divider" aria-hidden="true"></span>
+
+        <div
+          id="formatbar"
+          role="toolbar"
+          focusgroup="toolbar wrap"
+          aria-label="Markdown formatting"
+          aria-controls="document"
+        >
+          <div role="group" aria-label="Inline formatting">
+            <button type="button" data-command="bold" aria-label="Bold" title="Bold (Ctrl+B)">
+              <span class="btn-icon" data-icon="bold"></span>
+            </button>
+            <button type="button" data-command="italic" aria-label="Italic" title="Italic (Ctrl+I)">
+              <span class="btn-icon" data-icon="italic"></span>
+            </button>
+            <button type="button" data-command="code" aria-label="Inline code" title="Inline code">
+              <span class="btn-icon" data-icon="codeInline"></span>
+            </button>
+            <button
+              type="button"
+              data-command="link"
+              aria-label="Insert link"
+              title="Insert link (Ctrl+L)"
+            >
+              <span class="btn-icon" data-icon="link"></span>
+            </button>
+          </div>
+          <span role="separator" aria-orientation="vertical"></span>
+          <div role="group" aria-label="Block formatting">
+            <button type="button" data-command="heading-1" aria-label="Heading 1" title="Heading 1">
+              <span class="btn-icon" data-icon="h1"></span>
+            </button>
+            <button type="button" data-command="heading-2" aria-label="Heading 2" title="Heading 2">
+              <span class="btn-icon" data-icon="h2"></span>
+            </button>
+            <button
+              type="button"
+              data-command="list"
+              aria-label="Bulleted list"
+              title="Bulleted list"
+            >
+              <span class="btn-icon" data-icon="list"></span>
+            </button>
+            <button type="button" data-command="quote" aria-label="Blockquote" title="Blockquote">
+              <span class="btn-icon" data-icon="quote"></span>
+            </button>
+            <button
+              type="button"
+              data-command="code-block"
+              aria-label="Code block"
+              title="Code block"
+            >
+              <span class="btn-icon" data-icon="codeBlock"></span>
+            </button>
+            <button
+              type="button"
+              data-command="table"
+              aria-label="Insert table"
+              title="Insert table"
+            >
+              <span class="btn-icon" data-icon="table"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="panel-toggles" role="group" aria-label="Workspace panels">
+          <button
+            type="button"
+            data-command="toggle-files"
+            id="toggle-files"
+            aria-pressed="true"
+            title="Toggle files sidebar (Ctrl+\)"
+          >
+            <span class="btn-icon" data-icon="panelLeft"></span><span>Files</span>
+          </button>
+          <button
+            type="button"
+            data-command="toggle-outline"
+            id="toggle-outline"
+            aria-pressed="true"
+            title="Toggle outline sidebar"
+          >
+            <span class="btn-icon" data-icon="listTree"></span><span>Outline</span>
+          </button>
+          <button
+            type="button"
+            data-command="toggle-focus"
+            id="toggle-focus"
+            aria-pressed="false"
+            title="Toggle focus mode (Ctrl+D)"
+          >
+            <span class="btn-icon" data-icon="maximize"></span><span>Focus</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="findbar" role="search" aria-label="Find and replace in document" hidden>
+        <div class="find-row">
+          <button
+            type="button"
+            id="find-toggle"
+            data-command="find-toggle"
+            aria-expanded="false"
+            aria-controls="replace-row"
+            title="Show or hide replacement"
+          >
+            Replace
+          </button>
+          <label class="find-field" for="find-input">
+            <span class="btn-icon" data-icon="search"></span>
+            <span class="sr-only">Find</span>
+            <input
+              id="find-input"
+              placeholder="Find in document…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="find-message"
+            />
+          </label>
+          <div class="find-options" role="group" aria-label="Search options">
+            <button
+              type="button"
+              id="find-case"
+              data-find-option
+              aria-pressed="false"
+              aria-label="Match case"
+              title="Match case"
+            >
+              Aa
+            </button>
+            <button
+              type="button"
+              id="find-word"
+              data-find-option
+              aria-pressed="false"
+              aria-label="Match whole word"
+              title="Match whole word"
+            >
+              Word
+            </button>
+            <button
+              type="button"
+              id="find-regex"
+              data-find-option
+              aria-pressed="false"
+              aria-label="Use regular expression"
+              title="Use regular expression"
+            >
+              .*
+            </button>
+          </div>
+          <span id="find-count" aria-live="polite"></span>
+          <div class="find-actions">
+            <button
+              type="button"
+              class="icon-button"
+              data-command="find-prev"
+              aria-label="Previous match"
+              title="Previous match (Shift+F3)"
+            >
+              <span class="btn-icon" data-icon="chevronUp"></span>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              data-command="find-next"
+              aria-label="Next match"
+              title="Next match (F3)"
+            >
+              <span class="btn-icon" data-icon="chevronDown"></span>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              data-command="find-close"
+              aria-label="Close find"
+              title="Close find (Esc)"
+            >
+              <span class="btn-icon" data-icon="x"></span>
+            </button>
+          </div>
+        </div>
+        <div class="find-row" id="replace-row" hidden>
+          <label class="find-field" for="replace-input">
+            <span class="sr-only">Replace with</span>
+            <input
+              id="replace-input"
+              placeholder="Replace with…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="replacement-hint"
+            />
+          </label>
+          <button
+            type="button"
+            id="replace-one"
+            data-command="replace-current"
+            disabled
+            title="Replace current match (Enter in replacement field)"
+          >
+            Replace
+          </button>
+          <button
+            type="button"
+            id="replace-all"
+            data-command="replace-all"
+            disabled
+            title="Replace all matches (Ctrl+Enter in replacement field)"
+          >
+            Replace all
+          </button>
+          <span id="replacement-hint"
+            >Regex captures: $1, $&lt;name&gt;, $&amp;. Empty text deletes matches.</span
+          >
+        </div>
+        <p id="find-message" role="status" aria-live="polite"></p>
+      </div>
+
+      <div id="workspace">
+        <aside id="files-panel" aria-label="Files sidebar">
+          <div class="panel-heading">
+            <h2>Files</h2>
+            <div class="spacer"></div>
+            <button
+              type="button"
+              class="icon-button"
+              data-command="folder-up"
+              title="Parent folder"
+              aria-label="Parent folder"
+            >
+              <span class="btn-icon" data-icon="arrowUp"></span>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              data-command="refresh-folder"
+              title="Refresh folder"
+              aria-label="Refresh folder"
+            >
+              <span class="btn-icon" data-icon="rotateCw"></span>
+            </button>
+          </div>
+          <button type="button" id="folder-path" data-command="open-folder" title="Open folder">
+            <span class="btn-icon" data-icon="folderOpen"></span>
+            <span id="folder-path-label">Open a folder…</span>
+          </button>
+          <div id="files" class="tree"></div>
+          <div class="panel-heading">
+            <h2>Recent files</h2>
+            <div class="spacer"></div>
+            <button type="button" data-command="clear-recents" class="quiet">Clear</button>
+          </div>
+          <div id="recents" class="tree"></div>
+        </aside>
+
+        <div
+          id="files-resizer"
+          class="resizer"
+          role="separator"
+          tabindex="0"
+          aria-label="Resize files sidebar"
+          aria-controls="files-panel"
+          aria-orientation="vertical"
+        ></div>
+
+        <main id="document" aria-label="Document workspace" data-mode="live">
+          <div id="live-pane" class="scroll-pane">
+            <div id="live-document" class="markdown-body" aria-label="Live document"></div>
+            <button type="button" id="append-block" class="append-block">
+              <span class="btn-icon" data-icon="plus"></span><span>Add paragraph</span>
+            </button>
+          </div>
+          <div id="source-pane" class="source-pane" hidden>
+            <textarea
+              id="source-editor"
+              aria-label="Markdown source"
+              spellcheck="false"
+              placeholder="Start writing Markdown…"
+            ></textarea>
+          </div>
+          <div
+            id="split-resizer"
+            class="resizer"
+            hidden
+            role="separator"
+            tabindex="0"
+            aria-label="Resize source and preview"
+            aria-orientation="vertical"
+          ></div>
+          <div
+            id="preview-pane"
+            class="scroll-pane"
+            tabindex="0"
+            role="region"
+            aria-label="Rendered document"
+          >
+            <div id="preview-document" class="markdown-body" aria-label="Markdown preview"></div>
+          </div>
+          <div id="pdf-pane" class="pdf-pane" hidden>
+            <iframe id="pdf-frame" title="PDF document"></iframe>
+            <div id="pdf-drop-shield" hidden></div>
+          </div>
+        </main>
+
+        <div
+          id="outline-resizer"
+          class="resizer"
+          role="separator"
+          tabindex="0"
+          aria-label="Resize outline sidebar"
+          aria-controls="outline-panel"
+          aria-orientation="vertical"
+        ></div>
+
+        <aside id="outline-panel" aria-label="Outline sidebar">
+          <div class="panel-heading">
+            <h2>Outline</h2>
+          </div>
+          <div id="outline" class="tree"></div>
+        </aside>
+      </div>
+
+      <footer id="statusbar">
+        <span id="connection" role="status">Connecting…</span>
+        <span id="status" role="status"></span>
+        <div class="spacer"></div>
+        <span id="counts"></span>
+        <span id="save-state"></span>
+        <button type="button" id="mode-status" title="Cycle view mode (Live / Source / Split)">
+          Live
+        </button>
+      </footer>
     </div>
 
-    <div id="viewbar">
-      <div class="segments" role="group" aria-label="Editor mode">
-        <button type="button" data-command="view-live" title="Live editor (Ctrl+1)">
-          <span class="btn-icon" data-icon="eye"></span><span>Live</span>
-        </button><button type="button" data-command="view-source" title="Source editor (Ctrl+2)">
-          <span class="btn-icon" data-icon="code"></span><span>Source</span>
-        </button><button type="button" data-command="view-split" title="Split editor (Ctrl+3)">
-          <span class="btn-icon" data-icon="columns"></span><span>Split</span>
-        </button>
-      </div>
-
-      <span id="pdf-badge" class="pdf-badge" hidden>PDF · Read-only</span>
-
-      <span class="bar-divider" aria-hidden="true"></span>
-
-      <div id="formatbar" role="toolbar" focusgroup="toolbar wrap" aria-label="Markdown formatting" aria-controls="document">
-        <div role="group" aria-label="Inline formatting">
-          <button type="button" data-command="bold" aria-label="Bold" title="Bold (Ctrl+B)"><span class="btn-icon" data-icon="bold"></span></button>
-          <button type="button" data-command="italic" aria-label="Italic" title="Italic (Ctrl+I)"><span class="btn-icon" data-icon="italic"></span></button>
-          <button type="button" data-command="code" aria-label="Inline code" title="Inline code"><span class="btn-icon" data-icon="codeInline"></span></button>
-          <button type="button" data-command="link" aria-label="Insert link" title="Insert link (Ctrl+L)"><span class="btn-icon" data-icon="link"></span></button>
-        </div>
-        <span role="separator" aria-orientation="vertical"></span>
-        <div role="group" aria-label="Block formatting">
-          <button type="button" data-command="heading-1" aria-label="Heading 1" title="Heading 1"><span class="btn-icon" data-icon="h1"></span></button>
-          <button type="button" data-command="heading-2" aria-label="Heading 2" title="Heading 2"><span class="btn-icon" data-icon="h2"></span></button>
-          <button type="button" data-command="list" aria-label="Bulleted list" title="Bulleted list"><span class="btn-icon" data-icon="list"></span></button>
-          <button type="button" data-command="quote" aria-label="Blockquote" title="Blockquote"><span class="btn-icon" data-icon="quote"></span></button>
-          <button type="button" data-command="code-block" aria-label="Code block" title="Code block"><span class="btn-icon" data-icon="codeBlock"></span></button>
-          <button type="button" data-command="table" aria-label="Insert table" title="Insert table"><span class="btn-icon" data-icon="table"></span></button>
-        </div>
-      </div>
-
-      <div class="spacer"></div>
-
-      <div class="panel-toggles" role="group" aria-label="Workspace panels">
-        <button type="button" data-command="toggle-files" id="toggle-files" aria-pressed="true" title="Toggle files sidebar (Ctrl+\)">
-          <span class="btn-icon" data-icon="panelLeft"></span><span>Files</span>
-        </button>
-        <button type="button" data-command="toggle-outline" id="toggle-outline" aria-pressed="true" title="Toggle outline sidebar">
-          <span class="btn-icon" data-icon="listTree"></span><span>Outline</span>
-        </button>
-        <button type="button" data-command="toggle-focus" id="toggle-focus" aria-pressed="false" title="Toggle focus mode (Ctrl+D)">
-          <span class="btn-icon" data-icon="maximize"></span><span>Focus</span>
-        </button>
-      </div>
-    </div>
-
-    <div id="findbar" role="search" aria-label="Find and replace in document" hidden>
-      <div class="find-row">
-      <button type="button" id="find-toggle" data-command="find-toggle" aria-expanded="false" aria-controls="replace-row" title="Show or hide replacement">Replace</button>
-      <label class="find-field" for="find-input">
+    <dialog id="palette-dialog" closedby="any" aria-labelledby="palette-title">
+      <h2 id="palette-title" class="sr-only">Commands</h2>
+      <div class="palette-search">
         <span class="btn-icon" data-icon="search"></span>
-        <span class="sr-only">Find</span>
-        <input id="find-input" placeholder="Find in document…" autocomplete="off" spellcheck="false" aria-describedby="find-message">
-      </label>
-      <div class="find-options" role="group" aria-label="Search options">
-        <button type="button" id="find-case" data-find-option aria-pressed="false" aria-label="Match case" title="Match case">Aa</button>
-        <button type="button" id="find-word" data-find-option aria-pressed="false" aria-label="Match whole word" title="Match whole word">Word</button>
-        <button type="button" id="find-regex" data-find-option aria-pressed="false" aria-label="Use regular expression" title="Use regular expression">.*</button>
+        <input
+          id="palette-input"
+          aria-label="Search commands"
+          placeholder="Type a command…"
+          autocomplete="off"
+        />
+        <kbd>Esc</kbd>
       </div>
-      <span id="find-count" aria-live="polite"></span>
-      <div class="find-actions">
-        <button type="button" class="icon-button" data-command="find-prev" aria-label="Previous match" title="Previous match (Shift+F3)">
-          <span class="btn-icon" data-icon="chevronUp"></span>
-        </button>
-        <button type="button" class="icon-button" data-command="find-next" aria-label="Next match" title="Next match (F3)">
-          <span class="btn-icon" data-icon="chevronDown"></span>
-        </button>
-        <button type="button" class="icon-button" data-command="find-close" aria-label="Close find" title="Close find (Esc)">
-          <span class="btn-icon" data-icon="x"></span>
-        </button>
-      </div>
-      </div>
-      <div class="find-row" id="replace-row" hidden>
-        <label class="find-field" for="replace-input">
-          <span class="sr-only">Replace with</span>
-          <input id="replace-input" placeholder="Replace with…" autocomplete="off" spellcheck="false" aria-describedby="replacement-hint">
-        </label>
-        <button type="button" id="replace-one" data-command="replace-current" disabled title="Replace current match (Enter in replacement field)">Replace</button>
-        <button type="button" id="replace-all" data-command="replace-all" disabled title="Replace all matches (Ctrl+Enter in replacement field)">Replace all</button>
-        <span id="replacement-hint">Regex captures: $1, $&lt;name&gt;, $&amp;. Empty text deletes matches.</span>
-      </div>
-      <p id="find-message" role="status" aria-live="polite"></p>
-    </div>
+      <div id="palette-list" role="listbox" aria-label="Matching commands"></div>
+      <p class="dialog-hint">↑ ↓ navigate · Enter run · Esc close</p>
+    </dialog>
 
-    <div id="workspace">
-      <aside id="files-panel" aria-label="Files sidebar">
-        <div class="panel-heading">
-          <h2>Files</h2>
-          <div class="spacer"></div>
-          <button type="button" class="icon-button" data-command="folder-up" title="Parent folder" aria-label="Parent folder">
-            <span class="btn-icon" data-icon="arrowUp"></span>
-          </button>
-          <button type="button" class="icon-button" data-command="refresh-folder" title="Refresh folder" aria-label="Refresh folder">
-            <span class="btn-icon" data-icon="rotateCw"></span>
-          </button>
-        </div>
-        <button type="button" id="folder-path" data-command="open-folder" title="Open folder">
-          <span class="btn-icon" data-icon="folderOpen"></span>
-          <span id="folder-path-label">Open a folder…</span>
-        </button>
-        <div id="files" class="tree"></div>
-        <div class="panel-heading">
-          <h2>Recent files</h2>
-          <div class="spacer"></div>
-          <button type="button" data-command="clear-recents" class="quiet">Clear</button>
-        </div>
-        <div id="recents" class="tree"></div>
-      </aside>
-
-      <div id="files-resizer" class="resizer" role="separator" tabindex="0" aria-label="Resize files sidebar"
-        aria-controls="files-panel" aria-orientation="vertical"></div>
-
-      <main id="document" aria-label="Document workspace" data-mode="live">
-        <div id="live-pane" class="scroll-pane">
-          <div id="live-document" class="markdown-body" aria-label="Live document"></div>
-          <button type="button" id="append-block" class="append-block">
-            <span class="btn-icon" data-icon="plus"></span><span>Add paragraph</span>
-          </button>
-        </div>
-        <div id="source-pane" class="source-pane" hidden>
-          <textarea id="source-editor" aria-label="Markdown source" spellcheck="false" placeholder="Start writing Markdown…"></textarea>
-        </div>
-        <div id="split-resizer" class="resizer" hidden role="separator" tabindex="0"
-          aria-label="Resize source and preview" aria-orientation="vertical"></div>
-        <div id="preview-pane" class="scroll-pane" tabindex="0" role="region" aria-label="Rendered document">
-          <div id="preview-document" class="markdown-body" aria-label="Markdown preview"></div>
-        </div>
-        <div id="pdf-pane" class="pdf-pane" hidden>
-          <iframe id="pdf-frame" title="PDF document"></iframe>
-          <div id="pdf-drop-shield" hidden></div>
-        </div>
-      </main>
-
-      <div id="outline-resizer" class="resizer" role="separator" tabindex="0" aria-label="Resize outline sidebar"
-        aria-controls="outline-panel" aria-orientation="vertical"></div>
-
-      <aside id="outline-panel" aria-label="Outline sidebar">
-        <div class="panel-heading">
-          <h2>Outline</h2>
-        </div>
-        <div id="outline" class="tree"></div>
-      </aside>
-    </div>
-
-    <footer id="statusbar">
-      <span id="connection" role="status">Connecting…</span>
-      <span id="status" role="status"></span>
-      <div class="spacer"></div>
-      <span id="counts"></span>
-      <span id="save-state"></span>
-      <button type="button" id="mode-status" title="Cycle view mode (Live / Source / Split)">Live</button>
-    </footer>
-  </div>
-
-  <dialog id="palette-dialog" closedby="any" aria-labelledby="palette-title">
-    <h2 id="palette-title" class="sr-only">Commands</h2>
-    <div class="palette-search">
-      <span class="btn-icon" data-icon="search"></span>
-      <input id="palette-input" aria-label="Search commands" placeholder="Type a command…" autocomplete="off">
-      <kbd>Esc</kbd>
-    </div>
-    <div id="palette-list" role="listbox" aria-label="Matching commands"></div>
-    <p class="dialog-hint">↑ ↓ navigate · Enter run · Esc close</p>
-  </dialog>
-
-  <dialog id="settings-dialog" closedby="any" aria-labelledby="settings-title">
-    <div class="dialog-heading">
-      <h2 id="settings-title">Settings</h2>
-      <button type="button" class="icon-button" data-close-dialog aria-label="Close settings">
-        <span class="btn-icon" data-icon="x"></span>
-      </button>
-    </div>
-    <div class="settings-group">
-      <label class="setting-row">
-        <span class="setting-copy"><strong>Appearance</strong><small>Interface light or dark palette</small></span>
-        <select id="color-mode">
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-        </select>
-      </label>
-      <label class="setting-row">
-        <span class="setting-copy"><strong>Markdown theme</strong><small>Typography and document palette</small></span>
-        <select id="md-theme">
-          <option value="cobalt">Cobalt</option>
-          <option value="paper">Paper</option>
-          <option value="graphite">Graphite</option>
-          <option value="forest">Forest</option>
-          <option value="mono">Mono</option>
-          <option value="mars">Mars</option>
-          <option value="github">GitHub</option>
-        </select>
-      </label>
-      <label class="setting-row setting-slider">
-        <span class="setting-head">
-          <span class="setting-copy"><strong>Text size</strong><small>Scales interface and document typography</small></span>
-          <output id="font-scale-value">100%</output>
-        </span>
-        <input id="font-scale" type="range" min="0.875" max="1.5" step="0.025" value="1">
-      </label>
-    </div>
-    <div class="settings-group">
-      <label class="check-label">
-        <span class="setting-copy"><strong>Files sidebar</strong><small>Browse folder and recent documents</small></span>
-        <input id="show-files" type="checkbox" class="toggle-switch">
-      </label>
-      <label class="check-label">
-        <span class="setting-copy"><strong>Outline sidebar</strong><small>Jump to headings in current document</small></span>
-        <input id="show-outline" type="checkbox" class="toggle-switch">
-      </label>
-    </div>
-    <div class="dialog-actions">
-      <button type="button" data-command="reset-layout">Reset sidebar widths</button>
-      <button type="button" class="primary" data-close-dialog>Done</button>
-    </div>
-  </dialog>
-
-  <dialog id="conflict-dialog" closedby="none" aria-labelledby="conflict-title" aria-describedby="conflict-description">
-    <h2 id="conflict-title">File changed on disk</h2>
-    <p id="conflict-path" style="overflow-wrap:anywhere"></p>
-    <p id="conflict-description"></p>
-    <div class="dialog-actions">
-      <button type="button" data-conflict="cancel">Later</button>
-      <button type="button" data-conflict="saveAs">Save As…</button>
-      <button type="button" data-conflict="keep">Keep Mine</button>
-      <button type="button" data-conflict="reload" class="primary">Reload</button>
-    </div>
-  </dialog>
-  <dialog id="unsaved-dialog" closedby="none" aria-labelledby="unsaved-title">
-    <div class="dialog-heading">
-      <span class="dialog-title-row">
-        <span class="btn-icon warn-icon" data-icon="alert"></span>
-        <h2 id="unsaved-title">Unsaved changes</h2>
-      </span>
-    </div>
-    <p id="unsaved-description"></p>
-    <div class="dialog-actions">
-      <button type="button" data-unsaved="cancel">Cancel</button>
-      <button type="button" class="danger" data-unsaved="discard">Discard</button>
-      <button type="button" data-unsaved="save" class="primary">Save</button>
-    </div>
-  </dialog>
-
-  <dialog id="help-dialog" closedby="any" aria-labelledby="help-title">
-    <div class="dialog-heading">
-      <h2 id="help-title">Keyboard shortcuts</h2>
-      <button type="button" class="icon-button" data-close-dialog aria-label="Close shortcuts">
-        <span class="btn-icon" data-icon="x"></span>
-      </button>
-    </div>
-    <div id="help-list"></div>
-  </dialog>
-
-  <dialog id="link-dialog" closedby="any" aria-labelledby="link-title">
-    <form id="link-form">
+    <dialog id="settings-dialog" closedby="any" aria-labelledby="settings-title">
       <div class="dialog-heading">
-        <h2 id="link-title">Insert link</h2>
-        <button type="button" class="icon-button" data-close-dialog aria-label="Close insert link">
+        <h2 id="settings-title">Settings</h2>
+        <button type="button" class="icon-button" data-close-dialog aria-label="Close settings">
           <span class="btn-icon" data-icon="x"></span>
         </button>
       </div>
-      <label class="field-stack">
-        <span>URL</span>
-        <input id="link-url" type="url" placeholder="https://example.com" required>
-      </label>
-      <div class="dialog-actions">
-        <button type="button" data-close-dialog>Cancel</button>
-        <button type="submit" class="primary">Insert link</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="export-dialog" closedby="any" aria-labelledby="export-title">
-    <form id="export-form">
-      <div class="dialog-heading">
-        <h2 id="export-title">Export document</h2>
-        <button type="button" class="icon-button" data-close-dialog aria-label="Close export">
-          <span class="btn-icon" data-icon="x"></span>
-        </button>
-      </div>
-      <fieldset class="export-formats">
-        <legend class="sr-only">Choose export format</legend>
-        <label class="export-card">
-          <input type="radio" name="export-format" value="html" checked>
-          <span class="export-copy"><strong>HTML Document</strong><small>Self-contained web page with embedded styles</small></span>
-          <span class="export-ext">.html</span>
-        </label>
-        <label class="export-card">
-          <input type="radio" name="export-format" value="pdf">
-          <span class="export-copy"><strong>PDF Document</strong><small>Paginated print-ready document</small></span>
-          <span class="export-ext">.pdf</span>
-        </label>
-        <label class="export-card">
-          <input type="radio" name="export-format" value="rtf">
-          <span class="export-copy"><strong>Rich Text</strong><small>Formatted document for Word &amp; LibreOffice</small></span>
-          <span class="export-ext">.rtf</span>
-        </label>
-        <label class="export-card">
-          <input type="radio" name="export-format" value="txt">
-          <span class="export-copy"><strong>Plain Text</strong><small>Clean readable text without Markdown syntax</small></span>
-          <span class="export-ext">.txt</span>
-        </label>
-      </fieldset>
-      <div id="export-html-options" class="settings-group">
-        <label class="setting-row">
-          <span class="setting-copy"><strong>HTML appearance</strong><small>Style embedded in the exported page</small></span>
-          <select id="export-html-style">
-            <option value="current">Current theme</option>
-            <option value="light">Print-ready light</option>
-            <option value="minimal">Minimal unstyled</option>
+      <div class="settings-group">
+        <label class="setting-row" for="asset-mode">
+          <span class="setting-copy"><strong>Image asset folders</strong><small>Where pasted and dropped images are stored</small></span>
+          <select id="asset-mode">
+            <option value="file">Per file: file_name.assets</option>
+            <option value="shared">Shared: data.assets</option>
+            <option value="custom">Custom folder</option>
           </select>
         </label>
+        <div id="asset-custom-settings" hidden>
+          <label for="asset-custom-path">Custom image folder</label>
+          <div class="asset-path-row">
+            <input id="asset-custom-path" type="text" placeholder="../images or D:\Images" spellcheck="false" autocomplete="off">
+            <button id="asset-folder-browse" type="button">Browse…</button>
+          </div>
+          <p class="dialog-hint">Relative paths start beside each note. An absolute path shares one folder across notes. Links use file URLs when the folder is on another drive.</p>
+        </div>
+        <p class="dialog-hint">Used for new imports. Existing links keep working. Shared data.assets means one folder per directory of notes.</p>
+      </div>
+      <div class="settings-group">
+        <label class="setting-row">
+          <span class="setting-copy"
+            ><strong>Appearance</strong><small>Interface light or dark palette</small></span
+          >
+          <select id="color-mode">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+        <label class="setting-row">
+          <span class="setting-copy"
+            ><strong>Markdown theme</strong><small>Typography and document palette</small></span
+          >
+          <select id="md-theme">
+            <option value="cobalt">Cobalt</option>
+            <option value="paper">Paper</option>
+            <option value="graphite">Graphite</option>
+            <option value="forest">Forest</option>
+            <option value="mono">Mono</option>
+            <option value="mars">Mars</option>
+            <option value="github">GitHub</option>
+          </select>
+        </label>
+        <label class="setting-row setting-slider">
+          <span class="setting-head">
+            <span class="setting-copy"
+              ><strong>Text size</strong
+              ><small>Scales interface and document typography</small></span
+            >
+            <output id="font-scale-value">100%</output>
+          </span>
+          <input id="font-scale" type="range" min="0.875" max="1.5" step="0.025" value="1" />
+        </label>
+      </div>
+      <div class="settings-group">
+        <label class="check-label">
+          <span class="setting-copy"
+            ><strong>Files sidebar</strong><small>Browse folder and recent documents</small></span
+          >
+          <input id="show-files" type="checkbox" class="toggle-switch" />
+        </label>
+        <label class="check-label">
+          <span class="setting-copy"
+            ><strong>Outline sidebar</strong
+            ><small>Jump to headings in current document</small></span
+          >
+          <input id="show-outline" type="checkbox" class="toggle-switch" />
+        </label>
       </div>
       <div class="dialog-actions">
-        <button type="button" data-close-dialog>Cancel</button>
-        <button type="submit" class="primary">Export…</button>
+        <button type="button" data-command="reset-layout">Reset sidebar widths</button>
+        <button type="button" class="primary" data-close-dialog>Done</button>
       </div>
-    </form>
-  </dialog>
+    </dialog>
 
-  <dialog id="about-dialog" closedby="any" aria-labelledby="about-title">
-    <div class="dialog-heading">
-      <h2 id="about-title">About Markora</h2>
-      <button type="button" class="icon-button" data-close-dialog aria-label="Close about">
+    <dialog
+      id="conflict-dialog"
+      closedby="none"
+      aria-labelledby="conflict-title"
+      aria-describedby="conflict-description"
+    >
+      <h2 id="conflict-title">File changed on disk</h2>
+      <p id="conflict-path" style="overflow-wrap: anywhere"></p>
+      <p id="conflict-description"></p>
+      <div class="dialog-actions">
+        <button type="button" data-conflict="cancel">Later</button>
+        <button type="button" data-conflict="saveAs">Save As…</button>
+        <button type="button" data-conflict="keep">Keep Mine</button>
+        <button type="button" data-conflict="reload" class="primary">Reload</button>
+      </div>
+    </dialog>
+    <dialog id="unsaved-dialog" closedby="none" aria-labelledby="unsaved-title">
+      <div class="dialog-heading">
+        <span class="dialog-title-row">
+          <span class="btn-icon warn-icon" data-icon="alert"></span>
+          <h2 id="unsaved-title">Unsaved changes</h2>
+        </span>
+      </div>
+      <p id="unsaved-description"></p>
+      <div class="dialog-actions">
+        <button type="button" data-unsaved="cancel">Cancel</button>
+        <button type="button" class="danger" data-unsaved="discard">Discard</button>
+        <button type="button" data-unsaved="save" class="primary">Save</button>
+      </div>
+    </dialog>
+
+    <dialog id="help-dialog" closedby="any" aria-labelledby="help-title">
+      <div class="dialog-heading">
+        <h2 id="help-title">Keyboard shortcuts</h2>
+        <button type="button" class="icon-button" data-close-dialog aria-label="Close shortcuts">
+          <span class="btn-icon" data-icon="x"></span>
+        </button>
+      </div>
+      <div id="help-list"></div>
+    </dialog>
+
+    <dialog id="link-dialog" closedby="any" aria-labelledby="link-title">
+      <form id="link-form">
+        <div class="dialog-heading">
+          <h2 id="link-title">Insert link</h2>
+          <button
+            type="button"
+            class="icon-button"
+            data-close-dialog
+            aria-label="Close insert link"
+          >
+            <span class="btn-icon" data-icon="x"></span>
+          </button>
+        </div>
+        <label class="field-stack">
+          <span>URL</span>
+          <input id="link-url" type="url" placeholder="https://example.com" required />
+        </label>
+        <div class="dialog-actions">
+          <button type="button" data-close-dialog>Cancel</button>
+          <button type="submit" class="primary">Insert link</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="export-dialog" closedby="any" aria-labelledby="export-title">
+      <form id="export-form">
+        <div class="dialog-heading">
+          <h2 id="export-title">Export document</h2>
+          <button type="button" class="icon-button" data-close-dialog aria-label="Close export">
+            <span class="btn-icon" data-icon="x"></span>
+          </button>
+        </div>
+        <fieldset class="export-formats">
+          <legend class="sr-only">Choose export format</legend>
+          <label class="export-card">
+            <input type="radio" name="export-format" value="html" checked />
+            <span class="export-copy"
+              ><strong>HTML Document</strong
+              ><small>Self-contained web page with embedded styles</small></span
+            >
+            <span class="export-ext">.html</span>
+          </label>
+          <label class="export-card">
+            <input type="radio" name="export-format" value="pdf" />
+            <span class="export-copy"
+              ><strong>PDF Document</strong><small>Paginated print-ready document</small></span
+            >
+            <span class="export-ext">.pdf</span>
+          </label>
+          <label class="export-card">
+            <input type="radio" name="export-format" value="rtf" />
+            <span class="export-copy"
+              ><strong>Rich Text</strong
+              ><small>Formatted document for Word &amp; LibreOffice</small></span
+            >
+            <span class="export-ext">.rtf</span>
+          </label>
+          <label class="export-card">
+            <input type="radio" name="export-format" value="txt" />
+            <span class="export-copy"
+              ><strong>Plain Text</strong
+              ><small>Clean readable text without Markdown syntax</small></span
+            >
+            <span class="export-ext">.txt</span>
+          </label>
+        </fieldset>
+        <div id="export-html-options" class="settings-group">
+          <label class="setting-row">
+            <span class="setting-copy"
+              ><strong>HTML appearance</strong
+              ><small>Style embedded in the exported page</small></span
+            >
+            <select id="export-html-style">
+              <option value="current">Current theme</option>
+              <option value="light">Print-ready light</option>
+              <option value="minimal">Minimal unstyled</option>
+            </select>
+          </label>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" data-close-dialog>Cancel</button>
+          <button type="submit" class="primary">Export…</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="about-dialog" closedby="any" aria-labelledby="about-title">
+      <div class="dialog-heading">
+        <h2 id="about-title">About Markora</h2>
+        <button type="button" class="icon-button" data-close-dialog aria-label="Close about">
+          <span class="btn-icon" data-icon="x"></span>
+        </button>
+      </div>
+      <div class="about-hero">
+        <span class="about-name">Markora<span class="about-dot">.</span></span>
+        <span class="about-version">v0.2.2-alpha</span>
+      </div>
+      <p class="about-summary">
+        A fast, local Markdown workspace with Live, Source, and Split editing modes.
+      </p>
+      <div class="settings-group about-meta">
+        <div class="setting-row"><span>Engine</span><strong>Rust · egui · WebView2</strong></div>
+        <div class="setting-row">
+          <span>Markdown</span><strong>CommonMark &amp; GFM (pulldown-cmark)</strong>
+        </div>
+        <div class="setting-row"><span>License</span><strong>MIT</strong></div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="primary" data-close-dialog>Close</button>
+      </div>
+    </dialog>
+
+    <input
+      id="image-picker"
+      type="file"
+      accept="image/png,image/jpeg,image/gif,image/webp"
+      multiple
+      hidden
+    />
+    <div id="image-import-note" role="status" aria-live="polite" hidden>
+      <span id="image-import-text"></span>
+      <button id="image-import-retry" type="button" hidden>Insert at cursor</button>
+      <button id="image-import-dismiss" type="button" aria-label="Dismiss image import message">
+        ×
+      </button>
+    </div>
+    <div id="error-banner" role="alert" hidden>
+      <span class="btn-icon" data-icon="alert"></span>
+      <span id="error-text"></span>
+      <button type="button" class="icon-button" id="dismiss-error" aria-label="Dismiss error">
         <span class="btn-icon" data-icon="x"></span>
       </button>
     </div>
-    <div class="about-hero">
-      <span class="about-name">Markora<span class="about-dot">.</span></span>
-      <span class="about-version">v0.2.2-alpha</span>
-    </div>
-    <p class="about-summary">A fast, local Markdown workspace with Live, Source, and Split editing modes.</p>
-    <div class="settings-group about-meta">
-      <div class="setting-row"><span>Engine</span><strong>Rust · egui · WebView2</strong></div>
-      <div class="setting-row"><span>Markdown</span><strong>CommonMark &amp; GFM (pulldown-cmark)</strong></div>
-      <div class="setting-row"><span>License</span><strong>MIT</strong></div>
-    </div>
-    <div class="dialog-actions">
-      <button type="button" class="primary" data-close-dialog>Close</button>
-    </div>
-  </dialog>
-
-  <div id="error-banner" role="alert" hidden>
-    <span class="btn-icon" data-icon="alert"></span>
-    <span id="error-text"></span>
-    <button type="button" class="icon-button" id="dismiss-error" aria-label="Dismiss error">
-      <span class="btn-icon" data-icon="x"></span>
-    </button>
-  </div>
-  <script>
+    <script>
 (() => {
 'use strict';
 const modules = {};
@@ -2880,10 +3218,13 @@ function showError(message) {
 function resolveMedia(root, docId) {
   if (!docId || !root) return;
   const rewrite = (raw) => {
+    if (/^file:/i.test(raw || "")) return `http://markora.localhost/imported/${encodeURIComponent(raw)}`;
     if (!raw || /^(https?:|data:|blob:|#|\/)/i.test(raw)) return null;
     const clean = raw.replace(/\\/g, "/").replace(/^\.\//, "");
-    const encoded = clean.split("/").filter(Boolean).map(encodeURIComponent).join("/");
-    return encoded ? `http://markora.localhost/doc/${docId}/${encoded}` : null;
+    const decoded = clean.split("/").map((part) => {
+      try { return decodeURIComponent(part); } catch { return part; }
+    }).join("/");
+    return decoded ? `http://markora.localhost/doc/${docId}/relative/${encodeURIComponent(decoded)}` : null;
   };
   for (const el of root.querySelectorAll("audio, video, source, img")) {
     for (const attr of ["src", "poster"]) {
@@ -2904,38 +3245,70 @@ const SVG = (paths) =>
   `<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
 
 const ICONS = {
-  folder: SVG('<path d="M3 7V5a1 1 0 0 1 1-1h6l2 3h8a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>'),
-  folderOpen: SVG('<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>'),
-  file: SVG('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>'),
-  filePdf: SVG('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 14h2a1.5 1.5 0 0 0 0-3H8v6"/><path d="M14 11h1.5a2 2 0 0 1 0 4H14v-4Z"/>'),
+  folder: SVG(
+    '<path d="M3 7V5a1 1 0 0 1 1-1h6l2 3h8a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>',
+  ),
+  folderOpen: SVG(
+    '<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>',
+  ),
+  file: SVG(
+    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
+  ),
+  filePdf: SVG(
+    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 14h2a1.5 1.5 0 0 0 0-3H8v6"/><path d="M14 11h1.5a2 2 0 0 1 0 4H14v-4Z"/>',
+  ),
   plus: SVG('<path d="M12 5v14M5 12h14"/>'),
   x: SVG('<path d="M18 6 6 18M6 6l12 12"/>'),
   arrowUp: SVG('<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>'),
-  rotateCw: SVG('<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>'),
+  rotateCw: SVG(
+    '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
+  ),
   chevronUp: SVG('<path d="m18 15-6-6-6 6"/>'),
   chevronDown: SVG('<path d="m6 9 6 6 6-6"/>'),
   search: SVG('<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>'),
-  sun: SVG('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'),
+  sun: SVG(
+    '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  ),
   moon: SVG('<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'),
-  settings: SVG('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'),
-  command: SVG('<path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/>'),
+  settings: SVG(
+    '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  ),
+  command: SVG(
+    '<path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/>',
+  ),
   panelLeft: SVG('<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/>'),
-  listTree: SVG('<path d="M21 12h-8M21 6H8M21 18h-8M3 6v4c0 1.1.9 2 2 2h3M3 10v6c0 1.1.9 2 2 2h3"/>'),
+  listTree: SVG(
+    '<path d="M21 12h-8M21 6H8M21 18h-8M3 6v4c0 1.1.9 2 2 2h3M3 10v6c0 1.1.9 2 2 2h3"/>',
+  ),
   maximize: SVG('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
-  eye: SVG('<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>'),
+  eye: SVG(
+    '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  ),
   code: SVG('<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>'),
   columns: SVG('<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/>'),
   bold: SVG('<path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"/>'),
-  italic: SVG('<line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/>'),
+  italic: SVG(
+    '<line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/>',
+  ),
   codeInline: SVG('<path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/>'),
-  link: SVG('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
+  link: SVG(
+    '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  ),
   h1: SVG('<path d="M4 12h8M4 18V6M12 18V6M17 12l3-2v8"/>'),
   h2: SVG('<path d="M4 12h8M4 18V6M12 18V6M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1"/>'),
-  list: SVG('<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>'),
-  quote: SVG('<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>'),
-  codeBlock: SVG('<rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 9-3 3 3 3M14 9l3 3-3 3"/>'),
+  list: SVG(
+    '<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+  ),
+  quote: SVG(
+    '<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>',
+  ),
+  codeBlock: SVG(
+    '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 9-3 3 3 3M14 9l3 3-3 3"/>',
+  ),
   table: SVG('<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/>'),
-  alert: SVG('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>'),
+  alert: SVG(
+    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
+  ),
   check: SVG('<path d="M20 6 9 17l-5-5"/>'),
 };
 
@@ -2975,12 +3348,12 @@ function createBridge(receive) {
       }
     }
   }
-  function send(action) {
-    if (editTimer) {
+  function send(action, attachDraft = true) {
+    if (attachDraft && editTimer) {
       clearTimeout(editTimer);
       editTimer = null;
     }
-    queue.push(JSON.stringify({ ...action, draft: draft() }));
+    queue.push(JSON.stringify({ ...action, draft: attachDraft ? draft() : null }));
     flush();
   }
   function scheduleEdit(delayMs = 0) {
@@ -3050,7 +3423,44 @@ function createBridge(receive) {
 
 return { createBridge };
 })();
+modules["live-tasks"] = (() => {
+// Toggle task checkboxes by editing their original Markdown source.
+function connectLiveTasks(root, getDocument, change) {
+  root.addEventListener("change", (event) => {
+    const box = event.target.closest('li input[type="checkbox"]');
+    const node = box?.closest("[data-block]");
+    if (!box || !node) return;
+    const doc = getDocument();
+    const block = doc.rendered.blocks[Number(node.dataset.block)];
+    if (!block) return;
+    const targetIndex = [...node.querySelectorAll('li input[type="checkbox"]')].indexOf(box);
+    let seen = -1;
+    let fence = false;
+    const slice = doc.markdown.slice(block.start, block.end);
+    const updated = slice
+      .split("\n")
+      .map((line) => {
+        if (/^[ \t]*(?:```|~~~)/.test(line)) fence = !fence;
+        if (fence) return line;
+        return line.replace(/^([ \t]*(?:[-*+]|\d+[.)])\s+\[)([ xX])(\])/, (_, pre, _mark, post) => {
+          seen += 1;
+          return seen === targetIndex ? `${pre}${box.checked ? "x" : " "}${post}` : _;
+        });
+      })
+      .join("\n");
+    if (updated !== slice)
+      change(
+        doc.markdown.slice(0, block.start) + updated + doc.markdown.slice(block.end),
+        true,
+        true,
+      );
+  });
+}
+
+return { connectLiveTasks };
+})();
 modules["live-editor"] = (() => {
+const { connectLiveTasks } = modules["live-tasks"];
 const { element, resolveMedia } = modules["dom"];
 
 const INITIAL_BATCH = 60;
@@ -3229,7 +3639,10 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
     if (editing) {
       const doc = getDocument();
       if (renderedMarkdown === doc.markdown && renderedBlocksRef === doc.rendered.blocks) {
-        if (editing.index >= 0) editing.node.replaceWith(buildBlockNode(doc.rendered.blocks[editing.index], editing.index, doc.id));
+        if (editing.index >= 0)
+          editing.node.replaceWith(
+            buildBlockNode(doc.rendered.blocks[editing.index], editing.index, doc.id),
+          );
         else editing.node.remove();
       } else renderedMarkdown = null;
       flushEdit();
@@ -3271,30 +3684,7 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
     node.scrollIntoView({ block: "nearest" });
     return textarea;
   }
-  root.addEventListener("change", (event) => {
-    const box = event.target.closest('li input[type="checkbox"]');
-    const node = box?.closest("[data-block]");
-    if (!box || !node) return;
-    const doc = getDocument();
-    const block = doc.rendered.blocks[Number(node.dataset.block)];
-    if (!block) return;
-    const targetIndex = [...node.querySelectorAll('li input[type="checkbox"]')].indexOf(box);
-    let seen = -1;
-    let fence = false;
-    const slice = doc.markdown.slice(block.start, block.end);
-    const updated = slice
-      .split("\n")
-      .map((line) => {
-        if (/^[ \t]*(?:```|~~~)/.test(line)) fence = !fence;
-        if (fence) return line;
-        return line.replace(/^([ \t]*(?:[-*+]|\d+[.)])\s+\[)([ xX])(\])/, (_, pre, _mark, post) => {
-          seen += 1;
-          return seen === targetIndex ? `${pre}${box.checked ? "x" : " "}${post}` : _;
-        });
-      })
-      .join("\n");
-    if (updated !== slice) change(doc.markdown.slice(0, block.start) + updated + doc.markdown.slice(block.end), true, true);
-  });
+  connectLiveTasks(root, getDocument, change);
   root.addEventListener("click", (event) => {
     if (event.target.closest("a, input, textarea, button, audio, video")) return;
     const node = event.target.closest("[data-block]");
@@ -3311,6 +3701,14 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
     }
   });
   return {
+    selection() {
+      return active
+        ? {
+            start: active.before.length + active.textarea.selectionStart,
+            end: active.before.length + active.textarea.selectionEnd,
+          }
+        : null;
+    },
     render,
     finish,
     append,
@@ -3345,9 +3743,74 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
 
 return { createLiveEditor };
 })();
+modules["editor-images"] = (() => {
+// Selection offsets always refer to the Markdown document, including Live blocks.
+function createImageEdits(getDocument, isReading, live, source, change, flush) {
+  function capture(target = null) {
+    const doc = getDocument();
+    if (isReading() || doc.kind === "pdf") return null;
+    let start,
+      end,
+      block = false;
+    if (doc.viewMode === "live") {
+      const selection = live.selection();
+      const node = target?.closest?.("[data-block]");
+      if (selection && (!node || node.contains(live.textarea()))) ({ start, end } = selection);
+      else {
+        start = end = node
+          ? (doc.rendered.blocks[Number(node.dataset.block)]?.end ?? doc.markdown.length)
+          : doc.markdown.length;
+        block = true;
+      }
+    } else {
+      start = source.selectionStart;
+      end = source.selectionEnd;
+    }
+    flush();
+    return { docId: doc.id, revision: doc.revision, start, end, block };
+  }
+  function insert(anchor, images) {
+    const doc = getDocument();
+    if (
+      !anchor ||
+      isReading() ||
+      doc.kind === "pdf" ||
+      doc.id !== anchor.docId ||
+      doc.revision !== anchor.revision
+    )
+      return false;
+    const escaped = (alt) => alt.replace(/([\\\[\]])/g, "\\$1");
+    const segment = (part) => encodeURIComponent(part).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+    // Encode each path segment once. Markdown destinations then contain no delimiters.
+    const links = images
+      .map(
+        (image) =>
+          `![${escaped(image.alt)}](${image.relativePath.startsWith("file:") ? image.relativePath : image.relativePath.split("/").map(segment).join("/")})`,
+      )
+      .join("\n");
+    const before = doc.markdown.slice(0, anchor.start),
+      after = doc.markdown.slice(anchor.end);
+    const text =
+      (anchor.block && before && !before.endsWith("\n\n") ? "\n\n" : "") +
+      links +
+      (anchor.block && after && !after.startsWith("\n\n") ? "\n\n" : "");
+    live.reset();
+    change(before + text + after, true, true);
+    if (doc.viewMode !== "live") {
+      source.setSelectionRange(anchor.start + text.length, anchor.start + text.length);
+      source.focus();
+    }
+    return true;
+  }
+  return { capture, insert };
+}
+
+return { createImageEdits };
+})();
 modules["editor"] = (() => {
 const { $, resolveMedia } = modules["dom"];
 const { createLiveEditor } = modules["live-editor"];
+const { createImageEdits } = modules["editor-images"];
 
 function createEditor(onChange, onFlush = () => {}) {
   let doc = {
@@ -3369,6 +3832,14 @@ function createEditor(onChange, onFlush = () => {}) {
   let lastPdfUrl = null;
   let reader = null;
   const live = createLiveEditor($("#live-document"), () => doc, change, onFlush);
+  const imageEdits = createImageEdits(
+    () => doc,
+    () => Boolean(reader?.active()),
+    live,
+    source,
+    change,
+    onFlush,
+  );
 
   function change(markdown, record = true, immediate = false) {
     if (reader?.active()) return;
@@ -3589,6 +4060,8 @@ function createEditor(onChange, onFlush = () => {}) {
   }
 
   return {
+    captureImageAnchor: imageEdits.capture,
+    insertImages: imageEdits.insert,
     resumeEditing: () => {
       if (doc.viewMode === "live") live.render();
     },
@@ -3891,6 +4364,7 @@ const COMMANDS = [
   ["code", "Inline code", "", "Format"],
   ["strike", "Strikethrough", "", "Format"],
   ["link", "Insert link…", "Ctrl+L", "Format"],
+  ["insert-image", "Insert image…", "", "Format"],
   ["heading-1", "Heading 1", "", "Format"],
   ["heading-2", "Heading 2", "", "Format"],
   ["heading-3", "Heading 3", "", "Format"],
@@ -4346,7 +4820,9 @@ function createDialogs(send, preferences, editor) {
   }
   function renderPalette() {
     const query = $("#palette-input").value.toLowerCase().trim();
-    hits = COMMANDS.filter((c) => c.menu && `${c.label} ${c.id} ${c.menu}`.toLowerCase().includes(query));
+    hits = COMMANDS.filter(
+      (c) => c.menu && `${c.label} ${c.id} ${c.menu}`.toLowerCase().includes(query),
+    );
     selected = Math.max(0, Math.min(selected, hits.length - 1));
     $("#palette-list").replaceChildren(
       ...hits.map((command, index) => {
@@ -4355,7 +4831,10 @@ function createDialogs(send, preferences, editor) {
         button.setAttribute("role", "option");
         button.setAttribute("aria-selected", String(index === selected));
         const main = element("span", "palette-item-main");
-        main.append(element("span", "palette-cat", command.menu), element("span", "", command.label));
+        main.append(
+          element("span", "palette-cat", command.menu),
+          element("span", "", command.label),
+        );
         button.append(main);
         if (command.shortcut) button.append(element("kbd", "", command.shortcut));
         button.onclick = () => {
@@ -4416,6 +4895,9 @@ function createDialogs(send, preferences, editor) {
   });
   $("#color-mode").onchange = (event) => preferences({ colorMode: event.target.value });
   $("#md-theme").onchange = (event) => preferences({ mdTheme: event.target.value });
+  $("#asset-mode").onchange = (event) => preferences({ assetMode: event.target.value });
+  $("#asset-custom-path").onchange = (event) => preferences({ assetCustomPath: event.target.value });
+  $("#asset-folder-browse").onclick = () => send({ type: "pickAssetFolder" });
   $("#show-files").onchange = (event) => preferences({ showFiles: event.target.checked });
   $("#show-outline").onchange = (event) => preferences({ showOutline: event.target.checked });
   scaleInput.oninput = (event) => {
@@ -4467,7 +4949,9 @@ function createDialogs(send, preferences, editor) {
   );
 
   return {
-    setRun: (handler) => { run = handler; },
+    setRun: (handler) => {
+      run = handler;
+    },
     palette() {
       selected = 0;
       $("#palette-input").value = "";
@@ -4475,9 +4959,15 @@ function createDialogs(send, preferences, editor) {
       show(palette);
       $("#palette-input").focus();
     },
-    settings() { show($("#settings-dialog")); },
-    help() { show($("#help-dialog")); },
-    about() { show($("#about-dialog")); },
+    settings() {
+      show($("#settings-dialog"));
+    },
+    help() {
+      show($("#help-dialog"));
+    },
+    about() {
+      show($("#about-dialog"));
+    },
     exportDoc() {
       updateExportOptions();
       show($("#export-dialog"));
@@ -4491,6 +4981,9 @@ function createDialogs(send, preferences, editor) {
       const prefs = snapshot.prefs;
       $("#color-mode").value = prefs.colorMode;
       $("#md-theme").value = prefs.mdTheme;
+      $("#asset-mode").value = prefs.assetMode;
+      $("#asset-custom-settings").hidden = prefs.assetMode !== "custom";
+      if (document.activeElement !== $("#asset-custom-path")) $("#asset-custom-path").value = prefs.assetCustomPath;
       $("#show-files").checked = prefs.showFiles;
       $("#show-outline").checked = prefs.showOutline;
       if (document.activeElement !== scaleInput) scaleInput.value = prefs.fontScale;
@@ -4499,7 +4992,9 @@ function createDialogs(send, preferences, editor) {
         $("#unsaved-description").textContent =
           `Save changes to “${snapshot.pending}” before closing?`;
         if (pendingTitle !== snapshot.pending)
-          $$("dialog[open]").forEach((d) => { if (d !== unsaved) d.close(); });
+          $$("dialog[open]").forEach((d) => {
+            if (d !== unsaved) d.close();
+          });
         show(unsaved);
       } else if (unsaved.open) unsaved.close();
       pendingTitle = snapshot.pending;
@@ -4516,7 +5011,8 @@ function createConflictDialog(send) {
   const dialog = $("#conflict-dialog");
   let token = null;
   $$("[data-conflict]").forEach((button) => {
-    button.onclick = () => send({ type: "resolveConflict", choice: button.dataset.conflict, token });
+    button.onclick = () =>
+      send({ type: "resolveConflict", choice: button.dataset.conflict, token });
   });
   dialog.addEventListener("cancel", (event) => {
     event.preventDefault();
@@ -4545,6 +5041,206 @@ function createConflictDialog(send) {
 
 return { createConflictDialog };
 })();
+modules["images"] = (() => {
+const { $, showError } = modules["dom"];
+
+const CHUNK = 256 * 1024;
+const imageName = (name) => /\.(png|jpe?g|gif|webp|bmp|svg|ico|avif|tiff?)$/i.test(name);
+const isImage = (file) => file.type.startsWith("image/") || imageName(file.name);
+
+function createImages(bridge, editor, getSnapshot) {
+  let nextToken = 0,
+    pending = null,
+    lastAck = -1,
+    finishing = false,
+    retry = null;
+  const picker = $("#image-picker");
+  const notice = $("#image-import-note");
+  const retryButton = $("#image-import-retry");
+  const send = (request, draft = false) => bridge.send({ type: "image", request }, draft);
+  const tabPath = (id) => getSnapshot()?.tabs.find((tab) => tab.id === id)?.path;
+  function message(text, canRetry = false) {
+    $("#image-import-text").textContent = text;
+    retryButton.hidden = !canRetry;
+    notice.hidden = false;
+  }
+  function begin(files, paths = null, target = null) {
+    if (pending) {
+      showError("Wait for the current image import to finish.");
+      return;
+    }
+    const anchor = editor.captureImageAnchor(target);
+    if (!anchor) {
+      showError("Images can be inserted into editable Markdown notes.");
+      return;
+    }
+    if (
+      !files.length ||
+      files.length > 10 ||
+      (!paths &&
+        (files.some((f) => !f.size || f.size > 20 * 1024 * 1024) ||
+          files.reduce((sum, f) => sum + f.size, 0) > 50 * 1024 * 1024))
+    ) {
+      showError("Choose up to 10 images, at most 20 MiB each and 50 MiB together.");
+      return;
+    }
+    retry = null;
+    lastAck = -1;
+    finishing = false;
+    pending = { token: ++nextToken, anchor, files, offset: 0 };
+    message(
+      tabPath(anchor.docId)
+        ? "Importing images…"
+        : "Save this note to choose where its images will be stored.",
+    );
+    send(
+      {
+        op: paths ? "paths" : "begin",
+        token: pending.token,
+        docId: anchor.docId,
+        revision: anchor.revision,
+        ...(paths ? { paths } : { files: files.map((f) => ({ name: f.name, size: f.size })) }),
+      },
+      true,
+    );
+  }
+  async function upload(reply) {
+    const operation = pending;
+    try {
+      const file = operation.files[reply.fileIndex];
+      const bytes = new Uint8Array(
+        await file.slice(operation.offset, operation.offset + CHUNK).arrayBuffer(),
+      );
+      if (operation !== pending) return;
+      let binary = "";
+      for (let i = 0; i < bytes.length; i += 8192)
+        binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      operation.offset += bytes.length;
+      const last = operation.offset === file.size;
+      if (last) operation.offset = 0;
+      send({
+        op: "chunk",
+        token: operation.token,
+        seq: reply.nextSeq,
+        fileIndex: reply.fileIndex,
+        data: btoa(binary),
+        last,
+      });
+    } catch (error) {
+      showError(`Could not read the image: ${error.message}`);
+      send({ op: "dismiss", token: operation.token });
+      pending = null;
+      notice.hidden = true;
+    }
+  }
+  function accept(snapshot) {
+    const reply = snapshot.imageImport;
+    if (!pending || !reply || reply.token !== pending.token) return;
+    if (reply.status === "ready" && lastAck !== reply.nextSeq) {
+      lastAck = reply.nextSeq;
+      if (reply.fileIndex < pending.files.length) upload(reply);
+      else if (!finishing) {
+        finishing = true;
+        send({ op: "finish", token: pending.token });
+      }
+    } else if (reply.status === "complete" || reply.status === "stale") {
+      const operation = pending;
+      pending = null;
+      if (
+        tabPath(operation.anchor.docId) === reply.documentPath &&
+        editor.insertImages(operation.anchor, reply.images)
+      )
+        notice.hidden = true;
+      else {
+        retry = { docId: reply.docId, path: reply.documentPath, images: reply.images };
+        message("Images saved. Return to the original note and insert them at your cursor.", true);
+      }
+      send({ op: "dismiss", token: reply.token });
+    } else if (reply.status === "error") {
+      pending = null;
+      notice.hidden = true;
+      showError(reply.message);
+      send({ op: "dismiss", token: reply.token });
+    }
+  }
+  retryButton.onclick = () => {
+    const anchor = editor.captureImageAnchor();
+    if (!retry || !anchor || anchor.docId !== retry.docId || tabPath(anchor.docId) !== retry.path) {
+      showError("Return to the original note before inserting its imported images.");
+      return;
+    }
+    if (editor.insertImages(anchor, retry.images)) {
+      retry = null;
+      notice.hidden = true;
+    }
+  };
+  $("#image-import-dismiss").onclick = () => {
+    if (!pending) {
+      retry = null;
+      notice.hidden = true;
+    }
+  };
+  picker.onchange = () => {
+    const files = [...picker.files];
+    picker.value = "";
+    if (files.length) begin(files);
+  };
+  document.addEventListener("paste", (event) => {
+    if (!event.target.closest?.("#document")) return;
+    const files = [...(event.clipboardData?.items || [])]
+      .filter((i) => i.kind === "file")
+      .map((i) => i.getAsFile())
+      .filter(Boolean);
+    if (!files.some(isImage)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    begin(files, null, event.target);
+  });
+  // DOM drops cover image blobs from other apps; native file paths arrive through Wry once.
+  document.addEventListener("dragover", (event) => event.preventDefault());
+  document.addEventListener("drop", (event) => {
+    event.preventDefault();
+    const files = [...(event.dataTransfer?.files || [])];
+    if (files.some(isImage)) {
+      if (!event.target.closest?.("#document")) {
+        showError("Drop images into the document workspace.");
+        return;
+      }
+      begin(files, null, event.target);
+    } else {
+      for (const file of files) {
+        const path = file.path || window.chrome?.webview?.getFilePath?.(file);
+        if (path) bridge.send({ type: "openPath", path });
+      }
+    }
+  });
+  function nativeDrop(paths, position) {
+    const images = paths.filter(imageName);
+    if (images.length && images.length !== paths.length) {
+      showError("Drop images and documents separately.");
+      return;
+    }
+    if (images.length) {
+      const target = document.elementFromPoint(
+        position[0] / devicePixelRatio,
+        position[1] / devicePixelRatio,
+      );
+      if (!target?.closest("#document")) {
+        showError("Drop images into the document workspace.");
+        return;
+      }
+      begin(
+        images.map((name) => ({ name })),
+        images,
+        target,
+      );
+    } else for (const path of paths) bridge.send({ type: "openPath", path });
+  }
+  return { accept, nativeDrop, pick: () => picker.click() };
+}
+
+return { createImages };
+})();
 modules["commands"] = (() => {
 const { $, $$, element, showError } = modules["dom"];
 const { COMMANDS } = modules["command-list"];
@@ -4565,7 +5261,7 @@ const SEPARATORS = new Set([
   "about",
 ]);
 
-function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
+function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) {
   const find = createFind(editor);
   const ids = new Set(COMMANDS.map((c) => c.id));
   const formatting = new Set(COMMANDS.filter((c) => c.menu === "Format").map((c) => c.id));
@@ -4659,6 +5355,7 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
       "find-close": () => find.close(),
       "reset-layout": () => layout.reset(),
       link: () => dialogs.link(),
+      "insert-image": () => images.pick(),
       undo: () => editor.history("undo"),
       redo: () => editor.history("redo"),
     };
@@ -4964,7 +5661,11 @@ function createChrome(send, editor) {
       $("#outline").replaceChildren(frag);
       if (!doc.rendered.outline.length)
         $("#outline").append(
-          element("p", "empty", doc.kind === "pdf" ? "Outline unavailable for PDFs." : "Headings appear here."),
+          element(
+            "p",
+            "empty",
+            doc.kind === "pdf" ? "Outline unavailable for PDFs." : "Headings appear here.",
+          ),
         );
     }
     $("#status").textContent = cleanPath(snapshot.status);
@@ -4977,7 +5678,9 @@ function createChrome(send, editor) {
     $("#save-state").textContent = tab?.dirty ? "Unsaved" : "Saved";
     $("#save-state").classList.toggle("dirty", !!tab?.dirty);
     const isPdfDoc = doc.kind === "pdf";
-    $("#mode-status").textContent = isPdfDoc ? "PDF" : doc.viewMode[0].toUpperCase() + doc.viewMode.slice(1);
+    $("#mode-status").textContent = isPdfDoc
+      ? "PDF"
+      : doc.viewMode[0].toUpperCase() + doc.viewMode.slice(1);
     $("#mode-status").dataset.mode = isPdfDoc ? "pdf" : doc.viewMode;
   }
   $("#tabs").addEventListener("keydown", (event) => {
@@ -4985,7 +5688,15 @@ function createChrome(send, editor) {
     const current = tabs.indexOf(document.activeElement);
     if (current < 0) return;
     const move =
-      event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : event.key === "Home" ? -current : event.key === "End" ? tabs.length - 1 - current : 0;
+      event.key === "ArrowRight"
+        ? 1
+        : event.key === "ArrowLeft"
+          ? -1
+          : event.key === "Home"
+            ? -current
+            : event.key === "End"
+              ? tabs.length - 1 - current
+              : 0;
     if (!move && event.key !== "Home" && event.key !== "End") return;
     event.preventDefault();
     const next = tabs[(current + move + tabs.length) % tabs.length];
@@ -5002,26 +5713,6 @@ function createChrome(send, editor) {
   $("#dismiss-error").onclick = () => {
     $("#error-banner").hidden = true;
   };
-  const showDropShield = (visible) => {
-    const shield = $("#pdf-drop-shield");
-    if (shield) shield.hidden = !visible || $("#pdf-pane").hidden;
-  };
-  window.addEventListener("dragenter", () => showDropShield(true));
-  document.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    showDropShield(true);
-  });
-  document.addEventListener("dragleave", (event) => {
-    if (!event.relatedTarget) showDropShield(false);
-  });
-  document.addEventListener("drop", (event) => {
-    event.preventDefault();
-    showDropShield(false);
-    for (const file of event.dataTransfer.files) {
-      const path = file.path || window.chrome?.webview?.getFilePath?.(file);
-      if (path) send({ type: "openPath", path });
-    }
-  });
   $("#document").addEventListener("click", (event) => {
     const link = event.target.closest("a");
     if (link) {
@@ -5048,9 +5739,14 @@ const { createCommands } = modules["commands"];
 const { createChrome } = modules["chrome"];
 const { createConflictDialog } = modules["conflicts"];
 const { createReading } = modules["reading"];
+const { createImages } = modules["images"];
 
 let snapshot = null;
 const bridge = createBridge((message) => {
+  if (message.type === "fileDrop") {
+    images.nativeDrop(message.paths, message.position);
+    return;
+  }
   if (message.type === "readingKey") {
     commands.readingKey(message.key);
     return;
@@ -5084,6 +5780,7 @@ const bridge = createBridge((message) => {
   dialogs.accept(snapshot);
   conflicts.accept(snapshot);
   commands.update();
+  images.accept(snapshot);
 });
 
 const editor = createEditor(
@@ -5097,12 +5794,14 @@ const preferences = (patch) => bridge.send({ type: "preferences", patch });
 const layout = createLayout(preferences);
 const dialogs = createDialogs(bridge.send, preferences, editor);
 const conflicts = createConflictDialog(bridge.send);
+const images = createImages(bridge, editor, () => snapshot);
 const commands = createCommands({
   send: bridge.send,
   editor,
   dialogs,
   layout,
   getSnapshot: () => snapshot,
+  images,
 });
 const chrome = createChrome(bridge.send, editor);
 window.addEventListener("error", (event) => showError(event.message));
@@ -5116,6 +5815,5 @@ return {  };
 })();
 })();
 </script>
-</body>
-
+  </body>
 </html>

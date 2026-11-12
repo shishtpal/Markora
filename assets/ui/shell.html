@@ -1,389 +1,690 @@
 <!doctype html>
 <html lang="en" data-color="dark" data-md-theme="cobalt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markora</title>
+    <!-- STYLES -->
+  </head>
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Markora</title><!-- STYLES -->
-</head>
+  <body>
+    <div id="app" aria-label="Markora Markdown editor">
+      <button
+        type="button"
+        id="exit-reading"
+        data-command="exit-reading"
+        hidden
+        title="Exit fullscreen reading (F11 or Escape)"
+      >
+        Exit reading · F11
+      </button>
+      <header id="menubar">
+        <nav id="menus" role="menubar" aria-label="Application menus"></nav>
+        <div class="spacer"></div>
+        <button
+          type="button"
+          class="bar-action"
+          data-command="command-palette"
+          title="Command palette (Ctrl+Shift+P)"
+        >
+          <span class="btn-icon" data-icon="command"></span><span>Commands</span><kbd>Ctrl K</kbd>
+        </button>
+        <button
+          type="button"
+          class="bar-action"
+          data-command="toggle-theme"
+          id="theme-toggle"
+          title="Toggle light / dark (Ctrl+Shift+L)"
+        >
+          <span class="btn-icon" data-icon="sun"></span
+          ><span id="theme-toggle-label">Light mode</span>
+        </button>
+        <button
+          type="button"
+          class="bar-action icon-text"
+          data-command="settings"
+          title="Settings (Ctrl+,)"
+        >
+          <span class="btn-icon" data-icon="settings"></span><span>Settings</span>
+        </button>
+      </header>
 
-<body>
-  <div id="app" aria-label="Markora Markdown editor">
-    <button type="button" id="exit-reading" data-command="exit-reading" hidden
-      title="Exit fullscreen reading (F11 or Escape)">Exit reading · F11</button>
-    <header id="menubar">
-      <nav id="menus" role="menubar" aria-label="Application menus"></nav>
-      <div class="spacer"></div>
-      <button type="button" class="bar-action" data-command="command-palette" title="Command palette (Ctrl+Shift+P)">
-        <span class="btn-icon" data-icon="command"></span><span>Commands</span><kbd>Ctrl K</kbd>
-      </button>
-      <button type="button" class="bar-action" data-command="toggle-theme" id="theme-toggle" title="Toggle light / dark (Ctrl+Shift+L)">
-        <span class="btn-icon" data-icon="sun"></span><span id="theme-toggle-label">Light mode</span>
-      </button>
-      <button type="button" class="bar-action icon-text" data-command="settings" title="Settings (Ctrl+,)">
-        <span class="btn-icon" data-icon="settings"></span><span>Settings</span>
-      </button>
-    </header>
+      <div id="tabbar">
+        <div id="tabs" role="tablist" aria-label="Open documents"></div>
+        <button
+          type="button"
+          data-command="new-tab"
+          class="icon-button"
+          aria-label="New tab"
+          title="New tab (Ctrl+N)"
+        >
+          <span class="btn-icon" data-icon="plus"></span>
+        </button>
+        <span id="document-path" title=""></span>
+      </div>
 
-    <div id="tabbar">
-      <div id="tabs" role="tablist" aria-label="Open documents"></div>
-      <button type="button" data-command="new-tab" class="icon-button" aria-label="New tab" title="New tab (Ctrl+N)">
-        <span class="btn-icon" data-icon="plus"></span>
-      </button>
-      <span id="document-path" title=""></span>
+      <div id="viewbar">
+        <div class="segments" role="group" aria-label="Editor mode">
+          <button type="button" data-command="view-live" title="Live editor (Ctrl+1)">
+            <span class="btn-icon" data-icon="eye"></span><span>Live</span></button
+          ><button type="button" data-command="view-source" title="Source editor (Ctrl+2)">
+            <span class="btn-icon" data-icon="code"></span><span>Source</span></button
+          ><button type="button" data-command="view-split" title="Split editor (Ctrl+3)">
+            <span class="btn-icon" data-icon="columns"></span><span>Split</span>
+          </button>
+        </div>
+
+        <span id="pdf-badge" class="pdf-badge" hidden>PDF · Read-only</span>
+
+        <span class="bar-divider" aria-hidden="true"></span>
+
+        <div
+          id="formatbar"
+          role="toolbar"
+          focusgroup="toolbar wrap"
+          aria-label="Markdown formatting"
+          aria-controls="document"
+        >
+          <div role="group" aria-label="Inline formatting">
+            <button type="button" data-command="bold" aria-label="Bold" title="Bold (Ctrl+B)">
+              <span class="btn-icon" data-icon="bold"></span>
+            </button>
+            <button type="button" data-command="italic" aria-label="Italic" title="Italic (Ctrl+I)">
+              <span class="btn-icon" data-icon="italic"></span>
+            </button>
+            <button type="button" data-command="code" aria-label="Inline code" title="Inline code">
+              <span class="btn-icon" data-icon="codeInline"></span>
+            </button>
+            <button
+              type="button"
+              data-command="link"
+              aria-label="Insert link"
+              title="Insert link (Ctrl+L)"
+            >
+              <span class="btn-icon" data-icon="link"></span>
+            </button>
+          </div>
+          <span role="separator" aria-orientation="vertical"></span>
+          <div role="group" aria-label="Block formatting">
+            <button type="button" data-command="heading-1" aria-label="Heading 1" title="Heading 1">
+              <span class="btn-icon" data-icon="h1"></span>
+            </button>
+            <button type="button" data-command="heading-2" aria-label="Heading 2" title="Heading 2">
+              <span class="btn-icon" data-icon="h2"></span>
+            </button>
+            <button
+              type="button"
+              data-command="list"
+              aria-label="Bulleted list"
+              title="Bulleted list"
+            >
+              <span class="btn-icon" data-icon="list"></span>
+            </button>
+            <button type="button" data-command="quote" aria-label="Blockquote" title="Blockquote">
+              <span class="btn-icon" data-icon="quote"></span>
+            </button>
+            <button
+              type="button"
+              data-command="code-block"
+              aria-label="Code block"
+              title="Code block"
+            >
+              <span class="btn-icon" data-icon="codeBlock"></span>
+            </button>
+            <button
+              type="button"
+              data-command="table"
+              aria-label="Insert table"
+              title="Insert table"
+            >
+              <span class="btn-icon" data-icon="table"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="panel-toggles" role="group" aria-label="Workspace panels">
+          <button
+            type="button"
+            data-command="toggle-files"
+            id="toggle-files"
+            aria-pressed="true"
+            title="Toggle files sidebar (Ctrl+\)"
+          >
+            <span class="btn-icon" data-icon="panelLeft"></span><span>Files</span>
+          </button>
+          <button
+            type="button"
+            data-command="toggle-outline"
+            id="toggle-outline"
+            aria-pressed="true"
+            title="Toggle outline sidebar"
+          >
+            <span class="btn-icon" data-icon="listTree"></span><span>Outline</span>
+          </button>
+          <button
+            type="button"
+            data-command="toggle-focus"
+            id="toggle-focus"
+            aria-pressed="false"
+            title="Toggle focus mode (Ctrl+D)"
+          >
+            <span class="btn-icon" data-icon="maximize"></span><span>Focus</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="findbar" role="search" aria-label="Find and replace in document" hidden>
+        <div class="find-row">
+          <button
+            type="button"
+            id="find-toggle"
+            data-command="find-toggle"
+            aria-expanded="false"
+            aria-controls="replace-row"
+            title="Show or hide replacement"
+          >
+            Replace
+          </button>
+          <label class="find-field" for="find-input">
+            <span class="btn-icon" data-icon="search"></span>
+            <span class="sr-only">Find</span>
+            <input
+              id="find-input"
+              placeholder="Find in document…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="find-message"
+            />
+          </label>
+          <div class="find-options" role="group" aria-label="Search options">
+            <button
+              type="button"
+              id="find-case"
+              data-find-option
+              aria-pressed="false"
+              aria-label="Match case"
+              title="Match case"
+            >
+              Aa
+            </button>
+            <button
+              type="button"
+              id="find-word"
+              data-find-option
+              aria-pressed="false"
+              aria-label="Match whole word"
+              title="Match whole word"
+            >
+              Word
+            </button>
+            <button
+              type="button"
+              id="find-regex"
+              data-find-option
+              aria-pressed="false"
+              aria-label="Use regular expression"
+              title="Use regular expression"
+            >
+              .*
+            </button>
+          </div>
+          <span id="find-count" aria-live="polite"></span>
+          <div class="find-actions">
+            <button
+              type="button"
+              class="icon-button"
+              data-command="find-prev"
+              aria-label="Previous match"
+              title="Previous match (Shift+F3)"
+            >
+              <span class="btn-icon" data-icon="chevronUp"></span>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              data-command="find-next"
+              aria-label="Next match"
+              title="Next match (F3)"
+            >
+              <span class="btn-icon" data-icon="chevronDown"></span>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              data-command="find-close"
+              aria-label="Close find"
+              title="Close find (Esc)"
+            >
+              <span class="btn-icon" data-icon="x"></span>
+            </button>
+          </div>
+        </div>
+        <div class="find-row" id="replace-row" hidden>
+          <label class="find-field" for="replace-input">
+            <span class="sr-only">Replace with</span>
+            <input
+              id="replace-input"
+              placeholder="Replace with…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="replacement-hint"
+            />
+          </label>
+          <button
+            type="button"
+            id="replace-one"
+            data-command="replace-current"
+            disabled
+            title="Replace current match (Enter in replacement field)"
+          >
+            Replace
+          </button>
+          <button
+            type="button"
+            id="replace-all"
+            data-command="replace-all"
+            disabled
+            title="Replace all matches (Ctrl+Enter in replacement field)"
+          >
+            Replace all
+          </button>
+          <span id="replacement-hint"
+            >Regex captures: $1, $&lt;name&gt;, $&amp;. Empty text deletes matches.</span
+          >
+        </div>
+        <p id="find-message" role="status" aria-live="polite"></p>
+      </div>
+
+      <div id="workspace">
+        <aside id="files-panel" aria-label="Files sidebar">
+          <div class="panel-heading">
+            <h2>Files</h2>
+            <div class="spacer"></div>
+            <button
+              type="button"
+              class="icon-button"
+              data-command="folder-up"
+              title="Parent folder"
+              aria-label="Parent folder"
+            >
+              <span class="btn-icon" data-icon="arrowUp"></span>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              data-command="refresh-folder"
+              title="Refresh folder"
+              aria-label="Refresh folder"
+            >
+              <span class="btn-icon" data-icon="rotateCw"></span>
+            </button>
+          </div>
+          <button type="button" id="folder-path" data-command="open-folder" title="Open folder">
+            <span class="btn-icon" data-icon="folderOpen"></span>
+            <span id="folder-path-label">Open a folder…</span>
+          </button>
+          <div id="files" class="tree"></div>
+          <div class="panel-heading">
+            <h2>Recent files</h2>
+            <div class="spacer"></div>
+            <button type="button" data-command="clear-recents" class="quiet">Clear</button>
+          </div>
+          <div id="recents" class="tree"></div>
+        </aside>
+
+        <div
+          id="files-resizer"
+          class="resizer"
+          role="separator"
+          tabindex="0"
+          aria-label="Resize files sidebar"
+          aria-controls="files-panel"
+          aria-orientation="vertical"
+        ></div>
+
+        <main id="document" aria-label="Document workspace" data-mode="live">
+          <div id="live-pane" class="scroll-pane">
+            <div id="live-document" class="markdown-body" aria-label="Live document"></div>
+            <button type="button" id="append-block" class="append-block">
+              <span class="btn-icon" data-icon="plus"></span><span>Add paragraph</span>
+            </button>
+          </div>
+          <div id="source-pane" class="source-pane" hidden>
+            <textarea
+              id="source-editor"
+              aria-label="Markdown source"
+              spellcheck="false"
+              placeholder="Start writing Markdown…"
+            ></textarea>
+          </div>
+          <div
+            id="split-resizer"
+            class="resizer"
+            hidden
+            role="separator"
+            tabindex="0"
+            aria-label="Resize source and preview"
+            aria-orientation="vertical"
+          ></div>
+          <div
+            id="preview-pane"
+            class="scroll-pane"
+            tabindex="0"
+            role="region"
+            aria-label="Rendered document"
+          >
+            <div id="preview-document" class="markdown-body" aria-label="Markdown preview"></div>
+          </div>
+          <div id="pdf-pane" class="pdf-pane" hidden>
+            <iframe id="pdf-frame" title="PDF document"></iframe>
+            <div id="pdf-drop-shield" hidden></div>
+          </div>
+        </main>
+
+        <div
+          id="outline-resizer"
+          class="resizer"
+          role="separator"
+          tabindex="0"
+          aria-label="Resize outline sidebar"
+          aria-controls="outline-panel"
+          aria-orientation="vertical"
+        ></div>
+
+        <aside id="outline-panel" aria-label="Outline sidebar">
+          <div class="panel-heading">
+            <h2>Outline</h2>
+          </div>
+          <div id="outline" class="tree"></div>
+        </aside>
+      </div>
+
+      <footer id="statusbar">
+        <span id="connection" role="status">Connecting…</span>
+        <span id="status" role="status"></span>
+        <div class="spacer"></div>
+        <span id="counts"></span>
+        <span id="save-state"></span>
+        <button type="button" id="mode-status" title="Cycle view mode (Live / Source / Split)">
+          Live
+        </button>
+      </footer>
     </div>
 
-    <div id="viewbar">
-      <div class="segments" role="group" aria-label="Editor mode">
-        <button type="button" data-command="view-live" title="Live editor (Ctrl+1)">
-          <span class="btn-icon" data-icon="eye"></span><span>Live</span>
-        </button><button type="button" data-command="view-source" title="Source editor (Ctrl+2)">
-          <span class="btn-icon" data-icon="code"></span><span>Source</span>
-        </button><button type="button" data-command="view-split" title="Split editor (Ctrl+3)">
-          <span class="btn-icon" data-icon="columns"></span><span>Split</span>
-        </button>
-      </div>
-
-      <span id="pdf-badge" class="pdf-badge" hidden>PDF · Read-only</span>
-
-      <span class="bar-divider" aria-hidden="true"></span>
-
-      <div id="formatbar" role="toolbar" focusgroup="toolbar wrap" aria-label="Markdown formatting" aria-controls="document">
-        <div role="group" aria-label="Inline formatting">
-          <button type="button" data-command="bold" aria-label="Bold" title="Bold (Ctrl+B)"><span class="btn-icon" data-icon="bold"></span></button>
-          <button type="button" data-command="italic" aria-label="Italic" title="Italic (Ctrl+I)"><span class="btn-icon" data-icon="italic"></span></button>
-          <button type="button" data-command="code" aria-label="Inline code" title="Inline code"><span class="btn-icon" data-icon="codeInline"></span></button>
-          <button type="button" data-command="link" aria-label="Insert link" title="Insert link (Ctrl+L)"><span class="btn-icon" data-icon="link"></span></button>
-        </div>
-        <span role="separator" aria-orientation="vertical"></span>
-        <div role="group" aria-label="Block formatting">
-          <button type="button" data-command="heading-1" aria-label="Heading 1" title="Heading 1"><span class="btn-icon" data-icon="h1"></span></button>
-          <button type="button" data-command="heading-2" aria-label="Heading 2" title="Heading 2"><span class="btn-icon" data-icon="h2"></span></button>
-          <button type="button" data-command="list" aria-label="Bulleted list" title="Bulleted list"><span class="btn-icon" data-icon="list"></span></button>
-          <button type="button" data-command="quote" aria-label="Blockquote" title="Blockquote"><span class="btn-icon" data-icon="quote"></span></button>
-          <button type="button" data-command="code-block" aria-label="Code block" title="Code block"><span class="btn-icon" data-icon="codeBlock"></span></button>
-          <button type="button" data-command="table" aria-label="Insert table" title="Insert table"><span class="btn-icon" data-icon="table"></span></button>
-        </div>
-      </div>
-
-      <div class="spacer"></div>
-
-      <div class="panel-toggles" role="group" aria-label="Workspace panels">
-        <button type="button" data-command="toggle-files" id="toggle-files" aria-pressed="true" title="Toggle files sidebar (Ctrl+\)">
-          <span class="btn-icon" data-icon="panelLeft"></span><span>Files</span>
-        </button>
-        <button type="button" data-command="toggle-outline" id="toggle-outline" aria-pressed="true" title="Toggle outline sidebar">
-          <span class="btn-icon" data-icon="listTree"></span><span>Outline</span>
-        </button>
-        <button type="button" data-command="toggle-focus" id="toggle-focus" aria-pressed="false" title="Toggle focus mode (Ctrl+D)">
-          <span class="btn-icon" data-icon="maximize"></span><span>Focus</span>
-        </button>
-      </div>
-    </div>
-
-    <div id="findbar" role="search" aria-label="Find and replace in document" hidden>
-      <div class="find-row">
-      <button type="button" id="find-toggle" data-command="find-toggle" aria-expanded="false" aria-controls="replace-row" title="Show or hide replacement">Replace</button>
-      <label class="find-field" for="find-input">
+    <dialog id="palette-dialog" closedby="any" aria-labelledby="palette-title">
+      <h2 id="palette-title" class="sr-only">Commands</h2>
+      <div class="palette-search">
         <span class="btn-icon" data-icon="search"></span>
-        <span class="sr-only">Find</span>
-        <input id="find-input" placeholder="Find in document…" autocomplete="off" spellcheck="false" aria-describedby="find-message">
-      </label>
-      <div class="find-options" role="group" aria-label="Search options">
-        <button type="button" id="find-case" data-find-option aria-pressed="false" aria-label="Match case" title="Match case">Aa</button>
-        <button type="button" id="find-word" data-find-option aria-pressed="false" aria-label="Match whole word" title="Match whole word">Word</button>
-        <button type="button" id="find-regex" data-find-option aria-pressed="false" aria-label="Use regular expression" title="Use regular expression">.*</button>
+        <input
+          id="palette-input"
+          aria-label="Search commands"
+          placeholder="Type a command…"
+          autocomplete="off"
+        />
+        <kbd>Esc</kbd>
       </div>
-      <span id="find-count" aria-live="polite"></span>
-      <div class="find-actions">
-        <button type="button" class="icon-button" data-command="find-prev" aria-label="Previous match" title="Previous match (Shift+F3)">
-          <span class="btn-icon" data-icon="chevronUp"></span>
-        </button>
-        <button type="button" class="icon-button" data-command="find-next" aria-label="Next match" title="Next match (F3)">
-          <span class="btn-icon" data-icon="chevronDown"></span>
-        </button>
-        <button type="button" class="icon-button" data-command="find-close" aria-label="Close find" title="Close find (Esc)">
-          <span class="btn-icon" data-icon="x"></span>
-        </button>
-      </div>
-      </div>
-      <div class="find-row" id="replace-row" hidden>
-        <label class="find-field" for="replace-input">
-          <span class="sr-only">Replace with</span>
-          <input id="replace-input" placeholder="Replace with…" autocomplete="off" spellcheck="false" aria-describedby="replacement-hint">
-        </label>
-        <button type="button" id="replace-one" data-command="replace-current" disabled title="Replace current match (Enter in replacement field)">Replace</button>
-        <button type="button" id="replace-all" data-command="replace-all" disabled title="Replace all matches (Ctrl+Enter in replacement field)">Replace all</button>
-        <span id="replacement-hint">Regex captures: $1, $&lt;name&gt;, $&amp;. Empty text deletes matches.</span>
-      </div>
-      <p id="find-message" role="status" aria-live="polite"></p>
-    </div>
+      <div id="palette-list" role="listbox" aria-label="Matching commands"></div>
+      <p class="dialog-hint">↑ ↓ navigate · Enter run · Esc close</p>
+    </dialog>
 
-    <div id="workspace">
-      <aside id="files-panel" aria-label="Files sidebar">
-        <div class="panel-heading">
-          <h2>Files</h2>
-          <div class="spacer"></div>
-          <button type="button" class="icon-button" data-command="folder-up" title="Parent folder" aria-label="Parent folder">
-            <span class="btn-icon" data-icon="arrowUp"></span>
-          </button>
-          <button type="button" class="icon-button" data-command="refresh-folder" title="Refresh folder" aria-label="Refresh folder">
-            <span class="btn-icon" data-icon="rotateCw"></span>
-          </button>
-        </div>
-        <button type="button" id="folder-path" data-command="open-folder" title="Open folder">
-          <span class="btn-icon" data-icon="folderOpen"></span>
-          <span id="folder-path-label">Open a folder…</span>
-        </button>
-        <div id="files" class="tree"></div>
-        <div class="panel-heading">
-          <h2>Recent files</h2>
-          <div class="spacer"></div>
-          <button type="button" data-command="clear-recents" class="quiet">Clear</button>
-        </div>
-        <div id="recents" class="tree"></div>
-      </aside>
-
-      <div id="files-resizer" class="resizer" role="separator" tabindex="0" aria-label="Resize files sidebar"
-        aria-controls="files-panel" aria-orientation="vertical"></div>
-
-      <main id="document" aria-label="Document workspace" data-mode="live">
-        <div id="live-pane" class="scroll-pane">
-          <div id="live-document" class="markdown-body" aria-label="Live document"></div>
-          <button type="button" id="append-block" class="append-block">
-            <span class="btn-icon" data-icon="plus"></span><span>Add paragraph</span>
-          </button>
-        </div>
-        <div id="source-pane" class="source-pane" hidden>
-          <textarea id="source-editor" aria-label="Markdown source" spellcheck="false" placeholder="Start writing Markdown…"></textarea>
-        </div>
-        <div id="split-resizer" class="resizer" hidden role="separator" tabindex="0"
-          aria-label="Resize source and preview" aria-orientation="vertical"></div>
-        <div id="preview-pane" class="scroll-pane" tabindex="0" role="region" aria-label="Rendered document">
-          <div id="preview-document" class="markdown-body" aria-label="Markdown preview"></div>
-        </div>
-        <div id="pdf-pane" class="pdf-pane" hidden>
-          <iframe id="pdf-frame" title="PDF document"></iframe>
-          <div id="pdf-drop-shield" hidden></div>
-        </div>
-      </main>
-
-      <div id="outline-resizer" class="resizer" role="separator" tabindex="0" aria-label="Resize outline sidebar"
-        aria-controls="outline-panel" aria-orientation="vertical"></div>
-
-      <aside id="outline-panel" aria-label="Outline sidebar">
-        <div class="panel-heading">
-          <h2>Outline</h2>
-        </div>
-        <div id="outline" class="tree"></div>
-      </aside>
-    </div>
-
-    <footer id="statusbar">
-      <span id="connection" role="status">Connecting…</span>
-      <span id="status" role="status"></span>
-      <div class="spacer"></div>
-      <span id="counts"></span>
-      <span id="save-state"></span>
-      <button type="button" id="mode-status" title="Cycle view mode (Live / Source / Split)">Live</button>
-    </footer>
-  </div>
-
-  <dialog id="palette-dialog" closedby="any" aria-labelledby="palette-title">
-    <h2 id="palette-title" class="sr-only">Commands</h2>
-    <div class="palette-search">
-      <span class="btn-icon" data-icon="search"></span>
-      <input id="palette-input" aria-label="Search commands" placeholder="Type a command…" autocomplete="off">
-      <kbd>Esc</kbd>
-    </div>
-    <div id="palette-list" role="listbox" aria-label="Matching commands"></div>
-    <p class="dialog-hint">↑ ↓ navigate · Enter run · Esc close</p>
-  </dialog>
-
-  <dialog id="settings-dialog" closedby="any" aria-labelledby="settings-title">
-    <div class="dialog-heading">
-      <h2 id="settings-title">Settings</h2>
-      <button type="button" class="icon-button" data-close-dialog aria-label="Close settings">
-        <span class="btn-icon" data-icon="x"></span>
-      </button>
-    </div>
-    <div class="settings-group">
-      <label class="setting-row">
-        <span class="setting-copy"><strong>Appearance</strong><small>Interface light or dark palette</small></span>
-        <select id="color-mode">
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-        </select>
-      </label>
-      <label class="setting-row">
-        <span class="setting-copy"><strong>Markdown theme</strong><small>Typography and document palette</small></span>
-        <select id="md-theme">
-          <option value="cobalt">Cobalt</option>
-          <option value="paper">Paper</option>
-          <option value="graphite">Graphite</option>
-          <option value="forest">Forest</option>
-          <option value="mono">Mono</option>
-          <option value="mars">Mars</option>
-          <option value="github">GitHub</option>
-        </select>
-      </label>
-      <label class="setting-row setting-slider">
-        <span class="setting-head">
-          <span class="setting-copy"><strong>Text size</strong><small>Scales interface and document typography</small></span>
-          <output id="font-scale-value">100%</output>
-        </span>
-        <input id="font-scale" type="range" min="0.875" max="1.5" step="0.025" value="1">
-      </label>
-    </div>
-    <div class="settings-group">
-      <label class="check-label">
-        <span class="setting-copy"><strong>Files sidebar</strong><small>Browse folder and recent documents</small></span>
-        <input id="show-files" type="checkbox" class="toggle-switch">
-      </label>
-      <label class="check-label">
-        <span class="setting-copy"><strong>Outline sidebar</strong><small>Jump to headings in current document</small></span>
-        <input id="show-outline" type="checkbox" class="toggle-switch">
-      </label>
-    </div>
-    <div class="dialog-actions">
-      <button type="button" data-command="reset-layout">Reset sidebar widths</button>
-      <button type="button" class="primary" data-close-dialog>Done</button>
-    </div>
-  </dialog>
-
-  <dialog id="conflict-dialog" closedby="none" aria-labelledby="conflict-title" aria-describedby="conflict-description">
-    <h2 id="conflict-title">File changed on disk</h2>
-    <p id="conflict-path" style="overflow-wrap:anywhere"></p>
-    <p id="conflict-description"></p>
-    <div class="dialog-actions">
-      <button type="button" data-conflict="cancel">Later</button>
-      <button type="button" data-conflict="saveAs">Save As…</button>
-      <button type="button" data-conflict="keep">Keep Mine</button>
-      <button type="button" data-conflict="reload" class="primary">Reload</button>
-    </div>
-  </dialog>
-  <dialog id="unsaved-dialog" closedby="none" aria-labelledby="unsaved-title">
-    <div class="dialog-heading">
-      <span class="dialog-title-row">
-        <span class="btn-icon warn-icon" data-icon="alert"></span>
-        <h2 id="unsaved-title">Unsaved changes</h2>
-      </span>
-    </div>
-    <p id="unsaved-description"></p>
-    <div class="dialog-actions">
-      <button type="button" data-unsaved="cancel">Cancel</button>
-      <button type="button" class="danger" data-unsaved="discard">Discard</button>
-      <button type="button" data-unsaved="save" class="primary">Save</button>
-    </div>
-  </dialog>
-
-  <dialog id="help-dialog" closedby="any" aria-labelledby="help-title">
-    <div class="dialog-heading">
-      <h2 id="help-title">Keyboard shortcuts</h2>
-      <button type="button" class="icon-button" data-close-dialog aria-label="Close shortcuts">
-        <span class="btn-icon" data-icon="x"></span>
-      </button>
-    </div>
-    <div id="help-list"></div>
-  </dialog>
-
-  <dialog id="link-dialog" closedby="any" aria-labelledby="link-title">
-    <form id="link-form">
+    <dialog id="settings-dialog" closedby="any" aria-labelledby="settings-title">
       <div class="dialog-heading">
-        <h2 id="link-title">Insert link</h2>
-        <button type="button" class="icon-button" data-close-dialog aria-label="Close insert link">
+        <h2 id="settings-title">Settings</h2>
+        <button type="button" class="icon-button" data-close-dialog aria-label="Close settings">
           <span class="btn-icon" data-icon="x"></span>
         </button>
       </div>
-      <label class="field-stack">
-        <span>URL</span>
-        <input id="link-url" type="url" placeholder="https://example.com" required>
-      </label>
-      <div class="dialog-actions">
-        <button type="button" data-close-dialog>Cancel</button>
-        <button type="submit" class="primary">Insert link</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="export-dialog" closedby="any" aria-labelledby="export-title">
-    <form id="export-form">
-      <div class="dialog-heading">
-        <h2 id="export-title">Export document</h2>
-        <button type="button" class="icon-button" data-close-dialog aria-label="Close export">
-          <span class="btn-icon" data-icon="x"></span>
-        </button>
-      </div>
-      <fieldset class="export-formats">
-        <legend class="sr-only">Choose export format</legend>
-        <label class="export-card">
-          <input type="radio" name="export-format" value="html" checked>
-          <span class="export-copy"><strong>HTML Document</strong><small>Self-contained web page with embedded styles</small></span>
-          <span class="export-ext">.html</span>
-        </label>
-        <label class="export-card">
-          <input type="radio" name="export-format" value="pdf">
-          <span class="export-copy"><strong>PDF Document</strong><small>Paginated print-ready document</small></span>
-          <span class="export-ext">.pdf</span>
-        </label>
-        <label class="export-card">
-          <input type="radio" name="export-format" value="rtf">
-          <span class="export-copy"><strong>Rich Text</strong><small>Formatted document for Word &amp; LibreOffice</small></span>
-          <span class="export-ext">.rtf</span>
-        </label>
-        <label class="export-card">
-          <input type="radio" name="export-format" value="txt">
-          <span class="export-copy"><strong>Plain Text</strong><small>Clean readable text without Markdown syntax</small></span>
-          <span class="export-ext">.txt</span>
-        </label>
-      </fieldset>
-      <div id="export-html-options" class="settings-group">
-        <label class="setting-row">
-          <span class="setting-copy"><strong>HTML appearance</strong><small>Style embedded in the exported page</small></span>
-          <select id="export-html-style">
-            <option value="current">Current theme</option>
-            <option value="light">Print-ready light</option>
-            <option value="minimal">Minimal unstyled</option>
+      <div class="settings-group">
+        <label class="setting-row" for="asset-mode">
+          <span class="setting-copy"><strong>Image asset folders</strong><small>Where pasted and dropped images are stored</small></span>
+          <select id="asset-mode">
+            <option value="file">Per file: file_name.assets</option>
+            <option value="shared">Shared: data.assets</option>
+            <option value="custom">Custom folder</option>
           </select>
         </label>
+        <div id="asset-custom-settings" hidden>
+          <label for="asset-custom-path">Custom image folder</label>
+          <div class="asset-path-row">
+            <input id="asset-custom-path" type="text" placeholder="../images or D:\Images" spellcheck="false" autocomplete="off">
+            <button id="asset-folder-browse" type="button">Browse…</button>
+          </div>
+          <p class="dialog-hint">Relative paths start beside each note. An absolute path shares one folder across notes. Links use file URLs when the folder is on another drive.</p>
+        </div>
+        <p class="dialog-hint">Used for new imports. Existing links keep working. Shared data.assets means one folder per directory of notes.</p>
+      </div>
+      <div class="settings-group">
+        <label class="setting-row">
+          <span class="setting-copy"
+            ><strong>Appearance</strong><small>Interface light or dark palette</small></span
+          >
+          <select id="color-mode">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+        <label class="setting-row">
+          <span class="setting-copy"
+            ><strong>Markdown theme</strong><small>Typography and document palette</small></span
+          >
+          <select id="md-theme">
+            <option value="cobalt">Cobalt</option>
+            <option value="paper">Paper</option>
+            <option value="graphite">Graphite</option>
+            <option value="forest">Forest</option>
+            <option value="mono">Mono</option>
+            <option value="mars">Mars</option>
+            <option value="github">GitHub</option>
+          </select>
+        </label>
+        <label class="setting-row setting-slider">
+          <span class="setting-head">
+            <span class="setting-copy"
+              ><strong>Text size</strong
+              ><small>Scales interface and document typography</small></span
+            >
+            <output id="font-scale-value">100%</output>
+          </span>
+          <input id="font-scale" type="range" min="0.875" max="1.5" step="0.025" value="1" />
+        </label>
+      </div>
+      <div class="settings-group">
+        <label class="check-label">
+          <span class="setting-copy"
+            ><strong>Files sidebar</strong><small>Browse folder and recent documents</small></span
+          >
+          <input id="show-files" type="checkbox" class="toggle-switch" />
+        </label>
+        <label class="check-label">
+          <span class="setting-copy"
+            ><strong>Outline sidebar</strong
+            ><small>Jump to headings in current document</small></span
+          >
+          <input id="show-outline" type="checkbox" class="toggle-switch" />
+        </label>
       </div>
       <div class="dialog-actions">
-        <button type="button" data-close-dialog>Cancel</button>
-        <button type="submit" class="primary">Export…</button>
+        <button type="button" data-command="reset-layout">Reset sidebar widths</button>
+        <button type="button" class="primary" data-close-dialog>Done</button>
       </div>
-    </form>
-  </dialog>
+    </dialog>
 
-  <dialog id="about-dialog" closedby="any" aria-labelledby="about-title">
-    <div class="dialog-heading">
-      <h2 id="about-title">About Markora</h2>
-      <button type="button" class="icon-button" data-close-dialog aria-label="Close about">
+    <dialog
+      id="conflict-dialog"
+      closedby="none"
+      aria-labelledby="conflict-title"
+      aria-describedby="conflict-description"
+    >
+      <h2 id="conflict-title">File changed on disk</h2>
+      <p id="conflict-path" style="overflow-wrap: anywhere"></p>
+      <p id="conflict-description"></p>
+      <div class="dialog-actions">
+        <button type="button" data-conflict="cancel">Later</button>
+        <button type="button" data-conflict="saveAs">Save As…</button>
+        <button type="button" data-conflict="keep">Keep Mine</button>
+        <button type="button" data-conflict="reload" class="primary">Reload</button>
+      </div>
+    </dialog>
+    <dialog id="unsaved-dialog" closedby="none" aria-labelledby="unsaved-title">
+      <div class="dialog-heading">
+        <span class="dialog-title-row">
+          <span class="btn-icon warn-icon" data-icon="alert"></span>
+          <h2 id="unsaved-title">Unsaved changes</h2>
+        </span>
+      </div>
+      <p id="unsaved-description"></p>
+      <div class="dialog-actions">
+        <button type="button" data-unsaved="cancel">Cancel</button>
+        <button type="button" class="danger" data-unsaved="discard">Discard</button>
+        <button type="button" data-unsaved="save" class="primary">Save</button>
+      </div>
+    </dialog>
+
+    <dialog id="help-dialog" closedby="any" aria-labelledby="help-title">
+      <div class="dialog-heading">
+        <h2 id="help-title">Keyboard shortcuts</h2>
+        <button type="button" class="icon-button" data-close-dialog aria-label="Close shortcuts">
+          <span class="btn-icon" data-icon="x"></span>
+        </button>
+      </div>
+      <div id="help-list"></div>
+    </dialog>
+
+    <dialog id="link-dialog" closedby="any" aria-labelledby="link-title">
+      <form id="link-form">
+        <div class="dialog-heading">
+          <h2 id="link-title">Insert link</h2>
+          <button
+            type="button"
+            class="icon-button"
+            data-close-dialog
+            aria-label="Close insert link"
+          >
+            <span class="btn-icon" data-icon="x"></span>
+          </button>
+        </div>
+        <label class="field-stack">
+          <span>URL</span>
+          <input id="link-url" type="url" placeholder="https://example.com" required />
+        </label>
+        <div class="dialog-actions">
+          <button type="button" data-close-dialog>Cancel</button>
+          <button type="submit" class="primary">Insert link</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="export-dialog" closedby="any" aria-labelledby="export-title">
+      <form id="export-form">
+        <div class="dialog-heading">
+          <h2 id="export-title">Export document</h2>
+          <button type="button" class="icon-button" data-close-dialog aria-label="Close export">
+            <span class="btn-icon" data-icon="x"></span>
+          </button>
+        </div>
+        <fieldset class="export-formats">
+          <legend class="sr-only">Choose export format</legend>
+          <label class="export-card">
+            <input type="radio" name="export-format" value="html" checked />
+            <span class="export-copy"
+              ><strong>HTML Document</strong
+              ><small>Self-contained web page with embedded styles</small></span
+            >
+            <span class="export-ext">.html</span>
+          </label>
+          <label class="export-card">
+            <input type="radio" name="export-format" value="pdf" />
+            <span class="export-copy"
+              ><strong>PDF Document</strong><small>Paginated print-ready document</small></span
+            >
+            <span class="export-ext">.pdf</span>
+          </label>
+          <label class="export-card">
+            <input type="radio" name="export-format" value="rtf" />
+            <span class="export-copy"
+              ><strong>Rich Text</strong
+              ><small>Formatted document for Word &amp; LibreOffice</small></span
+            >
+            <span class="export-ext">.rtf</span>
+          </label>
+          <label class="export-card">
+            <input type="radio" name="export-format" value="txt" />
+            <span class="export-copy"
+              ><strong>Plain Text</strong
+              ><small>Clean readable text without Markdown syntax</small></span
+            >
+            <span class="export-ext">.txt</span>
+          </label>
+        </fieldset>
+        <div id="export-html-options" class="settings-group">
+          <label class="setting-row">
+            <span class="setting-copy"
+              ><strong>HTML appearance</strong
+              ><small>Style embedded in the exported page</small></span
+            >
+            <select id="export-html-style">
+              <option value="current">Current theme</option>
+              <option value="light">Print-ready light</option>
+              <option value="minimal">Minimal unstyled</option>
+            </select>
+          </label>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" data-close-dialog>Cancel</button>
+          <button type="submit" class="primary">Export…</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="about-dialog" closedby="any" aria-labelledby="about-title">
+      <div class="dialog-heading">
+        <h2 id="about-title">About Markora</h2>
+        <button type="button" class="icon-button" data-close-dialog aria-label="Close about">
+          <span class="btn-icon" data-icon="x"></span>
+        </button>
+      </div>
+      <div class="about-hero">
+        <span class="about-name">Markora<span class="about-dot">.</span></span>
+        <span class="about-version">v0.2.2-alpha</span>
+      </div>
+      <p class="about-summary">
+        A fast, local Markdown workspace with Live, Source, and Split editing modes.
+      </p>
+      <div class="settings-group about-meta">
+        <div class="setting-row"><span>Engine</span><strong>Rust · egui · WebView2</strong></div>
+        <div class="setting-row">
+          <span>Markdown</span><strong>CommonMark &amp; GFM (pulldown-cmark)</strong>
+        </div>
+        <div class="setting-row"><span>License</span><strong>MIT</strong></div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="primary" data-close-dialog>Close</button>
+      </div>
+    </dialog>
+
+    <input
+      id="image-picker"
+      type="file"
+      accept="image/png,image/jpeg,image/gif,image/webp"
+      multiple
+      hidden
+    />
+    <div id="image-import-note" role="status" aria-live="polite" hidden>
+      <span id="image-import-text"></span>
+      <button id="image-import-retry" type="button" hidden>Insert at cursor</button>
+      <button id="image-import-dismiss" type="button" aria-label="Dismiss image import message">
+        ×
+      </button>
+    </div>
+    <div id="error-banner" role="alert" hidden>
+      <span class="btn-icon" data-icon="alert"></span>
+      <span id="error-text"></span>
+      <button type="button" class="icon-button" id="dismiss-error" aria-label="Dismiss error">
         <span class="btn-icon" data-icon="x"></span>
       </button>
     </div>
-    <div class="about-hero">
-      <span class="about-name">Markora<span class="about-dot">.</span></span>
-      <span class="about-version">v0.2.2-alpha</span>
-    </div>
-    <p class="about-summary">A fast, local Markdown workspace with Live, Source, and Split editing modes.</p>
-    <div class="settings-group about-meta">
-      <div class="setting-row"><span>Engine</span><strong>Rust · egui · WebView2</strong></div>
-      <div class="setting-row"><span>Markdown</span><strong>CommonMark &amp; GFM (pulldown-cmark)</strong></div>
-      <div class="setting-row"><span>License</span><strong>MIT</strong></div>
-    </div>
-    <div class="dialog-actions">
-      <button type="button" class="primary" data-close-dialog>Close</button>
-    </div>
-  </dialog>
-
-  <div id="error-banner" role="alert" hidden>
-    <span class="btn-icon" data-icon="alert"></span>
-    <span id="error-text"></span>
-    <button type="button" class="icon-button" id="dismiss-error" aria-label="Dismiss error">
-      <span class="btn-icon" data-icon="x"></span>
-    </button>
-  </div>
-  <!-- SCRIPTS -->
-</body>
-
+    <!-- SCRIPTS -->
+  </body>
 </html>

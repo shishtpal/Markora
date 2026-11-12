@@ -24,12 +24,12 @@ export function createBridge(receive) {
       }
     }
   }
-  function send(action) {
-    if (editTimer) {
+  function send(action, attachDraft = true) {
+    if (attachDraft && editTimer) {
       clearTimeout(editTimer);
       editTimer = null;
     }
-    queue.push(JSON.stringify({ ...action, draft: draft() }));
+    queue.push(JSON.stringify({ ...action, draft: attachDraft ? draft() : null }));
     flush();
   }
   function scheduleEdit(delayMs = 0) {

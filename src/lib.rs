@@ -1,6 +1,9 @@
+pub mod asset_policy;
 pub mod export;
 pub mod file_io;
 mod html_media;
+pub mod image_assets;
+pub mod image_protocol;
 pub mod markdown;
 pub mod media;
 pub mod model;

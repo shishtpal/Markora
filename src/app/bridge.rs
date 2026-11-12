@@ -38,6 +38,9 @@ impl Markora {
             }
             self.needs_sync = true;
             match request.action {
+                Action::PickAssetFolder => self.pick_asset_folder(),
+                Action::Image { request } => self.image_request(request),
+                Action::NativeDrop { paths, position } => self.native_drop(paths, position),
                 Action::Ready => {
                     self.page_ready = true;
                     self.synced_doc = None;
@@ -167,6 +170,7 @@ impl Markora {
             })
         };
         let snapshot = Snapshot {
+            image_import: self.images.reply.as_ref(),
             tabs: self
                 .workspace
                 .tabs

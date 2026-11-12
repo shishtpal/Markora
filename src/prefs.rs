@@ -6,6 +6,8 @@ use std::path::PathBuf;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Prefs {
+    pub asset_mode: crate::asset_policy::AssetMode,
+    pub asset_custom_path: String,
     pub color_mode: String,
     pub md_theme: String,
     pub view_mode: ViewMode,
@@ -21,6 +23,8 @@ pub struct Prefs {
 impl Default for Prefs {
     fn default() -> Self {
         Self {
+            asset_mode: Default::default(),
+            asset_custom_path: String::new(),
             color_mode: "dark".into(),
             md_theme: "cobalt".into(),
             view_mode: ViewMode::Live,

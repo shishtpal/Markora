@@ -19,6 +19,7 @@ impl Markora {
                         ("Folder", "open-folder"),
                         ("Save", "save"),
                         ("Save as", "save-as"),
+                        ("Image folders", "asset-settings"),
                         ("Files", "toggle-files"),
                         ("Outline", "toggle-outline"),
                         ("Theme", "toggle-theme"),
@@ -122,16 +123,17 @@ impl Markora {
             }
             let (_, rev, text) = self.fallback_buf.as_mut().expect("initialized");
             egui::ScrollArea::vertical().show(ui, |ui| {
-                if ui
-                    .add(
-                        egui::TextEdit::multiline(text)
-                            .interactive(!self.reading.active)
-                            .code_editor()
-                            .desired_width(f32::INFINITY)
-                            .desired_rows(30),
-                    )
-                    .changed()
-                {
+                let output = egui::TextEdit::multiline(text)
+                    .interactive(!self.reading.active)
+                    .code_editor()
+                    .desired_width(f32::INFINITY)
+                    .desired_rows(30)
+                    .show(ui);
+                if let Some(range) = output.cursor_range {
+                    let range = range.as_sorted_char_range();
+                    self.images.native_range = range.start.0..range.end.0;
+                }
+                if output.response.changed() {
                     let next_rev = doc.revision + 1;
                     *rev = next_rev;
                     doc.edit(text.clone(), next_rev);

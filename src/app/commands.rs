@@ -11,6 +11,7 @@ impl Markora {
         let id = doc.id;
         let is_pdf = doc.kind == DocKind::Pdf;
         match command {
+            "asset-settings" => self.images.show_settings = true,
             "toggle-reading" => self.set_reading(!self.reading.active),
             "exit-reading" => self.set_reading(false),
             "new" | "new-tab" => self.workspace.add(String::new(), self.prefs.view_mode),

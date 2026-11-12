@@ -41,6 +41,11 @@ flowchart LR
 | `src/app/safety.rs`               | Background file scans and external-change resolution    |
 | `src/app/conflict.rs`             | Conflict choices, close continuation and native dialog  |
 | `src/app/save.rs`                 | Save dialogs, checked writes and saved baselines        |
+| `src/image_assets.rs`             | Bounded decoding, hashed asset names and immutable writes |
+| `src/image_assets/relocate.rs`    | Referenced imported-asset copying for Save As             |
+| `src/image_protocol.rs`           | Transfer limits, sequencing and acknowledgements          |
+| `src/app/images.rs`               | Import jobs, stale-result checks and native insertion     |
+| `src/webview_drop.rs`             | Single native file-drop route through the host            |
 | `src/webview_host.rs`             | Child webview, IPC wakeup, bounds and message delivery  |
 | `src/webview_fallback.rs`         | Non-Windows adapter selecting the native source editor  |
 | `src/theme.rs`, `src/platform.rs` | Native styling/fonts and external URL opening           |
@@ -147,6 +152,35 @@ or baseline are ignored. Saves compare the expected fingerprint both before
 writing the temporary file and immediately before replacement. This is
 optimistic conflict detection, not an exclusive lock on other applications.
 
+## Image importing
+
+`images.js` captures the document ID, revision and UTF-16 selection through
+`editor-images.js`. Begin applies the current draft and obtains a save path if
+needed. Browser blobs travel in acknowledged 256 KiB chunks without repeating
+the document draft on every chunk. Rust enforces declared sizes and ordering.
+Native file drops use Wry's handler and block default OS handling to prevent
+duplicate browser/parent processing. Fallback drops use the same importer.
+
+The worker validates a complete batch before writing files. It preserves image
+bytes under SHA-256 names, syncs a temporary file and publishes without replacing
+an existing destination. The UI inserts returned links through normal history
+and draft synchronization only when the captured document and revision match.
+Otherwise, it offers a new selection in the original note. Assets persist through
+Undo and discarded drafts; automatic cleanup is intentionally absent.
+
+Save As parses Markdown image references and copies only managed image filenames
+whose content matches their hash, then rewrites links according to the current
+per-file, shared data.assets or custom folder policy. `asset_policy.rs` handles
+destination paths and cross-drive file URLs. `app/asset_settings.rs` persists
+preferences and the exact imported-file allowlist in `imported-images.json`.
+The allowlist permits existing external images after a folder-setting change
+without enabling arbitrary traversal. Relative paths use an opaque protocol
+segment so browser URL normalization cannot remove parent components.
+Source and destination checks constrain ordinary asset folders. URL normalization encodes segments once,
+including existing percent escapes, spaces and Unicode. Clipboard imports in
+the native source fallback require a future platform adapter. `live-tasks.js`
+keeps checkbox edits separate from Live block editing and image selection.
+
 ## Verification
 
 - `cargo test`: production model, parser, storage, protocol and host regressions.
@@ -157,6 +191,12 @@ optimistic conflict detection, not an exclusive lock on other applications.
   changes and file save. Requires Windows.
 - `node tools/smoke-safety.cjs`: external conflicts, Live reload, forced shutdown,
   restored tabs/drafts and graceful-exit discard in real WebView2 processes.
+- `node --test tools/test-images.cjs`: source selections, stale revisions and URL normalization.
+- `node tools/smoke-images.cjs`: real OS image clipboard and OLE drop, preview,
+  Undo/Redo, chunked transfers, retry and native save dialogs. Uses isolated
+  fixtures and restores the clipboard after testing.
+- `node tools/smoke-images.cjs --dom`: WebView2 clipboard events and native-path
+  routing without OS input; also exercises all folder policies through Settings.
 - `node --test tools/test-search.cjs`: production search semantics, Unicode
   boundaries/offsets, capture substitutions and result limits.
 - `node tools/smoke-find.cjs`: real WebView2 find/replace, navigation, undo/save,

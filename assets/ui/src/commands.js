@@ -17,7 +17,7 @@ const SEPARATORS = new Set([
   "about",
 ]);
 
-export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
+export function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) {
   const find = createFind(editor);
   const ids = new Set(COMMANDS.map((c) => c.id));
   const formatting = new Set(COMMANDS.filter((c) => c.menu === "Format").map((c) => c.id));
@@ -111,6 +111,7 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot }) {
       "find-close": () => find.close(),
       "reset-layout": () => layout.reset(),
       link: () => dialogs.link(),
+      "insert-image": () => images.pick(),
       undo: () => editor.history("undo"),
       redo: () => editor.history("redo"),
     };

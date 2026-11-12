@@ -8,9 +8,14 @@ import { createCommands } from "./commands.js";
 import { createChrome } from "./chrome.js";
 import { createConflictDialog } from "./conflicts.js";
 import { createReading } from "./reading.js";
+import { createImages } from "./images.js";
 
 let snapshot = null;
 const bridge = createBridge((message) => {
+  if (message.type === "fileDrop") {
+    images.nativeDrop(message.paths, message.position);
+    return;
+  }
   if (message.type === "readingKey") {
     commands.readingKey(message.key);
     return;
@@ -44,6 +49,7 @@ const bridge = createBridge((message) => {
   dialogs.accept(snapshot);
   conflicts.accept(snapshot);
   commands.update();
+  images.accept(snapshot);
 });
 
 const editor = createEditor(
@@ -57,12 +63,14 @@ const preferences = (patch) => bridge.send({ type: "preferences", patch });
 const layout = createLayout(preferences);
 const dialogs = createDialogs(bridge.send, preferences, editor);
 const conflicts = createConflictDialog(bridge.send);
+const images = createImages(bridge, editor, () => snapshot);
 const commands = createCommands({
   send: bridge.send,
   editor,
   dialogs,
   layout,
   getSnapshot: () => snapshot,
+  images,
 });
 const chrome = createChrome(bridge.send, editor);
 window.addEventListener("error", (event) => showError(event.message));

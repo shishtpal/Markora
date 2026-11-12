@@ -1,5 +1,6 @@
 import { $, resolveMedia } from "./dom.js";
 import { createLiveEditor } from "./live-editor.js";
+import { createImageEdits } from "./editor-images.js";
 
 export function createEditor(onChange, onFlush = () => {}) {
   let doc = {
@@ -21,6 +22,14 @@ export function createEditor(onChange, onFlush = () => {}) {
   let lastPdfUrl = null;
   let reader = null;
   const live = createLiveEditor($("#live-document"), () => doc, change, onFlush);
+  const imageEdits = createImageEdits(
+    () => doc,
+    () => Boolean(reader?.active()),
+    live,
+    source,
+    change,
+    onFlush,
+  );
 
   function change(markdown, record = true, immediate = false) {
     if (reader?.active()) return;
@@ -241,6 +250,8 @@ export function createEditor(onChange, onFlush = () => {}) {
   }
 
   return {
+    captureImageAnchor: imageEdits.capture,
+    insertImages: imageEdits.insert,
     resumeEditing: () => {
       if (doc.viewMode === "live") live.render();
     },

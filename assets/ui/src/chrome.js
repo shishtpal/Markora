@@ -128,7 +128,11 @@ export function createChrome(send, editor) {
       $("#outline").replaceChildren(frag);
       if (!doc.rendered.outline.length)
         $("#outline").append(
-          element("p", "empty", doc.kind === "pdf" ? "Outline unavailable for PDFs." : "Headings appear here."),
+          element(
+            "p",
+            "empty",
+            doc.kind === "pdf" ? "Outline unavailable for PDFs." : "Headings appear here.",
+          ),
         );
     }
     $("#status").textContent = cleanPath(snapshot.status);
@@ -141,7 +145,9 @@ export function createChrome(send, editor) {
     $("#save-state").textContent = tab?.dirty ? "Unsaved" : "Saved";
     $("#save-state").classList.toggle("dirty", !!tab?.dirty);
     const isPdfDoc = doc.kind === "pdf";
-    $("#mode-status").textContent = isPdfDoc ? "PDF" : doc.viewMode[0].toUpperCase() + doc.viewMode.slice(1);
+    $("#mode-status").textContent = isPdfDoc
+      ? "PDF"
+      : doc.viewMode[0].toUpperCase() + doc.viewMode.slice(1);
     $("#mode-status").dataset.mode = isPdfDoc ? "pdf" : doc.viewMode;
   }
   $("#tabs").addEventListener("keydown", (event) => {
@@ -149,7 +155,15 @@ export function createChrome(send, editor) {
     const current = tabs.indexOf(document.activeElement);
     if (current < 0) return;
     const move =
-      event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : event.key === "Home" ? -current : event.key === "End" ? tabs.length - 1 - current : 0;
+      event.key === "ArrowRight"
+        ? 1
+        : event.key === "ArrowLeft"
+          ? -1
+          : event.key === "Home"
+            ? -current
+            : event.key === "End"
+              ? tabs.length - 1 - current
+              : 0;
     if (!move && event.key !== "Home" && event.key !== "End") return;
     event.preventDefault();
     const next = tabs[(current + move + tabs.length) % tabs.length];
@@ -166,26 +180,6 @@ export function createChrome(send, editor) {
   $("#dismiss-error").onclick = () => {
     $("#error-banner").hidden = true;
   };
-  const showDropShield = (visible) => {
-    const shield = $("#pdf-drop-shield");
-    if (shield) shield.hidden = !visible || $("#pdf-pane").hidden;
-  };
-  window.addEventListener("dragenter", () => showDropShield(true));
-  document.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    showDropShield(true);
-  });
-  document.addEventListener("dragleave", (event) => {
-    if (!event.relatedTarget) showDropShield(false);
-  });
-  document.addEventListener("drop", (event) => {
-    event.preventDefault();
-    showDropShield(false);
-    for (const file of event.dataTransfer.files) {
-      const path = file.path || window.chrome?.webview?.getFilePath?.(file);
-      if (path) send({ type: "openPath", path });
-    }
-  });
   $("#document").addEventListener("click", (event) => {
     const link = event.target.closest("a");
     if (link) {

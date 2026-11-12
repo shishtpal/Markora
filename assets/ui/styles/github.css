@@ -23,13 +23,16 @@ html[data-md-theme="github"][data-color="dark"] {
   --gh-inset: #151b23;
 }
 
-html[data-md-theme="github"] :is(#document, #live-pane, #preview-pane, #source-editor, .markdown-body) {
+html[data-md-theme="github"]
+  :is(#document, #live-pane, #preview-pane, #source-editor, .markdown-body) {
   color: var(--gh-text);
   background-color: var(--gh-bg);
 }
 
 html[data-md-theme="github"] .markdown-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans Devanagari", Helvetica, Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans Devanagari", Helvetica, Arial,
+    sans-serif;
   font-size: calc(16rem / 15);
   line-height: 1.5;
 }
@@ -42,16 +45,29 @@ html[data-md-theme="github"] .markdown-body :is(h1, h2, h3, h4, h5, h6) {
 }
 
 html[data-md-theme="github"] .markdown-body :is(h1, h2) {
-  padding-bottom: .3em;
+  padding-bottom: 0.3em;
   border-bottom: 1px solid var(--gh-subtle-border);
 }
 
-html[data-md-theme="github"] .markdown-body h1 { font-size: 2em; }
-html[data-md-theme="github"] .markdown-body h2 { font-size: 1.5em; }
-html[data-md-theme="github"] .markdown-body h3 { font-size: 1.25em; }
-html[data-md-theme="github"] .markdown-body h4 { font-size: 1em; }
-html[data-md-theme="github"] .markdown-body h5 { font-size: .875em; }
-html[data-md-theme="github"] .markdown-body h6 { font-size: .85em; color: var(--gh-muted); }
+html[data-md-theme="github"] .markdown-body h1 {
+  font-size: 2em;
+}
+html[data-md-theme="github"] .markdown-body h2 {
+  font-size: 1.5em;
+}
+html[data-md-theme="github"] .markdown-body h3 {
+  font-size: 1.25em;
+}
+html[data-md-theme="github"] .markdown-body h4 {
+  font-size: 1em;
+}
+html[data-md-theme="github"] .markdown-body h5 {
+  font-size: 0.875em;
+}
+html[data-md-theme="github"] .markdown-body h6 {
+  font-size: 0.85em;
+  color: var(--gh-muted);
+}
 
 html[data-md-theme="github"] .markdown-body > :first-child,
 html[data-md-theme="github"] .preview-batch:first-child > :first-child,
@@ -64,21 +80,31 @@ html[data-md-theme="github"] .markdown-body :is(p, ul, ol, blockquote, pre, tabl
   margin-bottom: 16px;
 }
 
-html[data-md-theme="github"] .markdown-body :is(ul, ol) { padding-left: 2em; }
-html[data-md-theme="github"] .markdown-body li + li { margin-top: .25em; }
-html[data-md-theme="github"] .markdown-body li :is(ul, ol) { margin-bottom: 0; }
-html[data-md-theme="github"] .markdown-body strong { font-weight: 600; }
+html[data-md-theme="github"] .markdown-body :is(ul, ol) {
+  padding-left: 2em;
+}
+html[data-md-theme="github"] .markdown-body li + li {
+  margin-top: 0.25em;
+}
+html[data-md-theme="github"] .markdown-body li :is(ul, ol) {
+  margin-bottom: 0;
+}
+html[data-md-theme="github"] .markdown-body strong {
+  font-weight: 600;
+}
 
 html[data-md-theme="github"] .markdown-body a {
   color: var(--gh-link);
   text-decoration: none;
 }
-html[data-md-theme="github"] .markdown-body a:hover { text-decoration: underline; }
+html[data-md-theme="github"] .markdown-body a:hover {
+  text-decoration: underline;
+}
 
 html[data-md-theme="github"] .markdown-body blockquote {
   padding: 0 1em;
   color: var(--gh-muted);
-  border-left: .25em solid var(--gh-border);
+  border-left: 0.25em solid var(--gh-border);
   background: transparent;
 }
 
@@ -86,7 +112,7 @@ html[data-md-theme="github"] .markdown-body :is(code, pre) {
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
 }
 html[data-md-theme="github"] .markdown-body code {
-  padding: .2em .4em;
+  padding: 0.2em 0.4em;
   font-size: 85%;
   border-radius: 6px;
   background: var(--gh-code);
@@ -110,10 +136,15 @@ html[data-md-theme="github"] .markdown-body :is(th, td) {
   padding: 6px 13px;
   border-color: var(--gh-border);
 }
-html[data-md-theme="github"] .markdown-body th { font-weight: 600; background: var(--gh-bg); }
-html[data-md-theme="github"] .markdown-body tr:nth-child(even) { background: var(--gh-inset); }
+html[data-md-theme="github"] .markdown-body th {
+  font-weight: 600;
+  background: var(--gh-bg);
+}
+html[data-md-theme="github"] .markdown-body tr:nth-child(even) {
+  background: var(--gh-inset);
+}
 html[data-md-theme="github"] .markdown-body hr {
-  height: .25em;
+  height: 0.25em;
   margin: 24px 0;
   border: 0;
   background: var(--gh-border);

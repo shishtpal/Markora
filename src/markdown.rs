@@ -5,7 +5,9 @@ use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
 use serde::Serialize;
 
 mod counts;
+mod urls;
 pub use counts::text_counts;
+use urls::{safe_image_url, safe_url};
 
 #[derive(Debug, Serialize)]
 pub struct Block {
@@ -100,31 +102,11 @@ fn safe_event(event: Event<'_>) -> Event<'_> {
             id,
         }) => Event::Start(Tag::Image {
             link_type,
-            dest_url: safe_url(dest_url),
+            dest_url: safe_image_url(dest_url),
             title,
             id,
         }),
         other => other,
-    }
-}
-
-fn safe_url(url: pulldown_cmark::CowStr<'_>) -> pulldown_cmark::CowStr<'_> {
-    if url.is_ascii() && !url.contains(':') && !url.bytes().any(|b| b.is_ascii_control()) {
-        return url;
-    }
-    let normalized: String = url
-        .chars()
-        .filter(|c| !c.is_control() && !c.is_whitespace())
-        .collect();
-    let lower = normalized.to_ascii_lowercase();
-    if lower.contains(':')
-        && !["https:", "http:", "mailto:"]
-            .iter()
-            .any(|p| lower.starts_with(p))
-    {
-        "#".into()
-    } else {
-        url
     }
 }
 

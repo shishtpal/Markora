@@ -13,10 +13,13 @@ export function showError(message) {
 export function resolveMedia(root, docId) {
   if (!docId || !root) return;
   const rewrite = (raw) => {
+    if (/^file:/i.test(raw || "")) return `http://markora.localhost/imported/${encodeURIComponent(raw)}`;
     if (!raw || /^(https?:|data:|blob:|#|\/)/i.test(raw)) return null;
     const clean = raw.replace(/\\/g, "/").replace(/^\.\//, "");
-    const encoded = clean.split("/").filter(Boolean).map(encodeURIComponent).join("/");
-    return encoded ? `http://markora.localhost/doc/${docId}/${encoded}` : null;
+    const decoded = clean.split("/").map((part) => {
+      try { return decodeURIComponent(part); } catch { return part; }
+    }).join("/");
+    return decoded ? `http://markora.localhost/doc/${docId}/relative/${encodeURIComponent(decoded)}` : null;
   };
   for (const el of root.querySelectorAll("audio, video, source, img")) {
     for (const attr of ["src", "poster"]) {

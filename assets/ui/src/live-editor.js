@@ -1,3 +1,4 @@
+import { connectLiveTasks } from "./live-tasks.js";
 import { element, resolveMedia } from "./dom.js";
 
 const INITIAL_BATCH = 60;
@@ -176,7 +177,10 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
     if (editing) {
       const doc = getDocument();
       if (renderedMarkdown === doc.markdown && renderedBlocksRef === doc.rendered.blocks) {
-        if (editing.index >= 0) editing.node.replaceWith(buildBlockNode(doc.rendered.blocks[editing.index], editing.index, doc.id));
+        if (editing.index >= 0)
+          editing.node.replaceWith(
+            buildBlockNode(doc.rendered.blocks[editing.index], editing.index, doc.id),
+          );
         else editing.node.remove();
       } else renderedMarkdown = null;
       flushEdit();
@@ -218,30 +222,7 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
     node.scrollIntoView({ block: "nearest" });
     return textarea;
   }
-  root.addEventListener("change", (event) => {
-    const box = event.target.closest('li input[type="checkbox"]');
-    const node = box?.closest("[data-block]");
-    if (!box || !node) return;
-    const doc = getDocument();
-    const block = doc.rendered.blocks[Number(node.dataset.block)];
-    if (!block) return;
-    const targetIndex = [...node.querySelectorAll('li input[type="checkbox"]')].indexOf(box);
-    let seen = -1;
-    let fence = false;
-    const slice = doc.markdown.slice(block.start, block.end);
-    const updated = slice
-      .split("\n")
-      .map((line) => {
-        if (/^[ \t]*(?:```|~~~)/.test(line)) fence = !fence;
-        if (fence) return line;
-        return line.replace(/^([ \t]*(?:[-*+]|\d+[.)])\s+\[)([ xX])(\])/, (_, pre, _mark, post) => {
-          seen += 1;
-          return seen === targetIndex ? `${pre}${box.checked ? "x" : " "}${post}` : _;
-        });
-      })
-      .join("\n");
-    if (updated !== slice) change(doc.markdown.slice(0, block.start) + updated + doc.markdown.slice(block.end), true, true);
-  });
+  connectLiveTasks(root, getDocument, change);
   root.addEventListener("click", (event) => {
     if (event.target.closest("a, input, textarea, button, audio, video")) return;
     const node = event.target.closest("[data-block]");
@@ -258,6 +239,14 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
     }
   });
   return {
+    selection() {
+      return active
+        ? {
+            start: active.before.length + active.textarea.selectionStart,
+            end: active.before.length + active.textarea.selectionEnd,
+          }
+        : null;
+    },
     render,
     finish,
     append,
