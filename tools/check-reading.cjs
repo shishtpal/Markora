@@ -32,6 +32,7 @@ module.exports = async function checkReading(client, menu, processId, artifacts)
     await menu("View", `view-${mode}`);
     await wait(`document.querySelector('#document').dataset.mode==='${mode}'`, `${mode} before reading`);
     if (mode === "live") {
+      await menu("View", "toggle-edit");
       await evaluate(`document.querySelector('.live-block[data-block="1"]').click()`);
     }
     const textarea = mode === "live" ? `document.querySelector('.block-editor')` : source;

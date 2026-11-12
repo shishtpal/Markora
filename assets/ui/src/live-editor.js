@@ -6,7 +6,7 @@ const FRAME_BATCH = 150;
 const MAX_FRAME_BLOCKS = 1200;
 
 // Edit Markdown source for one rendered block. Never reverse-engineer Markdown from HTML.
-export function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
+export function createLiveEditor(root, getDocument, change, flushEdit = () => {}, canEdit = () => true) {
   let active = null;
   let renderedMarkdown = null;
   let renderedBlocksRef = null;
@@ -51,12 +51,12 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
     }
     if (block.html.includes('type="checkbox"')) {
       node.querySelectorAll('li input[type="checkbox"]').forEach((box) => {
-        box.disabled = false;
+        box.disabled = !canEdit();
       });
     }
     node.tabIndex = 0;
     node.dataset.block = String(index);
-    node.setAttribute("aria-label", `Edit block ${index + 1}`);
+    node.setAttribute("aria-label", `Markdown block ${index + 1}`);
     return node;
   }
   function appendRange(blocks, docId, start, end) {
@@ -114,6 +114,7 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
     scheduleRemaining(blocks, doc.id);
   }
   function begin(index) {
+    if (!canEdit()) return null;
     if (active?.index === index) {
       active.textarea.focus();
       return active.textarea;
@@ -188,6 +189,7 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
     render();
   }
   function append(offset = getDocument().markdown.length) {
+    if (!canEdit()) return null;
     finish();
     const doc = getDocument();
     ensureRenderedThrough(doc.rendered.blocks.length);
@@ -222,13 +224,14 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
     node.scrollIntoView({ block: "nearest" });
     return textarea;
   }
-  connectLiveTasks(root, getDocument, change);
+  connectLiveTasks(root, getDocument, change, canEdit);
   root.addEventListener("click", (event) => {
     if (event.target.closest("a, input, textarea, button, audio, video")) return;
     const node = event.target.closest("[data-block]");
     if (node) begin(Number(node.dataset.block));
   });
   root.addEventListener("keydown", (event) => {
+    if (!canEdit()) return;
     if (event.target.tagName === "TEXTAREA") return;
     if (event.key === "Enter" || event.key === " ") {
       const node = event.target.closest("[data-block]");
@@ -263,12 +266,20 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
       return active?.textarea || null;
     },
     focus() {
+      if (!canEdit()) { root.focus(); return null; }
       return active?.textarea || begin(0) || append();
     },
     jump(offset, length = 0) {
       finish();
       const index = getDocument().rendered.blocks.findIndex((b) => b.end > offset);
       const target = Math.max(0, index);
+      if (!canEdit()) {
+        ensureRenderedThrough(target);
+        const node = root.querySelector(`[data-block="${target}"]`);
+        node?.focus({ preventScroll: true });
+        node?.scrollIntoView({ block: "center" });
+        return;
+      }
       const textarea = begin(target);
       if (textarea) {
         const start = getDocument().rendered.blocks[target]?.start || 0;

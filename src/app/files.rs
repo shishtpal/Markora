@@ -6,6 +6,29 @@ use markora::{
 };
 use std::path::Path;
 
+pub(super) enum BgEvent {
+    ImagesImported {
+        token: u64,
+        result: Result<Vec<markora::image_assets::ImportedImage>, String>,
+    },
+    DiskScan(Vec<safety::Observation>),
+    FileLoaded {
+        path: PathBuf,
+        view_mode: markora::model::ViewMode,
+        result: Result<PreparedDocument, String>,
+    },
+    FolderLoaded {
+        path: PathBuf,
+        generation: u64,
+        result: Result<Vec<FileEntry>, String>,
+    },
+    BranchLoaded {
+        path: String,
+        generation: u64,
+        result: Result<Vec<FileEntry>, String>,
+    },
+}
+
 impl Markora {
     pub(super) fn drain_bg(&mut self) {
         let events: Vec<_> = self.bg_rx.try_iter().collect();
@@ -13,6 +36,13 @@ impl Markora {
             match event {
                 BgEvent::ImagesImported { token, result } => self.finish_images(token, result),
                 BgEvent::DiskScan(observations) => self.apply_observations(observations),
+                BgEvent::BranchLoaded {
+                    path,
+                    generation,
+                    result,
+                } => {
+                    self.finish_branch(&path, generation, result);
+                }
                 BgEvent::FileLoaded {
                     path,
                     view_mode,
@@ -84,7 +114,10 @@ impl Markora {
             ));
         }
         if let Some(parent) = path.parent()
-            && self.folder.as_deref() != Some(parent)
+            && self
+                .folder
+                .as_ref()
+                .is_none_or(|root| !parent.starts_with(root))
         {
             self.open_folder(parent.into());
         }
@@ -160,6 +193,7 @@ impl Markora {
     }
 
     pub(super) fn open_folder(&mut self, path: PathBuf) {
+        let path = storage::normalize_path(&path);
         self.folder_generation += 1;
         let generation = self.folder_generation;
         if let Some(ctx) = self.egui_ctx.clone() {

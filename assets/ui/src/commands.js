@@ -43,6 +43,7 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot, ima
   }
   function run(id) {
     closeMenus();
+    if (!editor.canEdit() && (formatting.has(id) || ["undo", "redo", "link", "replace", "find-toggle", "replace-current", "replace-all"].includes(id))) return;
     if (
       editor.isReading() &&
       (formatting.has(id) ||
@@ -97,6 +98,7 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot, ima
     }
     const local = {
       "command-palette": () => dialogs.palette(),
+      "toggle-edit": () => { editor.toggleEdit(); find.update(); },
       settings: () => dialogs.settings(),
       shortcuts: () => dialogs.help(),
       about: () => dialogs.about(),

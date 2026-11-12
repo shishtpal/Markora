@@ -11,6 +11,7 @@ const order = [
   "live-tasks",
   "live-editor",
   "editor-images",
+  "edit-mode",
   "editor",
   "reading",
   "layout",
@@ -22,6 +23,7 @@ const order = [
   "conflicts",
   "images",
   "commands",
+  "sidebar",
   "chrome",
   "main",
 ];

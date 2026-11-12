@@ -112,6 +112,9 @@ pub fn folder_entries(dir: &Path) -> io::Result<Vec<FileEntry>> {
             name: entry.file_name().to_string_lossy().into_owned(),
             path: path.to_string_lossy().into_owned(),
             is_folder,
+            children: None,
+            loading: false,
+            error: None,
         });
     }
     entries.sort_by(|a, b| {

@@ -111,6 +111,7 @@ async function main() {
     assert(fs.existsSync(path.join(other, decodeURIComponent(links(renamed)[0]))));
     }
     await cmd('view-live'); await wait(`document.querySelector('#live-document img')?.naturalWidth>0`, 'relocated image preview');
+    await click('#toggle-edit');
     await click('#live-document [data-block]');
     await wait(`document.querySelector('.block-editor')`, 'Live editing');
     await evaluate(`(() => {const t=document.querySelector('.block-editor');t.focus();t.setSelectionRange(0,0);})()`);

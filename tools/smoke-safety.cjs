@@ -42,7 +42,11 @@ async function main() {
     app = null;
   }
   const send = (message) => client.evaluate(`window.ipc.postMessage(${JSON.stringify(JSON.stringify(message))})`);
-  const cmd = (command) => send({ type: "command", command });
+  const cmd = async (command) => {
+    await send({ type: "command", command });
+    if (command.startsWith("view-"))
+      await client.wait(`document.querySelector('#document').dataset.mode === ${JSON.stringify(command.slice(5))}`, "editor mode");
+  };
   const click = (selector) => client.evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
   const edit = (text) => client.evaluate(`(() => { const t = document.querySelector('#source-editor'); t.value = ${JSON.stringify(text)}; t.dispatchEvent(new Event('input', { bubbles: true })); })()`);
   const conflict = () => client.wait(`document.querySelector('#conflict-dialog').open`, "external-change dialog", 8000);
@@ -84,6 +88,7 @@ async function main() {
     // Reload must also reset a live block textarea, rather than leaving its old draft active.
     await cmd("view-live");
     await client.wait(`document.querySelector('#live-document [data-block]')`, "live block");
+    await click("#toggle-edit");
     await click("#live-document [data-block]");
     await client.wait(`document.querySelector('.block-editor')`, "active live block");
     fs.writeFileSync(note, "# Reloaded externally");

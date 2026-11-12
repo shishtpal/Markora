@@ -75,6 +75,16 @@
         </div>
 
         <span id="pdf-badge" class="pdf-badge" hidden>PDF · Read-only</span>
+        <span id="live-access" role="status">Read-only</span>
+        <button
+          type="button"
+          id="toggle-edit"
+          data-command="toggle-edit"
+          aria-pressed="false"
+          title="Toggle Live edit mode (Ctrl+E)"
+        >
+          <span id="toggle-edit-label">Edit mode</span>
+        </button>
 
         <span class="bar-divider" aria-hidden="true"></span>
 
@@ -299,39 +309,52 @@
 
       <div id="workspace">
         <aside id="files-panel" aria-label="Files sidebar">
-          <div class="panel-heading">
-            <h2>Files</h2>
-            <div class="spacer"></div>
-            <button
-              type="button"
-              class="icon-button"
-              data-command="folder-up"
-              title="Parent folder"
-              aria-label="Parent folder"
-            >
-              <span class="btn-icon" data-icon="arrowUp"></span>
+          <section id="explorer-panel" class="sidebar-section" aria-label="File explorer">
+            <div class="panel-heading">
+              <h2>Files</h2>
+              <div class="spacer"></div>
+              <button
+                type="button"
+                class="icon-button"
+                data-command="folder-up"
+                title="Parent folder"
+                aria-label="Parent folder"
+              >
+                <span class="btn-icon" data-icon="arrowUp"></span>
+              </button>
+              <button
+                type="button"
+                class="icon-button"
+                data-command="refresh-folder"
+                title="Refresh folder"
+                aria-label="Refresh folder"
+              >
+                <span class="btn-icon" data-icon="rotateCw"></span>
+              </button>
+            </div>
+            <button type="button" id="folder-path" data-command="open-folder" title="Open folder">
+              <span class="btn-icon" data-icon="folderOpen"></span>
+              <span id="folder-path-label">Open a folder…</span>
             </button>
-            <button
-              type="button"
-              class="icon-button"
-              data-command="refresh-folder"
-              title="Refresh folder"
-              aria-label="Refresh folder"
-            >
-              <span class="btn-icon" data-icon="rotateCw"></span>
-            </button>
-          </div>
-          <button type="button" id="folder-path" data-command="open-folder" title="Open folder">
-            <span class="btn-icon" data-icon="folderOpen"></span>
-            <span id="folder-path-label">Open a folder…</span>
-          </button>
-          <div id="files" class="tree"></div>
-          <div class="panel-heading">
-            <h2>Recent files</h2>
-            <div class="spacer"></div>
-            <button type="button" data-command="clear-recents" class="quiet">Clear</button>
-          </div>
-          <div id="recents" class="tree"></div>
+            <div id="files" class="tree" role="tree" aria-label="Folder tree"></div>
+          </section>
+          <section id="recents-panel" class="sidebar-section" aria-label="Recent files">
+            <div class="panel-heading">
+              <h2>
+                <button
+                  type="button"
+                  id="toggle-recents"
+                  aria-expanded="true"
+                  aria-controls="recents"
+                >
+                  Recent files
+                </button>
+              </h2>
+              <div class="spacer"></div>
+              <button type="button" data-command="clear-recents" class="quiet">Clear</button>
+            </div>
+            <div id="recents" class="tree"></div>
+          </section>
         </aside>
 
         <div
@@ -346,8 +369,13 @@
 
         <main id="document" aria-label="Document workspace" data-mode="live">
           <div id="live-pane" class="scroll-pane">
-            <div id="live-document" class="markdown-body" aria-label="Live document"></div>
-            <button type="button" id="append-block" class="append-block">
+            <div
+              id="live-document"
+              class="markdown-body read-only"
+              aria-label="Live document"
+              tabindex="-1"
+            ></div>
+            <button type="button" id="append-block" class="append-block" hidden>
               <span class="btn-icon" data-icon="plus"></span><span>Add paragraph</span>
             </button>
           </div>
@@ -438,7 +466,10 @@
       </div>
       <div class="settings-group">
         <label class="setting-row" for="asset-mode">
-          <span class="setting-copy"><strong>Image asset folders</strong><small>Where pasted and dropped images are stored</small></span>
+          <span class="setting-copy"
+            ><strong>Image asset folders</strong
+            ><small>Where pasted and dropped images are stored</small></span
+          >
           <select id="asset-mode">
             <option value="file">Per file: file_name.assets</option>
             <option value="shared">Shared: data.assets</option>
@@ -448,12 +479,24 @@
         <div id="asset-custom-settings" hidden>
           <label for="asset-custom-path">Custom image folder</label>
           <div class="asset-path-row">
-            <input id="asset-custom-path" type="text" placeholder="../images or D:\Images" spellcheck="false" autocomplete="off">
+            <input
+              id="asset-custom-path"
+              type="text"
+              placeholder="../images or D:\Images"
+              spellcheck="false"
+              autocomplete="off"
+            />
             <button id="asset-folder-browse" type="button">Browse…</button>
           </div>
-          <p class="dialog-hint">Relative paths start beside each note. An absolute path shares one folder across notes. Links use file URLs when the folder is on another drive.</p>
+          <p class="dialog-hint">
+            Relative paths start beside each note. An absolute path shares one folder across notes.
+            Links use file URLs when the folder is on another drive.
+          </p>
         </div>
-        <p class="dialog-hint">Used for new imports. Existing links keep working. Shared data.assets means one folder per directory of notes.</p>
+        <p class="dialog-hint">
+          Used for new imports. Existing links keep working. Shared data.assets means one folder per
+          directory of notes.
+        </p>
       </div>
       <div class="settings-group">
         <label class="setting-row">

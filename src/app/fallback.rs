@@ -68,18 +68,7 @@ impl Markora {
                 .resizable(true)
                 .default_size(self.prefs.files_width)
                 .show(ui, |ui| {
-                    ui.heading("Files");
-                    let mut open = None;
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        for entry in &self.entries {
-                            if ui.button(&entry.name).clicked() {
-                                open = Some(PathBuf::from(&entry.path));
-                            }
-                        }
-                    });
-                    if let Some(path) = open {
-                        self.open_path(path);
-                    }
+                    self.native_sidebar(ui);
                 });
         }
         if self.prefs.show_outline && !self.prefs.focus_mode && !self.reading.active {

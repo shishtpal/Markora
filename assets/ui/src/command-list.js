@@ -36,6 +36,7 @@ export const COMMANDS = [
   ["code-block", "Code block", "", "Format"],
   ["table", "Table", "", "Format"],
   ["view-live", "Live editor", "Ctrl+1", "View"],
+  ["toggle-edit", "Toggle Live edit mode", "Ctrl+E", "View"],
   ["view-source", "Source editor", "Ctrl+2", "View"],
   ["view-split", "Split editor", "Ctrl+3", "View"],
   ["toggle-files", "Toggle files sidebar", "Ctrl+\\", "View"],

@@ -27,6 +27,7 @@ flowchart LR
 | `src/app/bridge.rs`               | Deserialize requests, apply drafts, build snapshots     |
 | `src/app/commands.rs`             | Native commands and unsaved-change state machine        |
 | `src/app/files.rs`                | File/folder dialogs, open/save, recents                 |
+| `src/app/sidebar.rs`              | Lazy folder branches, stale-result guards and native file tree |
 | `src/app/export.rs`               | Exports and acknowledged print/PDF preparation          |
 | `src/app/fallback.rs`             | Native source editor when WebView2 is unavailable       |
 | `src/app/reading.rs`              | Transient reading state and native fullscreen lifecycle |
@@ -66,9 +67,11 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
 | `command-list.js`, `commands.js` | Shared command catalog, menus, shortcuts, dispatch                   |
 | `editor.js`                      | Document draft, revisions, source/split editing, formatting, history |
 | `live-editor.js`                 | Rendered blocks with an active Markdown textarea                     |
+| `edit-mode.js`                   | Explicit Live edit gate and read-only controls                       |
+| `sidebar.js`                     | Accessible lazy file tree and collapsible recent-files panel         |
 | `layout.js`                      | Responsive sizing, pointer/keyboard resizers and saved widths        |
 | `reading.js`                     | Read-only preview presentation and editor focus/selection/scroll restore |
-| `chrome.js`                      | Tabs, file lists, recents, outline, status and themes                |
+| `chrome.js`                      | Tabs, outline, status, themes and sidebar snapshots                   |
 | `dialogs.js`, `find.js`          | Modal UI, palette, settings and document search                      |
 | `search-engine.js`               | Unicode-aware matching, bounded replacement and regex captures       |
 | `search-worker.js`               | Cancellable worker execution with search timeouts                    |

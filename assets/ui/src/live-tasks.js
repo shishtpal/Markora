@@ -1,9 +1,10 @@
 // Toggle task checkboxes by editing their original Markdown source.
-export function connectLiveTasks(root, getDocument, change) {
+export function connectLiveTasks(root, getDocument, change, canEdit = () => true) {
   root.addEventListener("change", (event) => {
     const box = event.target.closest('li input[type="checkbox"]');
     const node = box?.closest("[data-block]");
     if (!box || !node) return;
+    if (!canEdit()) { box.checked = !box.checked; return; }
     const doc = getDocument();
     const block = doc.rendered.blocks[Number(node.dataset.block)];
     if (!block) return;

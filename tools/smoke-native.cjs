@@ -105,6 +105,7 @@ async function main() {
     );
     await click("#palette-list button");
     await wait(`document.querySelector('#document').dataset.mode==='live'`, "palette Live editor");
+    if (await evaluate(`document.querySelector("#toggle-edit").getAttribute("aria-pressed")!=="true"`)) await click("#toggle-edit");
     await click('.live-block[data-block="1"]');
     const liveText = "A live edit with **persisted** Markdown.\n";
     await evaluate(
@@ -262,6 +263,7 @@ async function main() {
     await wait(`document.querySelector('#live-document h1')?.textContent==='Saved by menu'`);
     await wait(`document.querySelector('#document').dataset.mode==='live' && !document.querySelector('#live-pane').hidden`);
     // Ending an unchanged edit must restore the block and preserve other blocks.
+    await click("#toggle-edit");
     await click('.live-block[data-block="0"]');
     await call("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape" });
     await call("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape" });
@@ -367,6 +369,7 @@ async function main() {
     const openMs = Date.now() - openStart;
     console.log(`PASS large Live initial view (${openMs} ms)`);
     // Start editing before the frame queue finishes, then finish without changes.
+    await click("#toggle-edit");
     await click('.live-block[data-block="0"]');
     await call("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape" });
     await call("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape" });

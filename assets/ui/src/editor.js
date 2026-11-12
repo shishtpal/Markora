@@ -1,7 +1,7 @@
 import { $, resolveMedia } from "./dom.js";
 import { createLiveEditor } from "./live-editor.js";
 import { createImageEdits } from "./editor-images.js";
-
+import { createEditMode } from "./edit-mode.js";
 export function createEditor(onChange, onFlush = () => {}) {
   let doc = {
     id: 0,
@@ -21,18 +21,19 @@ export function createEditor(onChange, onFlush = () => {}) {
   let lastPreviewDocId = 0;
   let lastPdfUrl = null;
   let reader = null;
-  const live = createLiveEditor($("#live-document"), () => doc, change, onFlush);
+  const canEdit = () => editMode.canEdit();
+  const live = createLiveEditor($("#live-document"), () => doc, change, onFlush, canEdit);
+  const editMode = createEditMode(() => doc, () => Boolean(reader?.active()), live, onFlush);
   const imageEdits = createImageEdits(
     () => doc,
-    () => Boolean(reader?.active()),
+    () => !canEdit(),
     live,
     source,
     change,
     onFlush,
   );
-
   function change(markdown, record = true, immediate = false) {
-    if (reader?.active()) return;
+    if (!canEdit()) return;
     if (markdown === doc.markdown) return;
     doc.markdown = markdown;
     doc.revision++;
@@ -68,7 +69,6 @@ export function createEditor(onChange, onFlush = () => {}) {
   window.matchMedia("print").addEventListener("change", (event) => {
     if (event.matches) ensurePreview();
   });
-
   source.addEventListener("input", () => change(source.value));
   source.addEventListener("keydown", (event) => {
     if (event.key !== "Tab") return;
@@ -77,11 +77,11 @@ export function createEditor(onChange, onFlush = () => {}) {
     source.dispatchEvent(new Event("input"));
   });
   $("#append-block").addEventListener("click", () => live.append());
-
   function accept(incoming) {
     const kind = incoming.kind || "markdown";
     const switched = incoming.id !== doc.id || kind !== doc.kind;
     if (!switched && incoming.revision < doc.revision) return;
+    if (switched || incoming.viewMode !== doc.viewMode) editMode.reset();
     if (kind === "pdf") {
       live.reset();
       lastPreview = null;
@@ -105,6 +105,7 @@ export function createEditor(onChange, onFlush = () => {}) {
       $("#source-pane").hidden = true;
       $("#split-resizer").hidden = true;
       $("#findbar").hidden = true;
+      editMode.paint();
       if (lastPdfUrl !== doc.pdfUrl) {
         lastPdfUrl = doc.pdfUrl;
         $("#pdf-frame").src = doc.pdfUrl || "about:blank";
@@ -165,7 +166,7 @@ export function createEditor(onChange, onFlush = () => {}) {
     $("#split-resizer").hidden = doc.viewMode !== "split";
     if (doc.viewMode === "split") ensurePreview();
     if (doc.viewMode === "live" && !reader?.active()) live.render();
-    if (switched && doc.viewMode === "live" && !doc.markdown && !reader?.active()) live.append();
+    editMode.paint();
     if (switched) {
       source.scrollTop = 0;
       $("#live-pane").scrollTop = 0;
@@ -190,7 +191,7 @@ export function createEditor(onChange, onFlush = () => {}) {
     textarea.focus();
   }
   function format(command, url) {
-    if (reader?.active()) return;
+    if (!canEdit()) return;
     const wraps = {
       bold: ["**", "**"],
       italic: ["*", "*"],
@@ -232,7 +233,7 @@ export function createEditor(onChange, onFlush = () => {}) {
     textarea.focus();
   }
   function history(direction) {
-    if (reader?.active()) return;
+    if (!canEdit()) return;
     if (!currentHistory) return;
     const { undo, redo } = currentHistory;
     let text;
@@ -248,22 +249,22 @@ export function createEditor(onChange, onFlush = () => {}) {
     live.reset();
     change(text, false, true);
   }
-
   return {
+    canEdit,
+    toggleEdit: editMode.toggle,
     captureImageAnchor: imageEdits.capture,
     insertImages: imageEdits.insert,
     resumeEditing: () => {
+      editMode.paint();
       if (doc.viewMode === "live") live.render();
     },
-    setReader: (value) => {
-      reader = value;
-    },
+    setReader: (value) => { reader = value; },
     isReading: () => Boolean(reader?.active()),
     accept,
     format,
     history,
     replaceDocument(markdown) {
-      if (reader?.active() || doc.kind === "pdf" || markdown === doc.markdown) return;
+      if (!canEdit() || markdown === doc.markdown) return;
       live.reset();
       change(markdown, true, true);
     },

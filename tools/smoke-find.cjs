@@ -254,6 +254,7 @@ async function main() {
 
     await input("#source-editor", "hello hello");
     await mode("live");
+    await click("#toggle-edit");
     await input("#find-input", "hello");
     await input("#replace-input", "world");
     await count(2);

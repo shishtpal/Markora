@@ -61,6 +61,9 @@ pub enum Action {
     OpenPath {
         path: String,
     },
+    LoadFolder {
+        path: String,
+    },
     #[serde(rename_all = "camelCase")]
     OpenRelative {
         doc_id: u64,
@@ -170,6 +173,9 @@ pub struct FileEntry {
     pub name: String,
     pub path: String,
     pub is_folder: bool,
+    pub children: Option<Vec<FileEntry>>,
+    pub loading: bool,
+    pub error: Option<String>,
 }
 
 #[derive(Serialize)]

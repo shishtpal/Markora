@@ -1,29 +1,14 @@
 import { $, $$, element, showError } from "./dom.js";
 import { ICONS } from "./icons.js";
+import { createSidebar } from "./sidebar.js";
 
 export function createChrome(send, editor) {
   let tabsKey = "",
-    filesKey = "",
-    recentsKey = "",
     outlineDocId = 0,
     outlineRef = null,
     lastError = "";
   const cleanPath = (p) => (p ? p.replace(/\\\\\?\\/g, "") : "");
-  function fileButton(name, path, folder, activePath = "") {
-    const button = element("button");
-    button.type = "button";
-    button.title = cleanPath(path);
-    if (!folder && activePath && path === activePath) {
-      button.classList.add("active");
-      button.setAttribute("aria-current", "page");
-    }
-    const icon = element("span", `file-icon${folder ? " is-folder" : ""}`);
-    const isPdf = !folder && /\.pdf$/i.test(name);
-    icon.innerHTML = ICONS[folder ? "folder" : isPdf ? "filePdf" : "file"];
-    button.append(icon, element("span", "", name));
-    button.onclick = () => send({ type: "openPath", path });
-    return button;
-  }
+  const sidebar = createSidebar(send);
   function accept(snapshot, doc = snapshot.document) {
     const { prefs } = snapshot;
     const root = document.documentElement;
@@ -84,35 +69,10 @@ export function createChrome(send, editor) {
       );
       $(".tab.active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
-    const nextFiles = JSON.stringify([snapshot.folder, snapshot.entries, activePath]);
-    if (filesKey !== nextFiles) {
-      filesKey = nextFiles;
-      $("#folder-path-label").textContent =
-        cleanPath(snapshot.folder)?.split(/[\\/]/).filter(Boolean).at(-1) || "Open a folder…";
-      $("#folder-path").title = cleanPath(snapshot.folder) || "Open folder";
-      $("#files").replaceChildren(
-        ...snapshot.entries.map((f) => fileButton(f.name, f.path, f.isFolder, activePath)),
-      );
-      if (!snapshot.entries.length)
-        $("#files").append(
-          element(
-            "p",
-            "empty",
-            snapshot.folder ? "No supported files here." : "Open a folder to browse files.",
-          ),
-        );
-    }
-    const nextRecents = JSON.stringify([snapshot.recents, activePath]);
-    if (recentsKey !== nextRecents) {
-      recentsKey = nextRecents;
-      $("#recents").replaceChildren(
-        ...snapshot.recents.map((r) =>
-          fileButton(r.path.split(/[\\/]/).at(-1), r.path, false, activePath),
-        ),
-      );
-      if (!snapshot.recents.length)
-        $("#recents").append(element("p", "empty", "Opened files appear here."));
-    }
+    $("#folder-path-label").textContent =
+      cleanPath(snapshot.folder)?.split(/[\\/]/).filter(Boolean).at(-1) || "Open a folder…";
+    $("#folder-path").title = cleanPath(snapshot.folder) || "Open folder";
+    sidebar.accept(snapshot, activePath);
     if (outlineDocId !== doc.id || outlineRef !== doc.rendered.outline) {
       outlineDocId = doc.id;
       outlineRef = doc.rendered.outline;

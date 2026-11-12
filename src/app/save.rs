@@ -103,7 +103,8 @@ impl Markora {
                 doc.mark_saved();
                 let title = doc.title();
                 if let Some(parent) = path.parent() {
-                    self.open_folder(parent.into());
+                    let root = self.folder.as_ref().filter(|root| parent.starts_with(root));
+                    self.open_folder(root.cloned().unwrap_or_else(|| parent.into()));
                 }
                 self.touch_recent(path.clone(), title);
                 self.notify(format!("Saved {}", path.display()));

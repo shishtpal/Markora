@@ -51,6 +51,7 @@ impl Markora {
                 Action::PrintReady { token } => self.finish_print(token),
                 Action::Command { command } => self.run_command(&command),
                 Action::OpenPath { path } => self.open_path(path.into()),
+                Action::LoadFolder { path } => self.load_branch(path),
                 Action::OpenRelative { doc_id, path } => self.open_relative(doc_id, &path),
                 Action::OpenLink { url } => {
                     if let Err(error) = crate::platform::open_web_link(&url) {

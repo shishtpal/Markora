@@ -809,6 +809,79 @@ kbd {
 #files-panel {
   grid-column: 1;
   grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-section {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+#explorer-panel {
+  flex: 1;
+}
+#recents-panel {
+  flex: 0 1 auto;
+  max-height: 38%;
+  border-top: 1px solid var(--divider);
+  padding-top: 10px;
+}
+.sidebar-section > .tree {
+  overflow: auto;
+  min-height: 0;
+  margin-bottom: 6px;
+}
+#explorer-panel > .tree {
+  flex: 1;
+}
+#recents-panel .panel-heading {
+  flex-shrink: 0;
+}
+#toggle-recents {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+#toggle-recents::before {
+  content: "⌄";
+  margin-right: 7px;
+}
+#toggle-recents[aria-expanded="false"]::before {
+  content: "›";
+}
+.tree-group {
+  display: flex;
+  flex-direction: column;
+}
+.tree-chevron {
+  width: 10px;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--muted);
+}
+[aria-expanded="true"] > .tree-chevron {
+  transform: rotate(90deg);
+}
+.tree-note {
+  font-size: 0.76rem;
+  color: var(--muted);
+  padding: 5px 10px 5px 24px;
+}
+#live-access {
+  color: var(--muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+#toggle-edit {
+  font-size: 0.79rem;
+  border: 1px solid var(--divider);
+  white-space: nowrap;
+}
+#toggle-edit[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 #files-resizer {
   grid-column: 2;
@@ -1641,6 +1714,14 @@ html[data-md-theme="mars"][data-color="dark"] #document {
   #preview-document :is(pre, blockquote, table, img) {
     break-inside: avoid;
   }
+}
+#live-document.read-only .live-block {
+  cursor: text;
+}
+#live-document.read-only .live-block:hover {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
 }
 html[data-md-theme="github"][data-color="light"] {
   --gh-bg: #ffffff;
@@ -2588,6 +2669,16 @@ body.reading-mode .reading-match {
         </div>
 
         <span id="pdf-badge" class="pdf-badge" hidden>PDF · Read-only</span>
+        <span id="live-access" role="status">Read-only</span>
+        <button
+          type="button"
+          id="toggle-edit"
+          data-command="toggle-edit"
+          aria-pressed="false"
+          title="Toggle Live edit mode (Ctrl+E)"
+        >
+          <span id="toggle-edit-label">Edit mode</span>
+        </button>
 
         <span class="bar-divider" aria-hidden="true"></span>
 
@@ -2812,39 +2903,52 @@ body.reading-mode .reading-match {
 
       <div id="workspace">
         <aside id="files-panel" aria-label="Files sidebar">
-          <div class="panel-heading">
-            <h2>Files</h2>
-            <div class="spacer"></div>
-            <button
-              type="button"
-              class="icon-button"
-              data-command="folder-up"
-              title="Parent folder"
-              aria-label="Parent folder"
-            >
-              <span class="btn-icon" data-icon="arrowUp"></span>
+          <section id="explorer-panel" class="sidebar-section" aria-label="File explorer">
+            <div class="panel-heading">
+              <h2>Files</h2>
+              <div class="spacer"></div>
+              <button
+                type="button"
+                class="icon-button"
+                data-command="folder-up"
+                title="Parent folder"
+                aria-label="Parent folder"
+              >
+                <span class="btn-icon" data-icon="arrowUp"></span>
+              </button>
+              <button
+                type="button"
+                class="icon-button"
+                data-command="refresh-folder"
+                title="Refresh folder"
+                aria-label="Refresh folder"
+              >
+                <span class="btn-icon" data-icon="rotateCw"></span>
+              </button>
+            </div>
+            <button type="button" id="folder-path" data-command="open-folder" title="Open folder">
+              <span class="btn-icon" data-icon="folderOpen"></span>
+              <span id="folder-path-label">Open a folder…</span>
             </button>
-            <button
-              type="button"
-              class="icon-button"
-              data-command="refresh-folder"
-              title="Refresh folder"
-              aria-label="Refresh folder"
-            >
-              <span class="btn-icon" data-icon="rotateCw"></span>
-            </button>
-          </div>
-          <button type="button" id="folder-path" data-command="open-folder" title="Open folder">
-            <span class="btn-icon" data-icon="folderOpen"></span>
-            <span id="folder-path-label">Open a folder…</span>
-          </button>
-          <div id="files" class="tree"></div>
-          <div class="panel-heading">
-            <h2>Recent files</h2>
-            <div class="spacer"></div>
-            <button type="button" data-command="clear-recents" class="quiet">Clear</button>
-          </div>
-          <div id="recents" class="tree"></div>
+            <div id="files" class="tree" role="tree" aria-label="Folder tree"></div>
+          </section>
+          <section id="recents-panel" class="sidebar-section" aria-label="Recent files">
+            <div class="panel-heading">
+              <h2>
+                <button
+                  type="button"
+                  id="toggle-recents"
+                  aria-expanded="true"
+                  aria-controls="recents"
+                >
+                  Recent files
+                </button>
+              </h2>
+              <div class="spacer"></div>
+              <button type="button" data-command="clear-recents" class="quiet">Clear</button>
+            </div>
+            <div id="recents" class="tree"></div>
+          </section>
         </aside>
 
         <div
@@ -2859,8 +2963,13 @@ body.reading-mode .reading-match {
 
         <main id="document" aria-label="Document workspace" data-mode="live">
           <div id="live-pane" class="scroll-pane">
-            <div id="live-document" class="markdown-body" aria-label="Live document"></div>
-            <button type="button" id="append-block" class="append-block">
+            <div
+              id="live-document"
+              class="markdown-body read-only"
+              aria-label="Live document"
+              tabindex="-1"
+            ></div>
+            <button type="button" id="append-block" class="append-block" hidden>
               <span class="btn-icon" data-icon="plus"></span><span>Add paragraph</span>
             </button>
           </div>
@@ -2951,7 +3060,10 @@ body.reading-mode .reading-match {
       </div>
       <div class="settings-group">
         <label class="setting-row" for="asset-mode">
-          <span class="setting-copy"><strong>Image asset folders</strong><small>Where pasted and dropped images are stored</small></span>
+          <span class="setting-copy"
+            ><strong>Image asset folders</strong
+            ><small>Where pasted and dropped images are stored</small></span
+          >
           <select id="asset-mode">
             <option value="file">Per file: file_name.assets</option>
             <option value="shared">Shared: data.assets</option>
@@ -2961,12 +3073,24 @@ body.reading-mode .reading-match {
         <div id="asset-custom-settings" hidden>
           <label for="asset-custom-path">Custom image folder</label>
           <div class="asset-path-row">
-            <input id="asset-custom-path" type="text" placeholder="../images or D:\Images" spellcheck="false" autocomplete="off">
+            <input
+              id="asset-custom-path"
+              type="text"
+              placeholder="../images or D:\Images"
+              spellcheck="false"
+              autocomplete="off"
+            />
             <button id="asset-folder-browse" type="button">Browse…</button>
           </div>
-          <p class="dialog-hint">Relative paths start beside each note. An absolute path shares one folder across notes. Links use file URLs when the folder is on another drive.</p>
+          <p class="dialog-hint">
+            Relative paths start beside each note. An absolute path shares one folder across notes.
+            Links use file URLs when the folder is on another drive.
+          </p>
         </div>
-        <p class="dialog-hint">Used for new imports. Existing links keep working. Shared data.assets means one folder per directory of notes.</p>
+        <p class="dialog-hint">
+          Used for new imports. Existing links keep working. Shared data.assets means one folder per
+          directory of notes.
+        </p>
       </div>
       <div class="settings-group">
         <label class="setting-row">
@@ -3425,11 +3549,12 @@ return { createBridge };
 })();
 modules["live-tasks"] = (() => {
 // Toggle task checkboxes by editing their original Markdown source.
-function connectLiveTasks(root, getDocument, change) {
+function connectLiveTasks(root, getDocument, change, canEdit = () => true) {
   root.addEventListener("change", (event) => {
     const box = event.target.closest('li input[type="checkbox"]');
     const node = box?.closest("[data-block]");
     if (!box || !node) return;
+    if (!canEdit()) { box.checked = !box.checked; return; }
     const doc = getDocument();
     const block = doc.rendered.blocks[Number(node.dataset.block)];
     if (!block) return;
@@ -3468,7 +3593,7 @@ const FRAME_BATCH = 150;
 const MAX_FRAME_BLOCKS = 1200;
 
 // Edit Markdown source for one rendered block. Never reverse-engineer Markdown from HTML.
-function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
+function createLiveEditor(root, getDocument, change, flushEdit = () => {}, canEdit = () => true) {
   let active = null;
   let renderedMarkdown = null;
   let renderedBlocksRef = null;
@@ -3513,12 +3638,12 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
     }
     if (block.html.includes('type="checkbox"')) {
       node.querySelectorAll('li input[type="checkbox"]').forEach((box) => {
-        box.disabled = false;
+        box.disabled = !canEdit();
       });
     }
     node.tabIndex = 0;
     node.dataset.block = String(index);
-    node.setAttribute("aria-label", `Edit block ${index + 1}`);
+    node.setAttribute("aria-label", `Markdown block ${index + 1}`);
     return node;
   }
   function appendRange(blocks, docId, start, end) {
@@ -3576,6 +3701,7 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
     scheduleRemaining(blocks, doc.id);
   }
   function begin(index) {
+    if (!canEdit()) return null;
     if (active?.index === index) {
       active.textarea.focus();
       return active.textarea;
@@ -3650,6 +3776,7 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
     render();
   }
   function append(offset = getDocument().markdown.length) {
+    if (!canEdit()) return null;
     finish();
     const doc = getDocument();
     ensureRenderedThrough(doc.rendered.blocks.length);
@@ -3684,13 +3811,14 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
     node.scrollIntoView({ block: "nearest" });
     return textarea;
   }
-  connectLiveTasks(root, getDocument, change);
+  connectLiveTasks(root, getDocument, change, canEdit);
   root.addEventListener("click", (event) => {
     if (event.target.closest("a, input, textarea, button, audio, video")) return;
     const node = event.target.closest("[data-block]");
     if (node) begin(Number(node.dataset.block));
   });
   root.addEventListener("keydown", (event) => {
+    if (!canEdit()) return;
     if (event.target.tagName === "TEXTAREA") return;
     if (event.key === "Enter" || event.key === " ") {
       const node = event.target.closest("[data-block]");
@@ -3725,12 +3853,20 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}) {
       return active?.textarea || null;
     },
     focus() {
+      if (!canEdit()) { root.focus(); return null; }
       return active?.textarea || begin(0) || append();
     },
     jump(offset, length = 0) {
       finish();
       const index = getDocument().rendered.blocks.findIndex((b) => b.end > offset);
       const target = Math.max(0, index);
+      if (!canEdit()) {
+        ensureRenderedThrough(target);
+        const node = root.querySelector(`[data-block="${target}"]`);
+        node?.focus({ preventScroll: true });
+        node?.scrollIntoView({ block: "center" });
+        return;
+      }
       const textarea = begin(target);
       if (textarea) {
         const start = getDocument().rendered.blocks[target]?.start || 0;
@@ -3807,11 +3943,53 @@ function createImageEdits(getDocument, isReading, live, source, change, flush) {
 
 return { createImageEdits };
 })();
+modules["edit-mode"] = (() => {
+const { $, $$ } = modules["dom"];
+
+// Live editing is a deliberate, document-local choice. Source/Split are editors.
+function createEditMode(getDocument, isReading, live, flush) {
+  let enabled = false;
+  const canEdit = () =>
+    !isReading() && getDocument().kind !== "pdf" && (getDocument().viewMode !== "live" || enabled);
+  function paint() {
+    const doc = getDocument(),
+      liveMode = doc.kind !== "pdf" && doc.viewMode === "live";
+    $("#toggle-edit").hidden = !liveMode;
+    $("#toggle-edit").setAttribute("aria-pressed", String(enabled));
+    $("#toggle-edit-label").textContent = enabled ? "Done editing" : "Edit mode";
+    $("#live-access").hidden = !liveMode;
+    $("#live-access").textContent = enabled ? "Editing" : "Read-only";
+    $("#append-block").hidden = !liveMode || !canEdit();
+    $("#live-document").classList.toggle("read-only", !canEdit());
+    for (const box of $$('#live-document li input[type="checkbox"]')) box.disabled = !canEdit();
+    for (const button of $$("#formatbar button")) button.disabled = !canEdit();
+  }
+  return {
+    canEdit,
+    reset() {
+      enabled = false;
+    },
+    paint,
+    toggle() {
+      if (isReading() || getDocument().kind === "pdf" || getDocument().viewMode !== "live") return;
+      if (enabled) {
+        live.finish();
+        flush();
+      }
+      enabled = !enabled;
+      paint();
+      if (enabled && !getDocument().markdown) live.append();
+    },
+  };
+}
+
+return { createEditMode };
+})();
 modules["editor"] = (() => {
 const { $, resolveMedia } = modules["dom"];
 const { createLiveEditor } = modules["live-editor"];
 const { createImageEdits } = modules["editor-images"];
-
+const { createEditMode } = modules["edit-mode"];
 function createEditor(onChange, onFlush = () => {}) {
   let doc = {
     id: 0,
@@ -3831,18 +4009,19 @@ function createEditor(onChange, onFlush = () => {}) {
   let lastPreviewDocId = 0;
   let lastPdfUrl = null;
   let reader = null;
-  const live = createLiveEditor($("#live-document"), () => doc, change, onFlush);
+  const canEdit = () => editMode.canEdit();
+  const live = createLiveEditor($("#live-document"), () => doc, change, onFlush, canEdit);
+  const editMode = createEditMode(() => doc, () => Boolean(reader?.active()), live, onFlush);
   const imageEdits = createImageEdits(
     () => doc,
-    () => Boolean(reader?.active()),
+    () => !canEdit(),
     live,
     source,
     change,
     onFlush,
   );
-
   function change(markdown, record = true, immediate = false) {
-    if (reader?.active()) return;
+    if (!canEdit()) return;
     if (markdown === doc.markdown) return;
     doc.markdown = markdown;
     doc.revision++;
@@ -3878,7 +4057,6 @@ function createEditor(onChange, onFlush = () => {}) {
   window.matchMedia("print").addEventListener("change", (event) => {
     if (event.matches) ensurePreview();
   });
-
   source.addEventListener("input", () => change(source.value));
   source.addEventListener("keydown", (event) => {
     if (event.key !== "Tab") return;
@@ -3887,11 +4065,11 @@ function createEditor(onChange, onFlush = () => {}) {
     source.dispatchEvent(new Event("input"));
   });
   $("#append-block").addEventListener("click", () => live.append());
-
   function accept(incoming) {
     const kind = incoming.kind || "markdown";
     const switched = incoming.id !== doc.id || kind !== doc.kind;
     if (!switched && incoming.revision < doc.revision) return;
+    if (switched || incoming.viewMode !== doc.viewMode) editMode.reset();
     if (kind === "pdf") {
       live.reset();
       lastPreview = null;
@@ -3915,6 +4093,7 @@ function createEditor(onChange, onFlush = () => {}) {
       $("#source-pane").hidden = true;
       $("#split-resizer").hidden = true;
       $("#findbar").hidden = true;
+      editMode.paint();
       if (lastPdfUrl !== doc.pdfUrl) {
         lastPdfUrl = doc.pdfUrl;
         $("#pdf-frame").src = doc.pdfUrl || "about:blank";
@@ -3975,7 +4154,7 @@ function createEditor(onChange, onFlush = () => {}) {
     $("#split-resizer").hidden = doc.viewMode !== "split";
     if (doc.viewMode === "split") ensurePreview();
     if (doc.viewMode === "live" && !reader?.active()) live.render();
-    if (switched && doc.viewMode === "live" && !doc.markdown && !reader?.active()) live.append();
+    editMode.paint();
     if (switched) {
       source.scrollTop = 0;
       $("#live-pane").scrollTop = 0;
@@ -4000,7 +4179,7 @@ function createEditor(onChange, onFlush = () => {}) {
     textarea.focus();
   }
   function format(command, url) {
-    if (reader?.active()) return;
+    if (!canEdit()) return;
     const wraps = {
       bold: ["**", "**"],
       italic: ["*", "*"],
@@ -4042,7 +4221,7 @@ function createEditor(onChange, onFlush = () => {}) {
     textarea.focus();
   }
   function history(direction) {
-    if (reader?.active()) return;
+    if (!canEdit()) return;
     if (!currentHistory) return;
     const { undo, redo } = currentHistory;
     let text;
@@ -4058,22 +4237,22 @@ function createEditor(onChange, onFlush = () => {}) {
     live.reset();
     change(text, false, true);
   }
-
   return {
+    canEdit,
+    toggleEdit: editMode.toggle,
     captureImageAnchor: imageEdits.capture,
     insertImages: imageEdits.insert,
     resumeEditing: () => {
+      editMode.paint();
       if (doc.viewMode === "live") live.render();
     },
-    setReader: (value) => {
-      reader = value;
-    },
+    setReader: (value) => { reader = value; },
     isReading: () => Boolean(reader?.active()),
     accept,
     format,
     history,
     replaceDocument(markdown) {
-      if (reader?.active() || doc.kind === "pdf" || markdown === doc.markdown) return;
+      if (!canEdit() || markdown === doc.markdown) return;
       live.reset();
       change(markdown, true, true);
     },
@@ -4374,6 +4553,7 @@ const COMMANDS = [
   ["code-block", "Code block", "", "Format"],
   ["table", "Table", "", "Format"],
   ["view-live", "Live editor", "Ctrl+1", "View"],
+  ["toggle-edit", "Toggle Live edit mode", "Ctrl+E", "View"],
   ["view-source", "Source editor", "Ctrl+2", "View"],
   ["view-split", "Split editor", "Ctrl+3", "View"],
   ["toggle-files", "Toggle files sidebar", "Ctrl+\\", "View"],
@@ -4557,7 +4737,7 @@ function createFind(editor) {
     replacing = false,
     generation = 0,
     lastDoc = null;
-  let wasReading = false;
+  let wasReadOnly = false;
 
   function request() {
     const doc = editor.document();
@@ -4582,6 +4762,7 @@ function createFind(editor) {
     ]);
   }
   function paint() {
+    $("#find-toggle").disabled = !editor.canEdit();
     count.textContent = busy
       ? "Searching…"
       : input.value
@@ -4591,7 +4772,7 @@ function createFind(editor) {
     input.setAttribute("aria-invalid", String(failed));
     for (const id of ["replace-one", "replace-all"])
       $("#" + id).disabled =
-        editor.isReading() ||
+        !editor.canEdit() ||
         busy ||
         replacing ||
         failed ||
@@ -4652,12 +4833,12 @@ function createFind(editor) {
   }
 
   function update() {
-    if (wasReading !== editor.isReading()) {
-      wasReading = editor.isReading();
+    if (wasReadOnly !== !editor.canEdit()) {
+      wasReadOnly = !editor.canEdit();
       stop();
       replacing = false;
       key = null;
-      if (wasReading) toggleReplace(false);
+      if (wasReadOnly) toggleReplace(false);
       paint();
     }
     if (bar.hidden || editor.document().kind === "pdf") {
@@ -4694,9 +4875,9 @@ function createFind(editor) {
     editor.jump(hit.start, hit.length);
   }
   async function replace(all = false) {
-    if (replacing || editor.isReading()) return;
+    if (replacing || !editor.canEdit()) return;
     const ready = await ensure();
-    if (replacing || editor.isReading() || !ready || !hits.length || (all && limited)) return;
+    if (replacing || !editor.canEdit() || !ready || !hits.length || (all && limited)) return;
     const before = stamp(),
       focus = document.activeElement,
       token = ++generation;
@@ -4709,7 +4890,7 @@ function createFind(editor) {
       index: Math.max(0, index),
     });
     replacing = false;
-    if (token !== generation || bar.hidden || editor.isReading()) {
+    if (token !== generation || bar.hidden || !editor.canEdit()) {
       paint();
       return;
     }
@@ -4733,7 +4914,7 @@ function createFind(editor) {
     }
   }
   function toggleReplace(show = $("#replace-row").hidden) {
-    show = show && !editor.isReading();
+    show = show && !!editor.canEdit();
     $("#replace-row").hidden = !show;
     $("#find-toggle").setAttribute("aria-expanded", String(show));
     if (show) replacement.focus();
@@ -5287,6 +5468,7 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) 
   }
   function run(id) {
     closeMenus();
+    if (!editor.canEdit() && (formatting.has(id) || ["undo", "redo", "link", "replace", "find-toggle", "replace-current", "replace-all"].includes(id))) return;
     if (
       editor.isReading() &&
       (formatting.has(id) ||
@@ -5341,6 +5523,7 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) 
     }
     const local = {
       "command-palette": () => dialogs.palette(),
+      "toggle-edit": () => { editor.toggleEdit(); find.update(); },
       settings: () => dialogs.settings(),
       shortcuts: () => dialogs.help(),
       about: () => dialogs.about(),
@@ -5530,33 +5713,210 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) 
 
 return { createCommands };
 })();
-modules["chrome"] = (() => {
-const { $, $$, element, showError } = modules["dom"];
+modules["sidebar"] = (() => {
+const { $, element } = modules["dom"];
 const { ICONS } = modules["icons"];
 
-function createChrome(send, editor) {
-  let tabsKey = "",
-    filesKey = "",
+function createSidebar(send) {
+  let folder,
+    entries = [],
+    activePath = "",
+    key = "",
     recentsKey = "",
-    outlineDocId = 0,
-    outlineRef = null,
-    lastError = "";
-  const cleanPath = (p) => (p ? p.replace(/\\\\\?\\/g, "") : "");
-  function fileButton(name, path, folder, activePath = "") {
+    focusPath = "";
+  const expanded = new Set();
+  const requested = new Set();
+  const tree = $("#files");
+  $("#toggle-recents").onclick = () => {
+    const hidden = !$("#recents").hidden;
+    $("#recents").hidden = hidden;
+    $("#toggle-recents").setAttribute("aria-expanded", String(!hidden));
+  };
+  function fileButton(name, path, isFolder) {
     const button = element("button");
     button.type = "button";
-    button.title = cleanPath(path);
-    if (!folder && activePath && path === activePath) {
+    button.dataset.path = path;
+    button.title = path.replace(/\\\\\?\\/g, "");
+    if (!isFolder && path === activePath) {
       button.classList.add("active");
       button.setAttribute("aria-current", "page");
     }
-    const icon = element("span", `file-icon${folder ? " is-folder" : ""}`);
-    const isPdf = !folder && /\.pdf$/i.test(name);
-    icon.innerHTML = ICONS[folder ? "folder" : isPdf ? "filePdf" : "file"];
+    const icon = element("span", `file-icon${isFolder ? " is-folder" : ""}`);
+    icon.innerHTML = ICONS[isFolder ? "folder" : /\.pdf$/i.test(name) ? "filePdf" : "file"];
     button.append(icon, element("span", "", name));
     button.onclick = () => send({ type: "openPath", path });
     return button;
   }
+  function toggle(path) {
+    if (expanded.has(path)) expanded.delete(path);
+    else {
+      expanded.add(path);
+      requested.delete(path);
+    }
+    focusPath = path;
+    render();
+  }
+  function render() {
+    const focused = tree.contains(document.activeElement);
+    if (focused) focusPath = document.activeElement.dataset.path || focusPath;
+    let groupId = 0;
+    function branch(items, level = 1, parent = "") {
+      const fragment = document.createDocumentFragment();
+      items.forEach((entry, index) => {
+        const button = fileButton(entry.name, entry.path, entry.isFolder);
+        button.setAttribute("role", "treeitem");
+        button.setAttribute("aria-label", entry.name);
+        button.setAttribute("aria-level", level);
+        button.setAttribute("aria-posinset", index + 1);
+        button.setAttribute("aria-setsize", items.length);
+        button.dataset.parent = parent;
+        button.style.paddingLeft = `${8 + (level - 1) * 16}px`;
+        button.tabIndex = -1;
+        const chevron = element("span", "tree-chevron", entry.isFolder ? "›" : "");
+        chevron.setAttribute("aria-hidden", "true");
+        button.prepend(chevron);
+        fragment.append(button);
+        if (!entry.isFolder) return;
+        const open = expanded.has(entry.path);
+        button.setAttribute("aria-expanded", String(open));
+        button.onclick = () => toggle(entry.path);
+        if (!open) return;
+        const group = element("div", "tree-group");
+        group.id = `file-group-${++groupId}`;
+        group.setAttribute("role", "group");
+        button.setAttribute("aria-owns", group.id);
+        fragment.append(group);
+        if (entry.children) group.append(branch(entry.children, level + 1, entry.path));
+        if (entry.children?.length === 0)
+          group.append(element("p", "tree-note", "No supported files."));
+        if (!entry.children) {
+          group.append(
+            element(
+              "p",
+              "tree-note",
+              entry.error
+                ? `Could not load folder: ${entry.error}. Collapse and expand to retry.`
+                : "Loading…",
+            ),
+          );
+          if (!entry.loading && !requested.has(entry.path)) {
+            requested.add(entry.path);
+            queueMicrotask(() => send({ type: "loadFolder", path: entry.path }));
+          }
+        }
+      });
+      return fragment;
+    }
+    tree.replaceChildren(branch(entries));
+    if (!entries.length)
+      tree.append(
+        element(
+          "p",
+          "empty",
+          folder ? "No supported files here." : "Open a folder to browse files.",
+        ),
+      );
+    const rows = [...tree.querySelectorAll('[role="treeitem"]')];
+    const target =
+      rows.find((b) => b.dataset.path === focusPath) ||
+      rows.find((b) => b.classList.contains("active")) ||
+      rows[0];
+    if (target) {
+      target.tabIndex = 0;
+      if (focused) target.focus({ preventScroll: true });
+    }
+  }
+  tree.addEventListener("focusin", (event) => {
+    if (!event.target.matches('[role="treeitem"]')) return;
+    focusPath = event.target.dataset.path;
+    for (const row of tree.querySelectorAll('[role="treeitem"]'))
+      row.tabIndex = row === event.target ? 0 : -1;
+  });
+  tree.addEventListener("keydown", (event) => {
+    const row = event.target.closest('[role="treeitem"]');
+    if (!row) return;
+    const rows = [...tree.querySelectorAll('[role="treeitem"]')];
+    const index = rows.indexOf(row),
+      open = row.getAttribute("aria-expanded");
+    let next;
+    switch (event.key) {
+      case "ArrowDown":
+        next = rows[Math.min(index + 1, rows.length - 1)];
+        break;
+      case "ArrowUp":
+        next = rows[Math.max(0, index - 1)];
+        break;
+      case "Home":
+        next = rows[0];
+        break;
+      case "End":
+        next = rows.at(-1);
+        break;
+      case "ArrowRight":
+        if (open === "false") toggle(row.dataset.path);
+        else if (open === "true" && rows[index + 1]?.dataset.parent === row.dataset.path)
+          next = rows[index + 1];
+        break;
+      case "ArrowLeft":
+        if (open === "true") toggle(row.dataset.path);
+        else next = rows.find((b) => b.dataset.path === row.dataset.parent);
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    next?.focus();
+  });
+  return {
+    accept(snapshot, path) {
+      const next = JSON.stringify([snapshot.folder, snapshot.entries, path]);
+      activePath = path;
+      if (next !== key) {
+        if (folder !== snapshot.folder) {
+          expanded.clear();
+          requested.clear();
+          focusPath = "";
+        }
+        folder = snapshot.folder;
+        entries = snapshot.entries;
+        key = next;
+        // A response or refresh permits retries for unloaded branches.
+        requested.clear();
+        function failed(items) {
+          for (const entry of items) {
+            if (entry.error) requested.add(entry.path);
+            if (entry.children) failed(entry.children);
+          }
+        }
+        failed(entries);
+        render();
+      }
+      const recentKey = JSON.stringify([snapshot.recents, path]);
+      if (recentKey === recentsKey) return;
+      recentsKey = recentKey;
+      $("#recents").replaceChildren(
+        ...snapshot.recents.map((r) => fileButton(r.path.split(/[\\/]/).at(-1), r.path, false)),
+      );
+      if (!snapshot.recents.length)
+        $("#recents").append(element("p", "empty", "Opened files appear here."));
+    },
+  };
+}
+
+return { createSidebar };
+})();
+modules["chrome"] = (() => {
+const { $, $$, element, showError } = modules["dom"];
+const { ICONS } = modules["icons"];
+const { createSidebar } = modules["sidebar"];
+
+function createChrome(send, editor) {
+  let tabsKey = "",
+    outlineDocId = 0,
+    outlineRef = null,
+    lastError = "";
+  const cleanPath = (p) => (p ? p.replace(/\\\\\?\\/g, "") : "");
+  const sidebar = createSidebar(send);
   function accept(snapshot, doc = snapshot.document) {
     const { prefs } = snapshot;
     const root = document.documentElement;
@@ -5617,35 +5977,10 @@ function createChrome(send, editor) {
       );
       $(".tab.active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
-    const nextFiles = JSON.stringify([snapshot.folder, snapshot.entries, activePath]);
-    if (filesKey !== nextFiles) {
-      filesKey = nextFiles;
-      $("#folder-path-label").textContent =
-        cleanPath(snapshot.folder)?.split(/[\\/]/).filter(Boolean).at(-1) || "Open a folder…";
-      $("#folder-path").title = cleanPath(snapshot.folder) || "Open folder";
-      $("#files").replaceChildren(
-        ...snapshot.entries.map((f) => fileButton(f.name, f.path, f.isFolder, activePath)),
-      );
-      if (!snapshot.entries.length)
-        $("#files").append(
-          element(
-            "p",
-            "empty",
-            snapshot.folder ? "No supported files here." : "Open a folder to browse files.",
-          ),
-        );
-    }
-    const nextRecents = JSON.stringify([snapshot.recents, activePath]);
-    if (recentsKey !== nextRecents) {
-      recentsKey = nextRecents;
-      $("#recents").replaceChildren(
-        ...snapshot.recents.map((r) =>
-          fileButton(r.path.split(/[\\/]/).at(-1), r.path, false, activePath),
-        ),
-      );
-      if (!snapshot.recents.length)
-        $("#recents").append(element("p", "empty", "Opened files appear here."));
-    }
+    $("#folder-path-label").textContent =
+      cleanPath(snapshot.folder)?.split(/[\\/]/).filter(Boolean).at(-1) || "Open a folder…";
+    $("#folder-path").title = cleanPath(snapshot.folder) || "Open folder";
+    sidebar.accept(snapshot, activePath);
     if (outlineDocId !== doc.id || outlineRef !== doc.rendered.outline) {
       outlineDocId = doc.id;
       outlineRef = doc.rendered.outline;

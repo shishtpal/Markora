@@ -23,7 +23,8 @@ and [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/l
 
 ## Editing (Windows web interface)
 
-- **Live:** click a rendered block to edit its Markdown. Escape renders it again;
+- **Live:** opens read-only. Activate **Edit mode** (Ctrl+E), then click a rendered
+  block to edit its Markdown. **Done editing** returns to read-only. Escape renders it again;
   Ctrl+Enter starts a paragraph after the block.
 - **Source:** edit the complete Markdown document.
 - **Split:** edit source beside the rendered preview; drag the divider to resize.
@@ -32,6 +33,10 @@ and [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/l
   persist; double-click a divider or use View → Reset sidebar widths to reset.
 - Tabs, recents, folder browsing, outline navigation, formatting, undo/redo,
   find, command palette, focus mode, settings, light/dark and seven Markdown themes.
+- The Files sidebar expands folders in place as a keyboard-accessible tree.
+  Recent files have a separate collapsible panel. Opening and saving a file inside
+  the tree keeps the current root folder. Live edit mode resets when switching tabs
+  or editor views; task lists, formatting and replacements require edit mode.
 - **GitHub theme:** GitHub-style typography, heading rules, code, tables and quotes
   in light/dark modes. Select Settings → Markdown theme → GitHub; it also appears
   in the theme cycle. Palette reference: [github-markdown-css](https://github.com/sindresorhus/github-markdown-css).
@@ -194,6 +199,7 @@ the local asset protocol. Node and a web server are not needed at runtime.
 | Ctrl+W                    | Close tab                    |
 | Ctrl+Tab / Ctrl+Shift+Tab | Next / previous tab          |
 | Ctrl+1 / Ctrl+2 / Ctrl+3  | Live / Source / Split        |
+| Ctrl+E                    | Toggle Live edit mode        |
 | Ctrl+B / Ctrl+I / Ctrl+L  | Bold / italic / link         |
 | Ctrl+F / F3 / Shift+F3    | Find / next / previous match |
 | Ctrl+H                    | Find and replace             |
@@ -233,6 +239,7 @@ node tools/verify-ui.cjs
 node --test tools/test-search.cjs
 cargo build
 node tools/smoke-native.cjs
+node tools/smoke-sidebar.cjs
 node tools/smoke-safety.cjs
 node tools/smoke-images.cjs
 node tools/smoke-images.cjs --dom
@@ -244,6 +251,8 @@ and keyboard dispatch, palette, source/split/live editing, formatting, undo,
 find, sidebar resizing and persistence, full-width layouts, unsaved changes and
 file open/save. It saves screenshots and diagnostics under `target/ui-smoke/`.
 Tests use isolated settings and fixtures.
+The sidebar suite checks lazy nested folders, keyboard navigation, root preservation,
+recents, and read-only Live behavior before and after explicit edit-mode activation.
 The safety suite also force-stops and restarts the host to verify draft recovery,
 external-change dialogs, reload while editing a Live block, and discard on exit.
 The find suite checks search options, captures, Unicode, replacement/undo/save,

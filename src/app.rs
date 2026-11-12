@@ -21,11 +21,13 @@ mod safety;
 mod safety_tests;
 mod save;
 mod session;
+mod sidebar;
 #[cfg(test)]
 mod tests;
 
 use crate::{theme, webview_host::Host};
 use eframe::egui;
+use files::BgEvent;
 use markora::{
     media::SharedMediaRoots,
     model::{DocKind, Prefs, PreparedDocument, Recent, Workspace},
@@ -60,24 +62,6 @@ pub(super) struct SyncedDocState {
     pub view_mode: markora::model::ViewMode,
     pub rendered_revision: u64,
     pub rendered_full: bool,
-}
-
-pub(super) enum BgEvent {
-    ImagesImported {
-        token: u64,
-        result: Result<Vec<markora::image_assets::ImportedImage>, String>,
-    },
-    DiskScan(Vec<safety::Observation>),
-    FileLoaded {
-        path: PathBuf,
-        view_mode: markora::model::ViewMode,
-        result: Result<PreparedDocument, String>,
-    },
-    FolderLoaded {
-        path: PathBuf,
-        generation: u64,
-        result: Result<Vec<FileEntry>, String>,
-    },
 }
 
 pub struct Markora {

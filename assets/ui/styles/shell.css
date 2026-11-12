@@ -383,6 +383,80 @@
 #files-panel {
   grid-column: 1;
   grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-section {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+#explorer-panel {
+  flex: 1;
+}
+#recents-panel {
+  flex: 0 1 auto;
+  max-height: 38%;
+  border-top: 1px solid var(--divider);
+  padding-top: 10px;
+}
+.sidebar-section > .tree {
+  overflow: auto;
+  min-height: 0;
+  margin-bottom: 6px;
+}
+#explorer-panel > .tree {
+  flex: 1;
+}
+#recents-panel .panel-heading {
+  flex-shrink: 0;
+}
+#toggle-recents {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+#toggle-recents::before {
+  content: "⌄";
+  margin-right: 7px;
+}
+#toggle-recents[aria-expanded="false"]::before {
+  content: "›";
+}
+.tree-group {
+  display: flex;
+  flex-direction: column;
+}
+.tree-chevron {
+  width: 10px;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--muted);
+}
+[aria-expanded="true"] > .tree-chevron {
+  transform: rotate(90deg);
+}
+.tree-note {
+  font-size: 0.76rem;
+  color: var(--muted);
+  padding: 5px 10px 5px 24px;
+}
+#live-access {
+  color: var(--muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+#toggle-edit {
+  font-size: 0.79rem;
+  border: 1px solid var(--divider);
+  white-space: nowrap;
+}
+#toggle-edit[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 #files-resizer {

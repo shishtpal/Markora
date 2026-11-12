@@ -545,3 +545,11 @@ html[data-md-theme="mars"][data-color="dark"] #document {
     break-inside: avoid;
   }
 }
+#live-document.read-only .live-block {
+  cursor: text;
+}
+#live-document.read-only .live-block:hover {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
+}
