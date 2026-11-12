@@ -257,7 +257,7 @@ Markdown documents stay at their selected file paths.
 ## Publishing and license
 
 GitHub Actions checks and packages Windows and Linux builds on pushes and pull
-requests. A matching `v0.2.0` tag publishes both downloads and SHA-256 checksums to
+requests. A matching `v0.2.3-alpha` tag publishes both downloads and SHA-256 checksums to
 GitHub Releases. See [PUBLISHING.md](PUBLISHING.md) for the clean first-upload
 procedure, release commands and platform limitations.
 

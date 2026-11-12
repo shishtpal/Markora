@@ -1,6 +1,6 @@
 {
   "name": "markora",
-  "version": "0.2.2-alpha",
+  "version": "0.2.3-alpha",
   "private": true,
   "description": "Markora — Markdown editor (Rust + egui + WebView2). UI built with Tailwind CSS v4.",
   "scripts": {
