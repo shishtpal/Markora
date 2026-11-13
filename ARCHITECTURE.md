@@ -74,7 +74,8 @@ Edit `assets/ui/shell.html`, the files in `assets/ui/src/`, and the stylesheets 
 | `layout.js`                      | Responsive sizing, pointer/keyboard resizers and saved widths        |
 | `reading.js`                     | Read-only preview presentation and editor focus/selection/scroll restore |
 | `chrome.js`                      | Tabs, outline, status, themes and sidebar snapshots                   |
-| `dialogs.js`, `find.js`          | Modal UI, palette, settings and document search                      |
+| `settings.js`, `typography.js`   | Transient settings tab, font preview and saved editor typography      |
+| `dialogs.js`, `find.js`          | Modal UI, palette and document search                                |
 | `search-engine.js`               | Unicode-aware matching, bounded replacement and regex captures       |
 | `search-worker.js`               | Cancellable worker execution with search timeouts                    |
 | `conflicts.js`                   | External file-change dialog and resolution actions                   |

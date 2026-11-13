@@ -247,6 +247,7 @@ export function createLiveEditor(root, getDocument, change, flushEdit = () => {}
     restorePosition: (state, editable) => position.restore(state, editable, append),
     render,
     finish,
+    reflow: () => { if (active) resize(active.textarea); },
     append,
     reset() {
       cancelQueue();

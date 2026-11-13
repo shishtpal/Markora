@@ -32,7 +32,8 @@ and [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/l
 - Files and Outline sidebars have pointer and keyboard resizers. Their widths
   persist; double-click a divider or use View → Reset sidebar widths to reset.
 - Tabs, recents, folder browsing, outline navigation, formatting, undo/redo,
-  find, command palette, focus mode, settings, light/dark and seven Markdown themes.
+  find, command palette, focus mode, a dedicated Settings tab, light/dark and seven Markdown themes.
+  Settings includes saved font family and size controls with a live preview, plus interface scaling.
 - The Files sidebar expands folders in place as a keyboard-accessible tree.
   Recent files have a separate collapsible panel. Opening and saving a file inside
   the tree keeps the current root folder. Live edit mode resets when switching tabs
@@ -288,7 +289,7 @@ Markdown documents stay at their selected file paths.
 ## Publishing and license
 
 GitHub Actions checks and packages Windows and Linux builds on pushes and pull
-requests. A matching `v0.2.3-alpha` tag publishes both downloads and SHA-256 checksums to
+requests. A matching `v0.2.4-alpha` tag publishes both downloads and SHA-256 checksums to
 GitHub Releases. See [PUBLISHING.md](PUBLISHING.md) for the clean first-upload
 procedure, release commands and platform limitations.
 

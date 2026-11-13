@@ -89,9 +89,9 @@ module.exports = async function checkReading(client, menu, processId, artifacts)
   await menu("View", "toggle-reading");
   await wait(reading, "menu reading entry");
   await key(",", { modifiers: 2 });
-  await wait(`document.querySelector('#settings-dialog').open`, "reading settings dialog");
+  await wait(`!document.querySelector('#settings-page').hidden`, "reading settings page");
   await key("Escape");
-  await wait(`!document.querySelector('#settings-dialog').open`, "Escape closes reading settings");
+  await wait(`document.querySelector('#settings-page').hidden`, "Escape closes reading settings");
   assert.equal(await evaluate(reading), true, "dialog Escape preserves reading");
   native("F11");
   await wait(`!(${reading})`, "native F11 exit");

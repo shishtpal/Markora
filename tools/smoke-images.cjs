@@ -159,7 +159,7 @@ async function main() {
         fs.writeFileSync(path.join(artifacts, 'asset-settings.png'), Buffer.from(settingsShot.data, 'base64'));
       }
       await delay(150);
-      await click('#settings-dialog [data-close-dialog]');
+      await click('#close-settings');
       const prefs = JSON.parse(fs.readFileSync(path.join(artifacts, 'settings/prefs.json'), 'utf8'));
       assert.equal(prefs.assetMode, mode);
       if (mode === 'custom') assert.equal(prefs.assetCustomPath, custom);

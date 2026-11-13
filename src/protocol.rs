@@ -132,6 +132,8 @@ pub struct PrefsPatch {
     pub focus_mode: Option<bool>,
     pub split_ratio: Option<f32>,
     pub font_scale: Option<f32>,
+    pub font_family: Option<String>,
+    pub font_size: Option<f32>,
     pub files_width: Option<f32>,
     pub outline_width: Option<f32>,
 }
@@ -150,6 +152,8 @@ impl PrefsPatch {
             focus_mode,
             split_ratio,
             font_scale,
+            font_family,
+            font_size,
             files_width,
             outline_width
         );

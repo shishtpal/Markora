@@ -9,6 +9,7 @@ import { createChrome } from "./chrome.js";
 import { createConflictDialog } from "./conflicts.js";
 import { createReading } from "./reading.js";
 import { createImages } from "./images.js";
+import { createSettings } from "./settings.js";
 
 let snapshot = null;
 const bridge = createBridge((message) => {
@@ -45,6 +46,7 @@ const bridge = createBridge((message) => {
   if (snapshot.document) editor.accept(snapshot.document);
   editor.retainTabs(snapshot.tabs);
   layout.accept(snapshot.prefs);
+  settings.accept(snapshot);
   chrome.accept(snapshot, editor.document());
   reading.accept(snapshot.tabs);
   dialogs.accept(snapshot);
@@ -62,7 +64,8 @@ const reading = createReading(editor);
 editor.setReader(reading);
 const preferences = (patch) => bridge.send({ type: "preferences", patch });
 const layout = createLayout(preferences);
-const dialogs = createDialogs(bridge.send, preferences, editor);
+const dialogs = createDialogs(bridge.send, editor);
+const settings = createSettings(bridge.send, preferences, editor);
 const conflicts = createConflictDialog(bridge.send);
 const images = createImages(bridge, editor, () => snapshot);
 const commands = createCommands({
@@ -72,8 +75,9 @@ const commands = createCommands({
   layout,
   getSnapshot: () => snapshot,
   images,
+  settings,
 });
-const chrome = createChrome(bridge.send, editor);
+const chrome = createChrome(bridge.send, editor, settings);
 window.addEventListener("error", (event) => showError(event.message));
 window.addEventListener("unhandledrejection", (event) =>
   showError(event.reason?.message || event.reason),

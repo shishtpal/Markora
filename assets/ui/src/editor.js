@@ -255,6 +255,7 @@ export function createEditor(onChange, onFlush = () => {}) {
     },
     restorePosition: () => position.restore(false),
     capturePosition: position.save,
+    reflow: () => live.reflow(),
     setReader: (value) => { reader = value; },
     isReading: () => Boolean(reader?.active()),
     accept,

@@ -50,7 +50,7 @@
       </header>
 
       <div id="tabbar">
-        <div id="tabs" role="tablist" aria-label="Open documents"></div>
+        <div id="tabs" role="tablist" aria-label="Open tabs"></div>
         <button
           type="button"
           data-command="new-tab"
@@ -62,6 +62,200 @@
         </button>
         <span id="document-path" title=""></span>
       </div>
+
+      <section id="settings-page" role="tabpanel" aria-labelledby="settings-tab" hidden>
+        <div class="settings-shell">
+          <header class="settings-heading">
+            <div>
+              <p class="settings-eyebrow">MAKE IT YOURS</p>
+              <h1 id="settings-title" tabindex="-1">Settings</h1>
+              <p>Set up a space that feels right for your writing.</p>
+            </div>
+            <button type="button" id="close-settings" title="Back to document (Esc)">
+              <span aria-hidden="true">←</span>Back to document
+            </button>
+          </header>
+          <div class="settings-layout">
+            <nav class="settings-nav" aria-label="Settings sections">
+            <a href="#settings-appearance" aria-current="location">Appearance</a>
+              <a href="#settings-typography">Typography</a>
+              <a href="#settings-layout">Layout</a>
+              <a href="#settings-images">Images</a>
+              <p>Changes save automatically.</p>
+            </nav>
+            <div class="settings-content">
+              <section
+                id="settings-appearance"
+                class="settings-section"
+                aria-labelledby="appearance-title"
+              >
+                <h2 id="appearance-title">Appearance</h2>
+                <p class="settings-description">Choose the mood of your workspace.</p>
+                <div class="settings-group">
+                  <label class="setting-row" for="color-mode">
+                    <span class="setting-copy"
+                      ><strong>Color mode</strong
+                      ><small>Interface light or dark palette</small></span
+                    >
+                    <select id="color-mode">
+                      <option value="dark">Dark</option>
+                      <option value="light">Light</option>
+                    </select>
+                  </label>
+                  <label class="setting-row" for="md-theme">
+                    <span class="setting-copy"
+                      ><strong>Markdown theme</strong
+                      ><small>Document colors and default typography</small></span
+                    >
+                    <select id="md-theme">
+                      <option value="cobalt">Cobalt</option>
+                      <option value="paper">Paper</option>
+                      <option value="graphite">Graphite</option>
+                      <option value="forest">Forest</option>
+                      <option value="mono">Mono</option>
+                      <option value="mars">Mars</option>
+                      <option value="github">GitHub</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+              <section
+                id="settings-typography"
+                class="settings-section"
+                aria-labelledby="typography-title"
+              >
+                <h2 id="typography-title">Typography</h2>
+                <p class="settings-description">A comfortable typeface. Just the right size.</p>
+                <div class="settings-group">
+                  <label class="setting-row" for="font-family">
+                    <span class="setting-copy"
+                      ><strong>Font family</strong
+                      ><small>Used in Live, Source, Split, and reading views</small></span
+                    >
+                    <select id="font-family">
+                      <option value="theme">Theme default</option>
+                      <option value="space-grotesk">Space Grotesk</option>
+                      <option value="system">System sans</option>
+                      <option value="georgia">Georgia</option>
+                      <option value="arial">Arial</option>
+                      <option value="ibm-plex-mono">IBM Plex Mono</option>
+                      <option value="consolas">Consolas</option>
+                    </select>
+                  </label>
+                  <label class="setting-row" for="font-size">
+                    <span class="setting-copy"
+                      ><strong>Font size</strong
+                      ><small>Document and editor text, before interface scaling</small></span
+                    >
+                    <span class="settings-size"
+                      ><input
+                        id="font-size"
+                        type="number"
+                        min="12"
+                        max="32"
+                        step="1"
+                        value="16"
+                      /><span>px</span></span
+                    >
+                  </label>
+                  <div class="settings-preview" aria-label="Font preview">
+                    <span class="settings-preview-label">LIVE PREVIEW</span>
+                    <div id="font-preview">
+                      <h3>A little room to think.</h3>
+                      <p>Good writing starts with a comfortable space. Make this one your own.</p>
+                      <p>The quick brown fox jumps over the lazy dog. 0123456789</p>
+                      <code># Your next great idea</code>
+                    </div>
+                  </div>
+                  <label class="setting-row setting-slider" for="font-scale">
+                    <span class="setting-head">
+                      <span class="setting-copy"
+                        ><strong>Interface scale</strong
+                        ><small
+                          >Scale menus, sidebars, and document typography together</small
+                        ></span
+                      >
+                      <output id="font-scale-value" for="font-scale">100%</output>
+                    </span>
+                    <input
+                      id="font-scale"
+                      type="range"
+                      min="0.875"
+                      max="1.5"
+                      step="0.025"
+                      value="1"
+                    />
+                  </label>
+                  <div class="settings-reset-row">
+                    <button type="button" id="reset-typography">Reset typography</button>
+                  </div>
+                </div>
+              </section>
+              <section id="settings-layout" class="settings-section" aria-labelledby="layout-title">
+                <h2 id="layout-title">Layout</h2>
+                <p class="settings-description">Keep your files and headings within reach.</p>
+                <div class="settings-group">
+                  <label class="check-label">
+                    <span class="setting-copy"
+                      ><strong>Files sidebar</strong
+                      ><small>Browse folders and recent documents</small></span
+                    >
+                    <input id="show-files" type="checkbox" class="toggle-switch" />
+                  </label>
+                  <label class="check-label">
+                    <span class="setting-copy"
+                      ><strong>Outline sidebar</strong
+                      ><small>Jump to headings in the current document</small></span
+                    >
+                    <input id="show-outline" type="checkbox" class="toggle-switch" />
+                  </label>
+                  <div class="settings-reset-row">
+                    <button type="button" data-command="reset-layout">Reset sidebar widths</button>
+                  </div>
+                </div>
+              </section>
+              <section id="settings-images" class="settings-section" aria-labelledby="images-title">
+                <h2 id="images-title">Images</h2>
+                <p class="settings-description">Choose a home for pasted and dropped images.</p>
+                <div class="settings-group">
+                  <label class="setting-row" for="asset-mode">
+                    <span class="setting-copy"
+                      ><strong>Image asset folders</strong
+                      ><small>Where pasted and dropped images are stored</small></span
+                    >
+                    <select id="asset-mode">
+                      <option value="file">Per file: file_name.assets</option>
+                      <option value="shared">Shared: data.assets</option>
+                      <option value="custom">Custom folder</option>
+                    </select>
+                  </label>
+                  <div id="asset-custom-settings" hidden>
+                    <label for="asset-custom-path">Custom image folder</label>
+                    <div class="asset-path-row">
+                      <input
+                        id="asset-custom-path"
+                        type="text"
+                        placeholder="../images or D:\Images"
+                        spellcheck="false"
+                        autocomplete="off"
+                      />
+                      <button id="asset-folder-browse" type="button">Browse…</button>
+                    </div>
+                    <p class="dialog-hint">
+                      Relative paths start beside each note. An absolute path shares one folder
+                      across notes. Links use file URLs when the folder is on another drive.
+                    </p>
+                  </div>
+                  <p class="dialog-hint">
+                    Used for new imports. Existing links keep working. Shared data.assets means one
+                    folder per directory of notes.
+                  </p>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div id="viewbar">
         <div class="segments" role="group" aria-label="Editor mode">
@@ -455,103 +649,6 @@
       </div>
       <div id="palette-list" role="listbox" aria-label="Matching commands"></div>
       <p class="dialog-hint">↑ ↓ navigate · Enter run · Esc close</p>
-    </dialog>
-
-    <dialog id="settings-dialog" closedby="any" aria-labelledby="settings-title">
-      <div class="dialog-heading">
-        <h2 id="settings-title">Settings</h2>
-        <button type="button" class="icon-button" data-close-dialog aria-label="Close settings">
-          <span class="btn-icon" data-icon="x"></span>
-        </button>
-      </div>
-      <div class="settings-group">
-        <label class="setting-row" for="asset-mode">
-          <span class="setting-copy"
-            ><strong>Image asset folders</strong
-            ><small>Where pasted and dropped images are stored</small></span
-          >
-          <select id="asset-mode">
-            <option value="file">Per file: file_name.assets</option>
-            <option value="shared">Shared: data.assets</option>
-            <option value="custom">Custom folder</option>
-          </select>
-        </label>
-        <div id="asset-custom-settings" hidden>
-          <label for="asset-custom-path">Custom image folder</label>
-          <div class="asset-path-row">
-            <input
-              id="asset-custom-path"
-              type="text"
-              placeholder="../images or D:\Images"
-              spellcheck="false"
-              autocomplete="off"
-            />
-            <button id="asset-folder-browse" type="button">Browse…</button>
-          </div>
-          <p class="dialog-hint">
-            Relative paths start beside each note. An absolute path shares one folder across notes.
-            Links use file URLs when the folder is on another drive.
-          </p>
-        </div>
-        <p class="dialog-hint">
-          Used for new imports. Existing links keep working. Shared data.assets means one folder per
-          directory of notes.
-        </p>
-      </div>
-      <div class="settings-group">
-        <label class="setting-row">
-          <span class="setting-copy"
-            ><strong>Appearance</strong><small>Interface light or dark palette</small></span
-          >
-          <select id="color-mode">
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-          </select>
-        </label>
-        <label class="setting-row">
-          <span class="setting-copy"
-            ><strong>Markdown theme</strong><small>Typography and document palette</small></span
-          >
-          <select id="md-theme">
-            <option value="cobalt">Cobalt</option>
-            <option value="paper">Paper</option>
-            <option value="graphite">Graphite</option>
-            <option value="forest">Forest</option>
-            <option value="mono">Mono</option>
-            <option value="mars">Mars</option>
-            <option value="github">GitHub</option>
-          </select>
-        </label>
-        <label class="setting-row setting-slider">
-          <span class="setting-head">
-            <span class="setting-copy"
-              ><strong>Text size</strong
-              ><small>Scales interface and document typography</small></span
-            >
-            <output id="font-scale-value">100%</output>
-          </span>
-          <input id="font-scale" type="range" min="0.875" max="1.5" step="0.025" value="1" />
-        </label>
-      </div>
-      <div class="settings-group">
-        <label class="check-label">
-          <span class="setting-copy"
-            ><strong>Files sidebar</strong><small>Browse folder and recent documents</small></span
-          >
-          <input id="show-files" type="checkbox" class="toggle-switch" />
-        </label>
-        <label class="check-label">
-          <span class="setting-copy"
-            ><strong>Outline sidebar</strong
-            ><small>Jump to headings in current document</small></span
-          >
-          <input id="show-outline" type="checkbox" class="toggle-switch" />
-        </label>
-      </div>
-      <div class="dialog-actions">
-        <button type="button" data-command="reset-layout">Reset sidebar widths</button>
-        <button type="button" class="primary" data-close-dialog>Done</button>
-      </div>
     </dialog>
 
     <dialog

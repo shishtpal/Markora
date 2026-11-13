@@ -8,7 +8,7 @@ Use a fresh GitHub repository and the clean source snapshot:
 powershell -ExecutionPolicy Bypass -File tools/package-source.ps1
 ```
 
-Extract `dist/markora-0.2.3-alpha-source.zip` into a new folder. Create an empty GitHub
+Extract `dist/markora-0.2.4-alpha-source.zip` into a new folder. Create an empty GitHub
 repository, then publish that extracted folder with GitHub Desktop or Git.
 The ZIP includes `.github/workflows/build.yml` and `.gitignore`; preserve hidden
 files when extracting or copying. GitHub's web upload may omit hidden files, so
@@ -36,23 +36,22 @@ the packages from the completed run's **Artifacts** section (retained 14 days).
 To publish a release, keep Cargo.toml, the Cargo.lock root package, package.json
 and both root version entries in package-lock.json in sync. Review and commit
 the version changes yourself, push the commit, then push its matching `v` tag.
-For the current version, run from the repository root on `main`:
+Review and commit all changes intended for the release, including new files and
+generated UI bundles. Then run from the repository root on `main`:
 
 ```powershell
 node tools/check-release.cjs
 git diff --check
-git add -- Cargo.toml Cargo.lock package.json package-lock.json README.md PUBLISHING.md
-git commit -m "chore(release): bump version to 0.2.3-alpha"
 git push origin main
-git tag -a v0.2.3-alpha -m "Markora v0.2.3-alpha"
-git push origin v0.2.3-alpha
+git tag -a v0.2.4-alpha -m "Markora v0.2.4-alpha"
+git push origin v0.2.4-alpha
 ```
 
 Only tag a commit containing the complete publishing setup. Both platform jobs
 must succeed before the workflow publishes a GitHub Release. It uploads:
 
-- `markora-0.2.3-alpha-windows-x86_64.zip` with `markora.exe`.
-- `markora-0.2.3-alpha-linux-x86_64.tar.gz` with `markora`.
+- `markora-0.2.4-alpha-windows-x86_64.zip` with `markora.exe`.
+- `markora-0.2.4-alpha-linux-x86_64.tar.gz` with `markora`.
 - A SHA-256 checksum file for each archive.
 
 Archives include the README, project license, third-party notices and font

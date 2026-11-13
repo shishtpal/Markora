@@ -2,14 +2,19 @@ import { $, $$, element, showError } from "./dom.js";
 import { ICONS } from "./icons.js";
 import { createSidebar } from "./sidebar.js";
 
-export function createChrome(send, editor) {
+export function createChrome(send, editor, settings) {
   let tabsKey = "",
     outlineDocId = 0,
     outlineRef = null,
     lastError = "";
   const cleanPath = (p) => (p ? p.replace(/\\\\\?\\/g, "") : "");
   const sidebar = createSidebar(send);
+  let latest = null;
+  settings.onChange(() => {
+    if (latest) accept(latest, editor.document());
+  });
   function accept(snapshot, doc = snapshot.document) {
+    latest = snapshot;
     const { prefs } = snapshot;
     const root = document.documentElement;
     root.dataset.color = prefs.colorMode;
@@ -29,15 +34,15 @@ export function createChrome(send, editor) {
 
     const tab = snapshot.tabs.find((t) => t.id === doc.id);
     const activePath = tab?.path || "";
-    document.title = `${tab?.dirty ? "• " : ""}${tab?.title || "Untitled"} — Markora`;
+    document.title = settings.active() ? "Settings — Markora" : `${tab?.dirty ? "• " : ""}${tab?.title || "Untitled"} — Markora`;
     $("#document-path").textContent = cleanPath(activePath) || "Unsaved document";
     $("#document-path").title = cleanPath(activePath);
-    const nextTabsKey = JSON.stringify([snapshot.tabs, doc.id]);
+    const nextTabsKey = JSON.stringify([snapshot.tabs, doc.id, settings.opened(), settings.active()]);
     if (nextTabsKey !== tabsKey) {
       tabsKey = nextTabsKey;
       $("#tabs").replaceChildren(
         ...snapshot.tabs.map((t) => {
-          const isActive = t.id === doc.id;
+          const isActive = t.id === doc.id && !settings.active();
           const item = element("div", `tab${isActive ? " active" : ""}`);
           const button = element("button", "tab-title", t.title);
           button.type = "button";
@@ -45,7 +50,10 @@ export function createChrome(send, editor) {
           button.setAttribute("aria-selected", String(isActive));
           button.tabIndex = isActive ? 0 : -1;
           button.title = cleanPath(t.path) || t.title;
-          button.onclick = () => send({ type: "activateTab", id: t.id });
+          button.onclick = () => {
+            settings.leave(false);
+            send({ type: "activateTab", id: t.id });
+          };
           button.onauxclick = (event) => {
             if (event.button === 1) {
               event.preventDefault();
@@ -67,6 +75,27 @@ export function createChrome(send, editor) {
           return item;
         }),
       );
+      if (settings.opened()) {
+        const item = element("div", `tab${settings.active() ? " active" : ""}`);
+        const button = element("button", "tab-title", "Settings");
+        button.id = "settings-tab";
+        button.type = "button";
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-controls", "settings-page");
+        button.setAttribute("aria-selected", String(settings.active()));
+        button.tabIndex = settings.active() ? 0 : -1;
+        button.onclick = settings.show;
+        button.onauxclick = (event) => {
+          if (event.button === 1) { event.preventDefault(); settings.close(); }
+        };
+        const close = element("button", "tab-close");
+        close.type = "button";
+        close.innerHTML = ICONS.x;
+        close.setAttribute("aria-label", "Close Settings");
+        close.onclick = settings.close;
+        item.append(button, close);
+        $("#tabs").append(item);
+      }
       $(".tab.active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
     $("#folder-path-label").textContent =
@@ -129,6 +158,7 @@ export function createChrome(send, editor) {
     const next = tabs[(current + move + tabs.length) % tabs.length];
     next?.focus();
     next?.click();
+    $$('#tabs [role="tab"]')[(current + move + tabs.length) % tabs.length]?.focus();
   });
   $("#mode-status").onclick = () => {
     const mode = $("#mode-status").dataset.mode;

@@ -17,7 +17,7 @@ const SEPARATORS = new Set([
   "about",
 ]);
 
-export function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) {
+export function createCommands({ send, editor, dialogs, layout, getSnapshot, images, settings }) {
   const find = createFind(editor);
   const ids = new Set(COMMANDS.map((c) => c.id));
   const formatting = new Set(COMMANDS.filter((c) => c.menu === "Format").map((c) => c.id));
@@ -43,6 +43,7 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot, ima
   }
   function run(id) {
     closeMenus();
+    if (settings.handleCommand(id, formatting)) return;
     if (!editor.canEdit() && (formatting.has(id) || ["undo", "redo", "link", "replace", "find-toggle", "replace-current", "replace-all"].includes(id))) return;
     if (
       editor.isReading() &&
@@ -99,7 +100,7 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot, ima
     const local = {
       "command-palette": () => dialogs.palette(),
       "toggle-edit": () => { editor.toggleEdit(); find.update(); },
-      settings: () => dialogs.settings(),
+      settings: () => settings.show(),
       shortcuts: () => dialogs.help(),
       about: () => dialogs.about(),
       export: () => dialogs.exportDoc(),
@@ -245,7 +246,8 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot, ima
     const dialog = $("dialog[open]");
     if (dialog) {
       if (dialog.dispatchEvent(new Event("cancel", { cancelable: true }))) dialog.close();
-    } else if (!$("#findbar").hidden) find.close();
+    } else if (settings.active()) settings.close();
+    else if (!$("#findbar").hidden) find.close();
     else if (editor.isReading()) run("exit-reading");
   }
   document.addEventListener("keydown", (event) => {
@@ -259,7 +261,7 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot, ima
     const mod = event.ctrlKey || event.metaKey;
     if (
       mod &&
-      event.target.closest("#findbar input") &&
+      event.target.closest("#findbar input, #settings-page input") &&
       ["z", "y"].includes(event.key.toLowerCase())
     )
       return;
@@ -273,6 +275,7 @@ export function createCommands({ send, editor, dialogs, layout, getSnapshot, ima
     if (mod && key === "Y") command = "redo";
     if (event.key === "Escape") {
       closeMenus();
+      if (settings.active()) { event.preventDefault(); return settings.close(); }
       if (!$("#findbar").hidden) return find.close();
       if (editor.isReading()) command = "exit-reading";
       else if (getSnapshot()?.prefs.focusMode) command = "toggle-focus";

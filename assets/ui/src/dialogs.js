@@ -2,23 +2,16 @@ import { $, $$, element } from "./dom.js";
 import { COMMANDS } from "./command-list.js";
 
 // Native HTML dialogs provide focus containment, Escape and focus restoration.
-export function createDialogs(send, preferences, editor) {
+export function createDialogs(send, editor) {
   let run = () => {};
   let selected = 0;
   let hits = [];
   let pendingTitle = null;
   const palette = $("#palette-dialog");
   const unsaved = $("#unsaved-dialog");
-  const scaleInput = $("#font-scale");
 
   function show(dialog) {
     if (!dialog.open) dialog.showModal();
-  }
-  function syncScaleDisplay(value) {
-    const pct = `${Math.round(Number(value) * 100)}%`;
-    $("#font-scale-value").textContent = pct;
-    scaleInput.style.setProperty("--control-value", value);
-    scaleInput.setAttribute("aria-valuetext", pct);
   }
   function renderPalette() {
     const query = $("#palette-input").value.toLowerCase().trim();
@@ -95,18 +88,6 @@ export function createDialogs(send, preferences, editor) {
     event.preventDefault();
     send({ type: "resolveUnsaved", choice: "cancel" });
   });
-  $("#color-mode").onchange = (event) => preferences({ colorMode: event.target.value });
-  $("#md-theme").onchange = (event) => preferences({ mdTheme: event.target.value });
-  $("#asset-mode").onchange = (event) => preferences({ assetMode: event.target.value });
-  $("#asset-custom-path").onchange = (event) => preferences({ assetCustomPath: event.target.value });
-  $("#asset-folder-browse").onclick = () => send({ type: "pickAssetFolder" });
-  $("#show-files").onchange = (event) => preferences({ showFiles: event.target.checked });
-  $("#show-outline").onchange = (event) => preferences({ showOutline: event.target.checked });
-  scaleInput.oninput = (event) => {
-    document.documentElement.style.setProperty("--font-scale", event.target.value);
-    syncScaleDisplay(event.target.value);
-  };
-  scaleInput.onchange = (event) => preferences({ fontScale: Number(event.target.value) });
   $("#link-form").onsubmit = (event) => {
     event.preventDefault();
     const url = $("#link-url").value;
@@ -161,9 +142,6 @@ export function createDialogs(send, preferences, editor) {
       show(palette);
       $("#palette-input").focus();
     },
-    settings() {
-      show($("#settings-dialog"));
-    },
     help() {
       show($("#help-dialog"));
     },
@@ -180,16 +158,6 @@ export function createDialogs(send, preferences, editor) {
       $("#link-url").focus();
     },
     accept(snapshot) {
-      const prefs = snapshot.prefs;
-      $("#color-mode").value = prefs.colorMode;
-      $("#md-theme").value = prefs.mdTheme;
-      $("#asset-mode").value = prefs.assetMode;
-      $("#asset-custom-settings").hidden = prefs.assetMode !== "custom";
-      if (document.activeElement !== $("#asset-custom-path")) $("#asset-custom-path").value = prefs.assetCustomPath;
-      $("#show-files").checked = prefs.showFiles;
-      $("#show-outline").checked = prefs.showOutline;
-      if (document.activeElement !== scaleInput) scaleInput.value = prefs.fontScale;
-      syncScaleDisplay(prefs.fontScale);
       if (snapshot.pending && !snapshot.conflict) {
         $("#unsaved-description").textContent =
           `Save changes to “${snapshot.pending}” before closing?`;

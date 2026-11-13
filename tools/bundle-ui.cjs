@@ -23,6 +23,8 @@ const order = [
   "search-engine",
   "search-worker",
   "find",
+  "typography",
+  "settings",
   "dialogs",
   "conflicts",
   "images",

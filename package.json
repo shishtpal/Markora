@@ -1,6 +1,6 @@
 {
   "name": "markora",
-  "version": "0.2.3-alpha",
+  "version": "0.2.4-alpha",
   "private": true,
   "description": "Markora — Markdown editor (Rust + egui + WebView2). UI built with Tailwind CSS v4.",
   "scripts": {
@@ -12,7 +12,8 @@
     "test:search": "node --test tools/test-search.cjs",
     "test:find": "node tools/smoke-find.cjs",
     "test:position": "node tools/smoke-position.cjs",
-    "test:ui": "node tools/verify-ui.cjs && node tools/smoke-sidebar.cjs && node tools/smoke-native.cjs && node tools/smoke-safety.cjs && node tools/smoke-find.cjs && node tools/smoke-position.cjs && node tools/smoke-images.cjs --dom && node tools/smoke-editing.cjs",
+    "test:settings": "node tools/smoke-settings.cjs",
+    "test:ui": "node tools/verify-ui.cjs && node tools/smoke-settings.cjs && node tools/smoke-sidebar.cjs && node tools/smoke-native.cjs && node tools/smoke-safety.cjs && node tools/smoke-find.cjs && node tools/smoke-position.cjs && node tools/smoke-images.cjs --dom && node tools/smoke-editing.cjs",
     "test:sidebar": "node tools/smoke-sidebar.cjs",
     "test:images": "node tools/smoke-images.cjs --dom",
     "test:images:desktop": "node tools/smoke-images.cjs",

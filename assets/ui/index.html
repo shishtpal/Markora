@@ -2436,6 +2436,221 @@ body.reading-mode .reading-match {
     display: none !important;
   }
 }
+body.settings-open :is(#viewbar, #findbar, #workspace, #statusbar, #exit-reading) {
+  display: none !important;
+}
+#settings-page {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--canvas);
+  scrollbar-gutter: stable;
+}
+body.reading-mode #settings-page {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.settings-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 44px clamp(20px, 5vw, 64px) 64px;
+}
+.settings-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--divider);
+}
+.settings-eyebrow, .settings-preview-label {
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.settings-heading h1 {
+  font-size: 2.2rem;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  margin: 4px 0 8px;
+}
+#settings-title:focus {
+  outline: none;
+}
+.settings-heading p:not(.settings-eyebrow), .settings-description {
+  color: var(--muted);
+  font-size: 0.86rem;
+  margin: 0;
+}
+#close-settings {
+  flex-shrink: 0;
+  border-color: var(--frame);
+  font-size: 0.82rem;
+}
+.settings-layout {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 40px;
+  padding-top: 32px;
+}
+.settings-nav {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.settings-nav a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 0.86rem;
+}
+.settings-nav a:hover, .settings-nav a[aria-current] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.settings-nav p {
+  margin: 20px 12px 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+.settings-content {
+  min-width: 0;
+}
+.settings-section {
+  scroll-margin-top: 24px;
+  margin-bottom: 36px;
+}
+.settings-section h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+.settings-description {
+  margin-bottom: 16px;
+}
+#settings-page .settings-group {
+  padding: 0 20px;
+  border-radius: 10px;
+}
+#settings-page :is(.setting-row, .check-label) {
+  padding: 18px 0;
+  gap: 16px;
+}
+#settings-page .setting-copy {
+  gap: 4px;
+}
+#settings-page select {
+  width: 190px;
+  max-width: 100%;
+  font-size: 0.82rem;
+}
+.settings-size {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+}
+#font-size {
+  width: 76px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.settings-preview {
+  padding: 20px;
+  margin: 0 0 4px;
+  border: 1px solid var(--divider);
+  border-radius: 6px;
+  background: var(--canvas);
+}
+#font-preview {
+  font-family: var(--preview-font);
+  font-size: calc(var(--editor-size, 16px) * var(--font-scale));
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+#font-preview h3 {
+  font-size: 1.45em;
+  margin: 14px 0 8px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+#font-preview p {
+  margin: 0 0 12px;
+}
+#font-preview code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--accent);
+}
+.settings-reset-row {
+  padding: 12px 0;
+  border-top: 1px solid var(--divider);
+}
+.settings-reset-row button {
+  color: var(--accent);
+  padding-left: 0;
+  font-size: 0.8rem;
+}
+html[data-custom-font] :is(.markdown-body, #source-editor, .block-editor) {
+  font-family: var(--editor-font);
+}
+html .markdown-body, html[data-md-theme] .markdown-body, html #source-editor, html .block-editor {
+  font-size: calc(var(--editor-size, 16px) * var(--font-scale));
+}
+html .markdown-body h1 {
+  font-size: 2em;
+}
+html .markdown-body h2 {
+  font-size: 1.5em;
+}
+html .markdown-body h3 {
+  font-size: 1.2em;
+}
+html .markdown-body :is(h4, h5, h6) {
+  font-size: 1em;
+}
+@media (max-width: 760px) {
+  .settings-shell {
+    padding-top: 24px;
+  }
+  .settings-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 24px;
+  }
+  .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    padding-top: 16px;
+  }
+  .settings-nav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .settings-nav p {
+    width: 100%;
+    margin: 4px 12px 0;
+  }
+  #settings-page .settings-group {
+    padding: 0 16px;
+  }
+}
+@media print {
+  #settings-page {
+    display: none !important;
+  }
+}
 @property --tw-rotate-x {
   syntax: "*";
   inherits: false;
@@ -2644,7 +2859,7 @@ body.reading-mode .reading-match {
       </header>
 
       <div id="tabbar">
-        <div id="tabs" role="tablist" aria-label="Open documents"></div>
+        <div id="tabs" role="tablist" aria-label="Open tabs"></div>
         <button
           type="button"
           data-command="new-tab"
@@ -2656,6 +2871,200 @@ body.reading-mode .reading-match {
         </button>
         <span id="document-path" title=""></span>
       </div>
+
+      <section id="settings-page" role="tabpanel" aria-labelledby="settings-tab" hidden>
+        <div class="settings-shell">
+          <header class="settings-heading">
+            <div>
+              <p class="settings-eyebrow">MAKE IT YOURS</p>
+              <h1 id="settings-title" tabindex="-1">Settings</h1>
+              <p>Set up a space that feels right for your writing.</p>
+            </div>
+            <button type="button" id="close-settings" title="Back to document (Esc)">
+              <span aria-hidden="true">←</span>Back to document
+            </button>
+          </header>
+          <div class="settings-layout">
+            <nav class="settings-nav" aria-label="Settings sections">
+            <a href="#settings-appearance" aria-current="location">Appearance</a>
+              <a href="#settings-typography">Typography</a>
+              <a href="#settings-layout">Layout</a>
+              <a href="#settings-images">Images</a>
+              <p>Changes save automatically.</p>
+            </nav>
+            <div class="settings-content">
+              <section
+                id="settings-appearance"
+                class="settings-section"
+                aria-labelledby="appearance-title"
+              >
+                <h2 id="appearance-title">Appearance</h2>
+                <p class="settings-description">Choose the mood of your workspace.</p>
+                <div class="settings-group">
+                  <label class="setting-row" for="color-mode">
+                    <span class="setting-copy"
+                      ><strong>Color mode</strong
+                      ><small>Interface light or dark palette</small></span
+                    >
+                    <select id="color-mode">
+                      <option value="dark">Dark</option>
+                      <option value="light">Light</option>
+                    </select>
+                  </label>
+                  <label class="setting-row" for="md-theme">
+                    <span class="setting-copy"
+                      ><strong>Markdown theme</strong
+                      ><small>Document colors and default typography</small></span
+                    >
+                    <select id="md-theme">
+                      <option value="cobalt">Cobalt</option>
+                      <option value="paper">Paper</option>
+                      <option value="graphite">Graphite</option>
+                      <option value="forest">Forest</option>
+                      <option value="mono">Mono</option>
+                      <option value="mars">Mars</option>
+                      <option value="github">GitHub</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+              <section
+                id="settings-typography"
+                class="settings-section"
+                aria-labelledby="typography-title"
+              >
+                <h2 id="typography-title">Typography</h2>
+                <p class="settings-description">A comfortable typeface. Just the right size.</p>
+                <div class="settings-group">
+                  <label class="setting-row" for="font-family">
+                    <span class="setting-copy"
+                      ><strong>Font family</strong
+                      ><small>Used in Live, Source, Split, and reading views</small></span
+                    >
+                    <select id="font-family">
+                      <option value="theme">Theme default</option>
+                      <option value="space-grotesk">Space Grotesk</option>
+                      <option value="system">System sans</option>
+                      <option value="georgia">Georgia</option>
+                      <option value="arial">Arial</option>
+                      <option value="ibm-plex-mono">IBM Plex Mono</option>
+                      <option value="consolas">Consolas</option>
+                    </select>
+                  </label>
+                  <label class="setting-row" for="font-size">
+                    <span class="setting-copy"
+                      ><strong>Font size</strong
+                      ><small>Document and editor text, before interface scaling</small></span
+                    >
+                    <span class="settings-size"
+                      ><input
+                        id="font-size"
+                        type="number"
+                        min="12"
+                        max="32"
+                        step="1"
+                        value="16"
+                      /><span>px</span></span
+                    >
+                  </label>
+                  <div class="settings-preview" aria-label="Font preview">
+                    <span class="settings-preview-label">LIVE PREVIEW</span>
+                    <div id="font-preview">
+                      <h3>A little room to think.</h3>
+                      <p>Good writing starts with a comfortable space. Make this one your own.</p>
+                      <p>The quick brown fox jumps over the lazy dog. 0123456789</p>
+                      <code># Your next great idea</code>
+                    </div>
+                  </div>
+                  <label class="setting-row setting-slider" for="font-scale">
+                    <span class="setting-head">
+                      <span class="setting-copy"
+                        ><strong>Interface scale</strong
+                        ><small
+                          >Scale menus, sidebars, and document typography together</small
+                        ></span
+                      >
+                      <output id="font-scale-value" for="font-scale">100%</output>
+                    </span>
+                    <input
+                      id="font-scale"
+                      type="range"
+                      min="0.875"
+                      max="1.5"
+                      step="0.025"
+                      value="1"
+                    />
+                  </label>
+                  <div class="settings-reset-row">
+                    <button type="button" id="reset-typography">Reset typography</button>
+                  </div>
+                </div>
+              </section>
+              <section id="settings-layout" class="settings-section" aria-labelledby="layout-title">
+                <h2 id="layout-title">Layout</h2>
+                <p class="settings-description">Keep your files and headings within reach.</p>
+                <div class="settings-group">
+                  <label class="check-label">
+                    <span class="setting-copy"
+                      ><strong>Files sidebar</strong
+                      ><small>Browse folders and recent documents</small></span
+                    >
+                    <input id="show-files" type="checkbox" class="toggle-switch" />
+                  </label>
+                  <label class="check-label">
+                    <span class="setting-copy"
+                      ><strong>Outline sidebar</strong
+                      ><small>Jump to headings in the current document</small></span
+                    >
+                    <input id="show-outline" type="checkbox" class="toggle-switch" />
+                  </label>
+                  <div class="settings-reset-row">
+                    <button type="button" data-command="reset-layout">Reset sidebar widths</button>
+                  </div>
+                </div>
+              </section>
+              <section id="settings-images" class="settings-section" aria-labelledby="images-title">
+                <h2 id="images-title">Images</h2>
+                <p class="settings-description">Choose a home for pasted and dropped images.</p>
+                <div class="settings-group">
+                  <label class="setting-row" for="asset-mode">
+                    <span class="setting-copy"
+                      ><strong>Image asset folders</strong
+                      ><small>Where pasted and dropped images are stored</small></span
+                    >
+                    <select id="asset-mode">
+                      <option value="file">Per file: file_name.assets</option>
+                      <option value="shared">Shared: data.assets</option>
+                      <option value="custom">Custom folder</option>
+                    </select>
+                  </label>
+                  <div id="asset-custom-settings" hidden>
+                    <label for="asset-custom-path">Custom image folder</label>
+                    <div class="asset-path-row">
+                      <input
+                        id="asset-custom-path"
+                        type="text"
+                        placeholder="../images or D:\Images"
+                        spellcheck="false"
+                        autocomplete="off"
+                      />
+                      <button id="asset-folder-browse" type="button">Browse…</button>
+                    </div>
+                    <p class="dialog-hint">
+                      Relative paths start beside each note. An absolute path shares one folder
+                      across notes. Links use file URLs when the folder is on another drive.
+                    </p>
+                  </div>
+                  <p class="dialog-hint">
+                    Used for new imports. Existing links keep working. Shared data.assets means one
+                    folder per directory of notes.
+                  </p>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div id="viewbar">
         <div class="segments" role="group" aria-label="Editor mode">
@@ -3049,103 +3458,6 @@ body.reading-mode .reading-match {
       </div>
       <div id="palette-list" role="listbox" aria-label="Matching commands"></div>
       <p class="dialog-hint">↑ ↓ navigate · Enter run · Esc close</p>
-    </dialog>
-
-    <dialog id="settings-dialog" closedby="any" aria-labelledby="settings-title">
-      <div class="dialog-heading">
-        <h2 id="settings-title">Settings</h2>
-        <button type="button" class="icon-button" data-close-dialog aria-label="Close settings">
-          <span class="btn-icon" data-icon="x"></span>
-        </button>
-      </div>
-      <div class="settings-group">
-        <label class="setting-row" for="asset-mode">
-          <span class="setting-copy"
-            ><strong>Image asset folders</strong
-            ><small>Where pasted and dropped images are stored</small></span
-          >
-          <select id="asset-mode">
-            <option value="file">Per file: file_name.assets</option>
-            <option value="shared">Shared: data.assets</option>
-            <option value="custom">Custom folder</option>
-          </select>
-        </label>
-        <div id="asset-custom-settings" hidden>
-          <label for="asset-custom-path">Custom image folder</label>
-          <div class="asset-path-row">
-            <input
-              id="asset-custom-path"
-              type="text"
-              placeholder="../images or D:\Images"
-              spellcheck="false"
-              autocomplete="off"
-            />
-            <button id="asset-folder-browse" type="button">Browse…</button>
-          </div>
-          <p class="dialog-hint">
-            Relative paths start beside each note. An absolute path shares one folder across notes.
-            Links use file URLs when the folder is on another drive.
-          </p>
-        </div>
-        <p class="dialog-hint">
-          Used for new imports. Existing links keep working. Shared data.assets means one folder per
-          directory of notes.
-        </p>
-      </div>
-      <div class="settings-group">
-        <label class="setting-row">
-          <span class="setting-copy"
-            ><strong>Appearance</strong><small>Interface light or dark palette</small></span
-          >
-          <select id="color-mode">
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-          </select>
-        </label>
-        <label class="setting-row">
-          <span class="setting-copy"
-            ><strong>Markdown theme</strong><small>Typography and document palette</small></span
-          >
-          <select id="md-theme">
-            <option value="cobalt">Cobalt</option>
-            <option value="paper">Paper</option>
-            <option value="graphite">Graphite</option>
-            <option value="forest">Forest</option>
-            <option value="mono">Mono</option>
-            <option value="mars">Mars</option>
-            <option value="github">GitHub</option>
-          </select>
-        </label>
-        <label class="setting-row setting-slider">
-          <span class="setting-head">
-            <span class="setting-copy"
-              ><strong>Text size</strong
-              ><small>Scales interface and document typography</small></span
-            >
-            <output id="font-scale-value">100%</output>
-          </span>
-          <input id="font-scale" type="range" min="0.875" max="1.5" step="0.025" value="1" />
-        </label>
-      </div>
-      <div class="settings-group">
-        <label class="check-label">
-          <span class="setting-copy"
-            ><strong>Files sidebar</strong><small>Browse folder and recent documents</small></span
-          >
-          <input id="show-files" type="checkbox" class="toggle-switch" />
-        </label>
-        <label class="check-label">
-          <span class="setting-copy"
-            ><strong>Outline sidebar</strong
-            ><small>Jump to headings in current document</small></span
-          >
-          <input id="show-outline" type="checkbox" class="toggle-switch" />
-        </label>
-      </div>
-      <div class="dialog-actions">
-        <button type="button" data-command="reset-layout">Reset sidebar widths</button>
-        <button type="button" class="primary" data-close-dialog>Done</button>
-      </div>
     </dialog>
 
     <dialog
@@ -4129,6 +4441,7 @@ function createLiveEditor(root, getDocument, change, flushEdit = () => {}, canEd
     restorePosition: (state, editable) => position.restore(state, editable, append),
     render,
     finish,
+    reflow: () => { if (active) resize(active.textarea); },
     append,
     reset() {
       cancelQueue();
@@ -4622,6 +4935,7 @@ function createEditor(onChange, onFlush = () => {}) {
     },
     restorePosition: () => position.restore(false),
     capturePosition: position.save,
+    reflow: () => live.reflow(),
     setReader: (value) => { reader = value; },
     isReading: () => Boolean(reader?.active()),
     accept,
@@ -5359,28 +5673,203 @@ function createFind(editor) {
 
 return { createFind };
 })();
+modules["typography"] = (() => {
+const FONT_STACKS = {
+  "space-grotesk": '"Space Grotesk", "Noto Sans Devanagari", sans-serif',
+  system: '"Segoe UI", "Noto Sans Devanagari", system-ui, sans-serif',
+  georgia: 'Georgia, "Times New Roman", "Noto Sans Devanagari", serif',
+  arial: 'Arial, "Noto Sans Devanagari", sans-serif',
+  "ibm-plex-mono": '"IBM Plex Mono", "Noto Sans Devanagari", monospace',
+  consolas: 'Consolas, "IBM Plex Mono", "Noto Sans Devanagari", monospace',
+};
+
+// Use an allowlist shared with Rust preferences, never saved CSS from user input.
+function applyTypography(prefs) {
+  const root = document.documentElement;
+  const family = FONT_STACKS[prefs.fontFamily];
+  root.toggleAttribute("data-custom-font", Boolean(family));
+  if (family) root.style.setProperty("--editor-font", family);
+  else root.style.removeProperty("--editor-font");
+  root.style.setProperty("--editor-size", `${prefs.fontSize ?? 16}px`);
+  const themed = prefs.mdTheme === "paper" ? FONT_STACKS.georgia
+    : prefs.mdTheme === "mono" ? FONT_STACKS["ibm-plex-mono"]
+    : prefs.mdTheme === "github" ? FONT_STACKS.system : "var(--font-ui)";
+  root.style.setProperty("--preview-font", family || themed);
+}
+
+return { applyTypography };
+})();
+modules["settings"] = (() => {
+const { $, $$ } = modules["dom"];
+const { applyTypography } = modules["typography"];
+
+// A transient workspace tab; document drafts and tab ownership stay with Rust.
+function createSettings(send, preferences, editor) {
+  const page = $("#settings-page");
+  const scale = $("#font-scale");
+  const size = $("#font-size");
+  let opened = false, active = false, docId = null, focus = null;
+  let selection = null, scroll = [];
+  let changed = () => {};
+  let prefs = {};
+
+  function scaleDisplay(value) {
+    const pct = `${Math.round(Number(value) * 100)}%`;
+    $("#font-scale-value").textContent = pct;
+    scale.style.setProperty("--control-value", value);
+    scale.setAttribute("aria-valuetext", pct);
+  }
+  function paint() {
+    page.hidden = !active;
+    document.body.classList.toggle("settings-open", active);
+    for (const selector of ["#viewbar", "#findbar", "#workspace", "#statusbar"])
+      $(selector).inert = active;
+    changed();
+  }
+  function show() {
+    if (!active) {
+      focus = document.activeElement;
+      selection = focus instanceof HTMLTextAreaElement
+        ? [focus.selectionStart, focus.selectionEnd, focus.selectionDirection] : null;
+      scroll = [$("#source-editor"), $("#live-pane"), $("#preview-pane")]
+        .map((node) => [node, node.scrollTop, node.scrollLeft]);
+      docId = editor.document().id;
+      editor.capturePosition();
+      send({ type: "edit" });
+    }
+    opened = active = true;
+    paint();
+    $("#settings-title").focus({ preventScroll: true });
+  }
+  function leave(restore = true) {
+    if (!active) return;
+    active = false;
+    paint();
+    editor.reflow();
+    if (restore && editor.document().id === docId) {
+      if (editor.isReading()) $("#preview-pane").focus({ preventScroll: true });
+      else if (focus?.isConnected && focus.getClientRects().length) {
+        focus.focus({ preventScroll: true });
+        if (selection) focus.setSelectionRange(...selection);
+      } else editor.focus();
+      for (const [node, top, left] of scroll) { node.scrollTop = top; node.scrollLeft = left; }
+    }
+  }
+  function close() {
+    opened = false;
+    leave();
+    changed();
+  }
+  function handleCommand(id, formatting) {
+    if (active) {
+      if (id === "close-tab") { close(); return true; }
+      if (id === "tab-next" || id === "tab-prev") {
+        const tabs = $$('#tabs [role="tab"]:not(#settings-tab)');
+        (id === "tab-next" ? tabs[0] : tabs.at(-1))?.click();
+        return true;
+      }
+      if (formatting.has(id) || ["undo", "redo", "link", "insert-image", "toggle-edit", "find", "replace",
+        "find-toggle", "find-next", "find-prev", "replace-current", "replace-all"].includes(id)) return true;
+      if (["new-tab", "open", "open-folder", "close-all", "view-live", "view-source", "view-split",
+        "toggle-reading", "exit-reading", "print", "export", "export-html", "export-pdf",
+        "export-rtf", "export-txt"].includes(id)) leave(false);
+    } else if (opened && (id === "tab-next" || id === "tab-prev")) {
+      const tabs = $$('#tabs [role="tab"]');
+      const index = tabs.findIndex((tab) => tab.getAttribute("aria-selected") === "true");
+      tabs[(index + (id === "tab-next" ? 1 : tabs.length - 1)) % tabs.length]?.click();
+      return true;
+    }
+    return false;
+  }
+  $("#close-settings").onclick = close;
+  page.addEventListener("scroll", () => {
+    const links = $$(".settings-nav a");
+    const top = page.getBoundingClientRect().top + 64;
+    const current = links.findLast((link) => $(link.hash).getBoundingClientRect().top <= top) || links[0];
+    links.forEach((link) => {
+      if (link === current) link.setAttribute("aria-current", "location");
+      else link.removeAttribute("aria-current");
+    });
+  }, { passive: true });
+  $$(".settings-nav a").forEach((link) => {
+    link.onclick = (event) => {
+      event.preventDefault();
+      $(link.hash).scrollIntoView({ block: "start" });
+      $$(".settings-nav a").forEach((item) => item.removeAttribute("aria-current"));
+      link.setAttribute("aria-current", "location");
+    };
+  });
+  $("#color-mode").onchange = (e) => preferences({ colorMode: e.target.value });
+  $("#md-theme").onchange = (e) => preferences({ mdTheme: e.target.value });
+  $("#font-family").onchange = (e) => {
+    prefs = { ...prefs, fontFamily: e.target.value };
+    applyTypography(prefs);
+    preferences({ fontFamily: e.target.value });
+  };
+  size.oninput = () => {
+    if (!size.value || !size.validity.valid) return;
+    prefs = { ...prefs, fontSize: size.valueAsNumber };
+    applyTypography(prefs);
+  };
+  size.onchange = () => {
+    const value = size.value ? Math.round(Math.max(12, Math.min(32, size.valueAsNumber))) : prefs.fontSize;
+    size.value = value;
+    prefs = { ...prefs, fontSize: value };
+    applyTypography(prefs);
+    preferences({ fontSize: value });
+  };
+  scale.oninput = () => {
+    document.documentElement.style.setProperty("--font-scale", scale.value);
+    scaleDisplay(scale.value);
+  };
+  scale.onchange = () => preferences({ fontScale: Number(scale.value) });
+  $("#reset-typography").onclick = () => preferences({ fontFamily: "theme", fontSize: 16, fontScale: 1 });
+  $("#asset-mode").onchange = (e) => preferences({ assetMode: e.target.value });
+  $("#asset-custom-path").onchange = (e) => preferences({ assetCustomPath: e.target.value });
+  $("#asset-folder-browse").onclick = () => send({ type: "pickAssetFolder" });
+  $("#show-files").onchange = (e) => preferences({ showFiles: e.target.checked });
+  $("#show-outline").onchange = (e) => preferences({ showOutline: e.target.checked });
+
+  return {
+    show, leave, close, handleCommand,
+    active: () => active,
+    opened: () => opened,
+    onChange: (handler) => { changed = handler; },
+    accept(snapshot) {
+      if (active && snapshot.activeDocId !== docId) leave(false);
+      prefs = snapshot.prefs;
+      applyTypography(document.activeElement === size && size.value && size.validity.valid
+        ? { ...prefs, fontSize: size.valueAsNumber } : prefs);
+      for (const [id, key] of [["color-mode", "colorMode"], ["md-theme", "mdTheme"],
+        ["asset-mode", "assetMode"], ["asset-custom-path", "assetCustomPath"],
+        ["font-family", "fontFamily"], ["font-size", "fontSize"], ["font-scale", "fontScale"]]) {
+        if (document.activeElement !== $(`#${id}`)) $(`#${id}`).value = prefs[key];
+      }
+      $("#asset-custom-settings").hidden = prefs.assetMode !== "custom";
+      $("#show-files").checked = prefs.showFiles;
+      $("#show-outline").checked = prefs.showOutline;
+      scaleDisplay(document.activeElement === scale ? scale.value : prefs.fontScale);
+    },
+  };
+}
+
+return { createSettings };
+})();
 modules["dialogs"] = (() => {
 const { $, $$, element } = modules["dom"];
 const { COMMANDS } = modules["command-list"];
 
 // Native HTML dialogs provide focus containment, Escape and focus restoration.
-function createDialogs(send, preferences, editor) {
+function createDialogs(send, editor) {
   let run = () => {};
   let selected = 0;
   let hits = [];
   let pendingTitle = null;
   const palette = $("#palette-dialog");
   const unsaved = $("#unsaved-dialog");
-  const scaleInput = $("#font-scale");
 
   function show(dialog) {
     if (!dialog.open) dialog.showModal();
-  }
-  function syncScaleDisplay(value) {
-    const pct = `${Math.round(Number(value) * 100)}%`;
-    $("#font-scale-value").textContent = pct;
-    scaleInput.style.setProperty("--control-value", value);
-    scaleInput.setAttribute("aria-valuetext", pct);
   }
   function renderPalette() {
     const query = $("#palette-input").value.toLowerCase().trim();
@@ -5457,18 +5946,6 @@ function createDialogs(send, preferences, editor) {
     event.preventDefault();
     send({ type: "resolveUnsaved", choice: "cancel" });
   });
-  $("#color-mode").onchange = (event) => preferences({ colorMode: event.target.value });
-  $("#md-theme").onchange = (event) => preferences({ mdTheme: event.target.value });
-  $("#asset-mode").onchange = (event) => preferences({ assetMode: event.target.value });
-  $("#asset-custom-path").onchange = (event) => preferences({ assetCustomPath: event.target.value });
-  $("#asset-folder-browse").onclick = () => send({ type: "pickAssetFolder" });
-  $("#show-files").onchange = (event) => preferences({ showFiles: event.target.checked });
-  $("#show-outline").onchange = (event) => preferences({ showOutline: event.target.checked });
-  scaleInput.oninput = (event) => {
-    document.documentElement.style.setProperty("--font-scale", event.target.value);
-    syncScaleDisplay(event.target.value);
-  };
-  scaleInput.onchange = (event) => preferences({ fontScale: Number(event.target.value) });
   $("#link-form").onsubmit = (event) => {
     event.preventDefault();
     const url = $("#link-url").value;
@@ -5523,9 +6000,6 @@ function createDialogs(send, preferences, editor) {
       show(palette);
       $("#palette-input").focus();
     },
-    settings() {
-      show($("#settings-dialog"));
-    },
     help() {
       show($("#help-dialog"));
     },
@@ -5542,16 +6016,6 @@ function createDialogs(send, preferences, editor) {
       $("#link-url").focus();
     },
     accept(snapshot) {
-      const prefs = snapshot.prefs;
-      $("#color-mode").value = prefs.colorMode;
-      $("#md-theme").value = prefs.mdTheme;
-      $("#asset-mode").value = prefs.assetMode;
-      $("#asset-custom-settings").hidden = prefs.assetMode !== "custom";
-      if (document.activeElement !== $("#asset-custom-path")) $("#asset-custom-path").value = prefs.assetCustomPath;
-      $("#show-files").checked = prefs.showFiles;
-      $("#show-outline").checked = prefs.showOutline;
-      if (document.activeElement !== scaleInput) scaleInput.value = prefs.fontScale;
-      syncScaleDisplay(prefs.fontScale);
       if (snapshot.pending && !snapshot.conflict) {
         $("#unsaved-description").textContent =
           `Save changes to “${snapshot.pending}” before closing?`;
@@ -5825,7 +6289,7 @@ const SEPARATORS = new Set([
   "about",
 ]);
 
-function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) {
+function createCommands({ send, editor, dialogs, layout, getSnapshot, images, settings }) {
   const find = createFind(editor);
   const ids = new Set(COMMANDS.map((c) => c.id));
   const formatting = new Set(COMMANDS.filter((c) => c.menu === "Format").map((c) => c.id));
@@ -5851,6 +6315,7 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) 
   }
   function run(id) {
     closeMenus();
+    if (settings.handleCommand(id, formatting)) return;
     if (!editor.canEdit() && (formatting.has(id) || ["undo", "redo", "link", "replace", "find-toggle", "replace-current", "replace-all"].includes(id))) return;
     if (
       editor.isReading() &&
@@ -5907,7 +6372,7 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) 
     const local = {
       "command-palette": () => dialogs.palette(),
       "toggle-edit": () => { editor.toggleEdit(); find.update(); },
-      settings: () => dialogs.settings(),
+      settings: () => settings.show(),
       shortcuts: () => dialogs.help(),
       about: () => dialogs.about(),
       export: () => dialogs.exportDoc(),
@@ -6053,7 +6518,8 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) 
     const dialog = $("dialog[open]");
     if (dialog) {
       if (dialog.dispatchEvent(new Event("cancel", { cancelable: true }))) dialog.close();
-    } else if (!$("#findbar").hidden) find.close();
+    } else if (settings.active()) settings.close();
+    else if (!$("#findbar").hidden) find.close();
     else if (editor.isReading()) run("exit-reading");
   }
   document.addEventListener("keydown", (event) => {
@@ -6067,7 +6533,7 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) 
     const mod = event.ctrlKey || event.metaKey;
     if (
       mod &&
-      event.target.closest("#findbar input") &&
+      event.target.closest("#findbar input, #settings-page input") &&
       ["z", "y"].includes(event.key.toLowerCase())
     )
       return;
@@ -6081,6 +6547,7 @@ function createCommands({ send, editor, dialogs, layout, getSnapshot, images }) 
     if (mod && key === "Y") command = "redo";
     if (event.key === "Escape") {
       closeMenus();
+      if (settings.active()) { event.preventDefault(); return settings.close(); }
       if (!$("#findbar").hidden) return find.close();
       if (editor.isReading()) command = "exit-reading";
       else if (getSnapshot()?.prefs.focusMode) command = "toggle-focus";
@@ -6293,14 +6760,19 @@ const { $, $$, element, showError } = modules["dom"];
 const { ICONS } = modules["icons"];
 const { createSidebar } = modules["sidebar"];
 
-function createChrome(send, editor) {
+function createChrome(send, editor, settings) {
   let tabsKey = "",
     outlineDocId = 0,
     outlineRef = null,
     lastError = "";
   const cleanPath = (p) => (p ? p.replace(/\\\\\?\\/g, "") : "");
   const sidebar = createSidebar(send);
+  let latest = null;
+  settings.onChange(() => {
+    if (latest) accept(latest, editor.document());
+  });
   function accept(snapshot, doc = snapshot.document) {
+    latest = snapshot;
     const { prefs } = snapshot;
     const root = document.documentElement;
     root.dataset.color = prefs.colorMode;
@@ -6320,15 +6792,15 @@ function createChrome(send, editor) {
 
     const tab = snapshot.tabs.find((t) => t.id === doc.id);
     const activePath = tab?.path || "";
-    document.title = `${tab?.dirty ? "• " : ""}${tab?.title || "Untitled"} — Markora`;
+    document.title = settings.active() ? "Settings — Markora" : `${tab?.dirty ? "• " : ""}${tab?.title || "Untitled"} — Markora`;
     $("#document-path").textContent = cleanPath(activePath) || "Unsaved document";
     $("#document-path").title = cleanPath(activePath);
-    const nextTabsKey = JSON.stringify([snapshot.tabs, doc.id]);
+    const nextTabsKey = JSON.stringify([snapshot.tabs, doc.id, settings.opened(), settings.active()]);
     if (nextTabsKey !== tabsKey) {
       tabsKey = nextTabsKey;
       $("#tabs").replaceChildren(
         ...snapshot.tabs.map((t) => {
-          const isActive = t.id === doc.id;
+          const isActive = t.id === doc.id && !settings.active();
           const item = element("div", `tab${isActive ? " active" : ""}`);
           const button = element("button", "tab-title", t.title);
           button.type = "button";
@@ -6336,7 +6808,10 @@ function createChrome(send, editor) {
           button.setAttribute("aria-selected", String(isActive));
           button.tabIndex = isActive ? 0 : -1;
           button.title = cleanPath(t.path) || t.title;
-          button.onclick = () => send({ type: "activateTab", id: t.id });
+          button.onclick = () => {
+            settings.leave(false);
+            send({ type: "activateTab", id: t.id });
+          };
           button.onauxclick = (event) => {
             if (event.button === 1) {
               event.preventDefault();
@@ -6358,6 +6833,27 @@ function createChrome(send, editor) {
           return item;
         }),
       );
+      if (settings.opened()) {
+        const item = element("div", `tab${settings.active() ? " active" : ""}`);
+        const button = element("button", "tab-title", "Settings");
+        button.id = "settings-tab";
+        button.type = "button";
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-controls", "settings-page");
+        button.setAttribute("aria-selected", String(settings.active()));
+        button.tabIndex = settings.active() ? 0 : -1;
+        button.onclick = settings.show;
+        button.onauxclick = (event) => {
+          if (event.button === 1) { event.preventDefault(); settings.close(); }
+        };
+        const close = element("button", "tab-close");
+        close.type = "button";
+        close.innerHTML = ICONS.x;
+        close.setAttribute("aria-label", "Close Settings");
+        close.onclick = settings.close;
+        item.append(button, close);
+        $("#tabs").append(item);
+      }
       $(".tab.active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
     $("#folder-path-label").textContent =
@@ -6420,6 +6916,7 @@ function createChrome(send, editor) {
     const next = tabs[(current + move + tabs.length) % tabs.length];
     next?.focus();
     next?.click();
+    $$('#tabs [role="tab"]')[(current + move + tabs.length) % tabs.length]?.focus();
   });
   $("#mode-status").onclick = () => {
     const mode = $("#mode-status").dataset.mode;
@@ -6458,6 +6955,7 @@ const { createChrome } = modules["chrome"];
 const { createConflictDialog } = modules["conflicts"];
 const { createReading } = modules["reading"];
 const { createImages } = modules["images"];
+const { createSettings } = modules["settings"];
 
 let snapshot = null;
 const bridge = createBridge((message) => {
@@ -6494,6 +6992,7 @@ const bridge = createBridge((message) => {
   if (snapshot.document) editor.accept(snapshot.document);
   editor.retainTabs(snapshot.tabs);
   layout.accept(snapshot.prefs);
+  settings.accept(snapshot);
   chrome.accept(snapshot, editor.document());
   reading.accept(snapshot.tabs);
   dialogs.accept(snapshot);
@@ -6511,7 +7010,8 @@ const reading = createReading(editor);
 editor.setReader(reading);
 const preferences = (patch) => bridge.send({ type: "preferences", patch });
 const layout = createLayout(preferences);
-const dialogs = createDialogs(bridge.send, preferences, editor);
+const dialogs = createDialogs(bridge.send, editor);
+const settings = createSettings(bridge.send, preferences, editor);
 const conflicts = createConflictDialog(bridge.send);
 const images = createImages(bridge, editor, () => snapshot);
 const commands = createCommands({
@@ -6521,8 +7021,9 @@ const commands = createCommands({
   layout,
   getSnapshot: () => snapshot,
   images,
+  settings,
 });
-const chrome = createChrome(bridge.send, editor);
+const chrome = createChrome(bridge.send, editor, settings);
 window.addEventListener("error", (event) => showError(event.message));
 window.addEventListener("unhandledrejection", (event) =>
   showError(event.reason?.message || event.reason),

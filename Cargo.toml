@@ -1,6 +1,6 @@
 [package]
 name = "markora"
-version = "0.2.3-alpha"
+version = "0.2.4-alpha"
 edition = "2024"
 rust-version = "1.95"
 description = "Markora Markdown editor with a WebView2 interface on Windows and a native source editor on Linux"

@@ -50,10 +50,14 @@ fn preferences_and_recents_are_real_json() {
     let storage = Storage { dir: dir.clone() };
     let prefs = Prefs {
         files_width: 320.0,
+        font_family: "georgia".into(),
+        font_size: 22.0,
         ..Default::default()
     };
     storage.write("prefs.json", &prefs).unwrap();
     assert_eq!(storage.prefs().files_width, 320.0);
+    assert_eq!(storage.prefs().font_family, "georgia");
+    assert_eq!(storage.prefs().font_size, 22.0);
     let mut recents = Vec::new();
     for index in 0..15 {
         storage::touch_recent(
